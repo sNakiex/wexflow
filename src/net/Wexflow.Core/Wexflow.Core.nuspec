@@ -2,7 +2,7 @@
 <package >
   <metadata>
     <id>Wexflow</id>
-    <version>6.4.0</version>
+    <version>6.5.0</version>
     <title>Wexflow</title>
     <authors>Akram El Assas</authors>
     <owners>akram.elassas</owners>
@@ -17,12 +17,12 @@
     <dependencies>
       <group targetFramework="net48">
         <dependency id="log4net" version="2.0.15" />
-        <dependency id="Newtonsoft.Json" version="13.0.1" />
+        <dependency id="Newtonsoft.Json" version="13.0.2" />
         <dependency id="Quartz" version="3.5.0" />
       </group>
       <group targetFramework="net7.0">
         <dependency id="log4net" version="2.0.15" />
-        <dependency id="Newtonsoft.Json" version="13.0.1" />
+        <dependency id="Newtonsoft.Json" version="13.0.2" />
         <dependency id="Quartz" version="3.5.0" />
       </group>
     </dependencies>
