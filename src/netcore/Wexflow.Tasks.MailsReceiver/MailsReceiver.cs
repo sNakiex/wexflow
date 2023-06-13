@@ -45,29 +45,29 @@ namespace Wexflow.Tasks.MailsReceiver
         {
             Info("Receiving mails...");
 
-            bool success = true;
-            bool atLeastOneSucceed = false;
+            var success = true;
+            var atLeastOneSucceed = false;
 
             try
             {
                 switch (Protocol)
                 {
                     case Protocol.Imap:
-                        using (var client = new ImapClient())
+                        using (ImapClient client = new())
                         {
                             client.Connect(Host, Port, EnableSsl);
                             client.Authenticate(User, Password);
-                            client.Inbox.Open(FolderAccess.ReadOnly);
+                            _ = client.Inbox.Open(FolderAccess.ReadOnly);
 
                             var uids = client.Inbox.Search(SearchQuery.All);
 
-                            var count = uids.Count();
+                            var count = uids.Count;
 
-                            for (int i = Math.Min(MessageCount, count); i > 0; i--)
+                            for (var i = Math.Min(MessageCount, count); i > 0; i--)
                             {
                                 var message = client.Inbox.GetMessage(uids[i]);
-                                string messageFileName = "message_" + i + "_" + string.Format("{0:yyyy-MM-dd-HH-mm-ss-fff}", message.Date);
-                                string messagePath = Path.Combine(Workflow.WorkflowTempFolder, messageFileName + ".eml");
+                                var messageFileName = $"message_{i}_{string.Format("{0:yyyy-MM-dd-HH-mm-ss-fff}", message.Date)}";
+                                var messagePath = Path.Combine(Workflow.WorkflowTempFolder, messageFileName + ".eml");
                                 message.WriteTo(messagePath);
                                 Files.Add(new FileInf(messagePath, Id));
                                 InfoFormat("Message {0} received. Path: {1}", i, messagePath);
@@ -79,25 +79,22 @@ namespace Wexflow.Tasks.MailsReceiver
                                 {
                                     if (attachment.IsAttachment)
                                     {
-                                        string attachmentPath = Path.Combine(Workflow.WorkflowTempFolder, messageFileName + "_" + (attachment is MessagePart ? ++j + ".eml" : ((MimePart)attachment).FileName));
+                                        var attachmentPath = Path.Combine(Workflow.WorkflowTempFolder, $"{messageFileName}_{(attachment is MessagePart ? ++j + ".eml" : ((MimePart)attachment).FileName)}");
 
-                                        if (attachment is MessagePart)
+                                        if (attachment is not MessagePart)
                                         {
-                                            ((MessagePart)attachment).WriteTo(attachmentPath);
+                                            using var stream = File.Create(attachmentPath);
+                                            ((MimePart)attachment).Content.DecodeTo(stream);
                                         }
                                         else
                                         {
-                                            using (var stream = File.Create(attachmentPath))
-                                            {
-                                                ((MimePart)attachment).Content.DecodeTo(stream);
-                                            }
+                                            ((MessagePart)attachment).WriteTo(attachmentPath);
                                         }
 
                                         Files.Add(new FileInf(attachmentPath, Id));
-                                        InfoFormat("Attachment {0} of mail {1} received. Path: {2}", (attachment is MessagePart ? j + ".eml" : ((MimePart)attachment).FileName), i, attachmentPath);
+                                        InfoFormat("Attachment {0} of mail {1} received. Path: {2}", attachment is MessagePart ? j + ".eml" : ((MimePart)attachment).FileName, i, attachmentPath);
                                     }
                                 }
-
 
                                 if (!atLeastOneSucceed)
                                 {
@@ -109,10 +106,10 @@ namespace Wexflow.Tasks.MailsReceiver
                         }
                         break;
                     case Protocol.Pop3:
-                        using (var client = new Pop3Client())
+                        using (Pop3Client client = new())
                         {
                             client.Connect(Host, Port, EnableSsl);
-                            client.AuthenticationMechanisms.Remove("XOAUTH2");
+                            _ = client.AuthenticationMechanisms.Remove("XOAUTH2");
                             client.Authenticate(User, Password);
 
                             var count = client.GetMessageCount();
@@ -121,11 +118,11 @@ namespace Wexflow.Tasks.MailsReceiver
                             // Messages are numbered in the interval: [1, messageCount]
                             // Ergo: message numbers are 1-based.
                             // Most servers give the latest message the highest number
-                            for (int i = Math.Min(MessageCount, count); i > 0; i--)
+                            for (var i = Math.Min(MessageCount, count); i > 0; i--)
                             {
                                 var message = client.GetMessage(i);
-                                string messageFileName = "message_" + i + "_" + string.Format("{0:yyyy-MM-dd-HH-mm-ss-fff}", message.Date);
-                                string messagePath = Path.Combine(Workflow.WorkflowTempFolder, messageFileName + ".eml");
+                                var messageFileName = $"message_{i}_{string.Format("{0:yyyy-MM-dd-HH-mm-ss-fff}", message.Date)}";
+                                var messagePath = Path.Combine(Workflow.WorkflowTempFolder, messageFileName + ".eml");
                                 message.WriteTo(messagePath);
                                 Files.Add(new FileInf(messagePath, Id));
                                 InfoFormat("Message {0} received. Path: {1}", i, messagePath);
@@ -136,7 +133,7 @@ namespace Wexflow.Tasks.MailsReceiver
                                 {
                                     if (attachment.IsAttachment)
                                     {
-                                        string attachmentPath = Path.Combine(Workflow.WorkflowTempFolder, messageFileName + "_" + attachment.ContentId);
+                                        var attachmentPath = Path.Combine(Workflow.WorkflowTempFolder, $"{messageFileName}_{attachment.ContentId}");
                                         attachment.WriteTo(attachmentPath);
                                         Files.Add(new FileInf(attachmentPath, Id));
                                         InfoFormat("Attachment {0} of mail {1} received. Path: {2}", attachment.ContentId, i, attachmentPath);
@@ -158,7 +155,6 @@ namespace Wexflow.Tasks.MailsReceiver
                         }
                         break;
                 }
-
             }
             catch (ThreadAbortException)
             {

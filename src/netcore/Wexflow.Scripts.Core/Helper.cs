@@ -32,7 +32,7 @@ namespace Wexflow.Scripts.Core
                         if (workflowIdFromFile == workflowId)
                         {
                             found = true;
-                            Console.WriteLine("Workflow " + workflowIdFromFile + " already in database.");
+                            Console.WriteLine($"Workflow {workflowIdFromFile} already in database.");
                             break;
                         }
                     }
@@ -41,8 +41,8 @@ namespace Wexflow.Scripts.Core
                     {
                         try
                         {
-                            db.InsertWorkflow(new Workflow { Xml = xdoc1.ToString() });
-                            Console.WriteLine("Workflow " + workflowIdFromFile + " inserted.");
+                            _ = db.InsertWorkflow(new Workflow { Xml = xdoc1.ToString() });
+                            Console.WriteLine($"Workflow {workflowIdFromFile} inserted.");
                         }
                         catch (Exception e)
                         {
@@ -73,7 +73,7 @@ namespace Wexflow.Scripts.Core
                         var xdoc = XDocument.Parse(workflow.Xml);
                         var workflowId = int.Parse(xdoc.Element(xn + "Workflow").Attribute("id").Value);
 
-                        if (workflowId != 170 && workflowId != 171 && workflowId != 172 && workflowId != 173 && workflowId != 174)
+                        if (workflowId is not 170 and not 171 and not 172 and not 173 and not 174)
                         {
                             db.InsertUserWorkflowRelation(new UserWorkflow
                             {
@@ -171,7 +171,7 @@ namespace Wexflow.Scripts.Core
                 var admin = db.GetUser("admin");
                 var wexflow = db.GetUser("wexflow");
 
-                var record = new Record
+                Record record = new()
                 {
                     Name = name,
                     Description = desc,
@@ -189,7 +189,7 @@ namespace Wexflow.Scripts.Core
 
                 if (hasFile)
                 {
-                    var recordVersion = new Wexflow.Core.Db.Version
+                    Wexflow.Core.Db.Version recordVersion = new()
                     {
                         RecordId = recordId
                     };
@@ -200,21 +200,14 @@ namespace Wexflow.Scripts.Core
                     var recordFilePath = Path.Combine(recordFolder, recordFileName);
                     if (!Directory.Exists(recordFolder))
                     {
-                        Directory.CreateDirectory(recordFolder);
+                        _ = Directory.CreateDirectory(recordFolder);
                     }
                     if (File.Exists(recordFilePath))
                     {
                         File.Delete(recordFilePath);
                     }
                     File.Copy(recordSrc, recordFilePath, true);
-                    if (isUnix)
-                    {
-                        recordVersion.FilePath = recordsFolder + "/" + dbFolderName + "/" + recordId + "/" + recordVersionId + "/" + recordFileName;
-                    }
-                    else
-                    {
-                        recordVersion.FilePath = recordFilePath;
-                    }
+                    recordVersion.FilePath = isUnix ? $"{recordsFolder}/{dbFolderName}/{recordId}/{recordVersionId}/{recordFileName}" : recordFilePath;
                     db.UpdateVersion(recordVersionId, recordVersion);
                 }
 

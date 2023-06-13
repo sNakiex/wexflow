@@ -53,7 +53,7 @@ namespace Wexflow.Tasks.SubWorkflow
                                     success = workflow.StartSync(Workflow.StartedBy, Guid.NewGuid(), ref warning);
                                     break;
                                 case KickOffMode.Async:
-                                    workflow.StartAsync(Workflow.StartedBy);
+                                    _ = workflow.StartAsync(Workflow.StartedBy);
                                     break;
                             }
                             break;

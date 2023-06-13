@@ -36,8 +36,8 @@ namespace Wexflow.Tasks.YouTube
         {
             Info("Uploading videos...");
 
-            bool succeeded = true;
-            bool atLeastOneSucceed = false;
+            var succeeded = true;
+            var atLeastOneSucceed = false;
 
             try
             {
@@ -47,22 +47,25 @@ namespace Wexflow.Tasks.YouTube
                 {
                     try
                     {
-                        XDocument xdoc = XDocument.Load(file.Path);
+                        var xdoc = XDocument.Load(file.Path);
 
                         foreach (var xvideo in xdoc.XPathSelectElements("/Videos/Video"))
                         {
-                            string title = xvideo.Element("Title").Value;
-                            string desc = xvideo.Element("Description").Value;
-                            string[] tags = xvideo.Element("Tags").Value.Split(',');
-                            string categoryId = xvideo.Element("CategoryId").Value;
-                            PrivacyStatus ps = (PrivacyStatus)Enum.Parse(typeof(PrivacyStatus), xvideo.Element("PrivacyStatus").Value, true);
-                            string filePath = xvideo.Element("FilePath").Value;
+                            var title = xvideo.Element("Title").Value;
+                            var desc = xvideo.Element("Description").Value;
+                            var tags = xvideo.Element("Tags").Value.Split(',');
+                            var categoryId = xvideo.Element("CategoryId").Value;
+                            var ps = (PrivacyStatus)Enum.Parse(typeof(PrivacyStatus), xvideo.Element("PrivacyStatus").Value, true);
+                            var filePath = xvideo.Element("FilePath").Value;
 
                             var succeededTask = UploadVideo(title, desc, tags, categoryId, ps, filePath);
                             succeededTask.Wait();
                             succeeded &= succeededTask.Result;
 
-                            if (succeeded && !atLeastOneSucceed) atLeastOneSucceed = true;
+                            if (succeeded && !atLeastOneSucceed)
+                            {
+                                atLeastOneSucceed = true;
+                            }
                         }
                     }
                     catch (ThreadAbortException)
@@ -75,7 +78,6 @@ namespace Wexflow.Tasks.YouTube
                         succeeded = false;
                     }
                 }
-
             }
             catch (ThreadAbortException)
             {
@@ -109,8 +111,9 @@ namespace Wexflow.Tasks.YouTube
                 InfoFormat("Uploading the video file {0} to YouTube started...", filePath);
                 Info("Authentication started...");
                 UserCredential credential;
-                using (var stream = new FileStream(ClientSecrets, FileMode.Open, FileAccess.Read))
+                using (FileStream stream = new(ClientSecrets, FileMode.Open, FileAccess.Read))
                 {
+#pragma warning disable CS0618 // Le type ou le membre est obsolète
                     credential = await GoogleWebAuthorizationBroker.AuthorizeAsync(
                         GoogleClientSecrets.Load(stream).Secrets,
                         // This OAuth 2.0 access scope allows an application to upload files to the
@@ -119,16 +122,17 @@ namespace Wexflow.Tasks.YouTube
                         User,
                         CancellationToken.None
                         );
+#pragma warning restore CS0618 // Le type ou le membre est obsolète
                 }
                 Info("Authentication succeeded.");
 
-                var youtubeService = new YouTubeService(new BaseClientService.Initializer()
+                YouTubeService youtubeService = new(new BaseClientService.Initializer()
                 {
                     HttpClientInitializer = credential,
                     ApplicationName = ApplicationName,
                 });
 
-                var video = new Video
+                Video video = new()
                 {
                     Snippet = new VideoSnippet()
                 };
@@ -141,7 +145,7 @@ namespace Wexflow.Tasks.YouTube
                     PrivacyStatus = ps.ToString().ToLower() // "unlisted" or "private" or "public"
                 };
 
-                using (var fileStream = new FileStream(filePath, FileMode.Open))
+                using (FileStream fileStream = new(filePath, FileMode.Open))
                 {
                     var videosInsertRequest = youtubeService.Videos.Insert(video, "snippet,status", fileStream, "video/*");
                     videosInsertRequest.ResponseReceived += VideosInsertRequest_ResponseReceived;
@@ -173,6 +177,5 @@ namespace Wexflow.Tasks.YouTube
         {
             InfoFormat("The video '{0}' was successfully uploaded. Id: '{1}' ", video.Snippet.Title, video.Id);
         }
-
     }
 }

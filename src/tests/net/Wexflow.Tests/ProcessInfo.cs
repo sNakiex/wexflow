@@ -1,7 +1,7 @@
-﻿using System.IO;
+﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System.IO;
 using System.Linq;
 using System.Xml.Linq;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Wexflow.Tests
 {
@@ -27,9 +27,9 @@ namespace Wexflow.Tests
         [TestMethod]
         public void ProcessInfoTest()
         {
-            string[] files = GetFiles();
+            var files = GetFiles();
             Assert.AreEqual(0, files.Length);
-            Helper.StartWorkflow(63);
+            _ = Helper.StartWorkflow(63);
             files = GetFiles();
             Assert.AreEqual(1, files.Length);
             var xdoc = XDocument.Load(files[0]);

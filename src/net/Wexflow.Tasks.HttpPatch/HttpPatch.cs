@@ -1,7 +1,8 @@
 ﻿using System;
-using System.Collections.Specialized;
 using System.IO;
 using System.Net;
+using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Security.Authentication;
 using System.Text;
 using System.Threading;
@@ -10,25 +11,24 @@ using Wexflow.Core;
 
 namespace Wexflow.Tasks.HttpPatch
 {
-    public class HttpPatch:Task
+    public class HttpPatch : Task
     {
         private const SslProtocols _Tls12 = (SslProtocols)0x00000C00;
         private const SecurityProtocolType Tls12 = (SecurityProtocolType)_Tls12;
 
         public string Url { get; private set; }
-        public NameValueCollection Params { get; private set; }
+        public string Payload { get; private set; }
+        public string AuthorizationScheme { get; private set; }
+        public string AuthorizationParameter { get; private set; }
+        public string Type { get; private set; }
 
         public HttpPatch(XElement xe, Workflow wf) : base(xe, wf)
         {
             Url = GetSetting("url");
-            var parameters = GetSetting("params");
-            var parametersArray = parameters.Split(new char[] { '&' }, StringSplitOptions.RemoveEmptyEntries);
-            Params = new NameValueCollection();
-            foreach (var param in parametersArray)
-            {
-                var paramKv = param.Split('=');
-                Params.Add(paramKv[0], paramKv[1]);
-            }
+            Payload = GetSetting("payload");
+            AuthorizationScheme = GetSetting("authorizationScheme");
+            AuthorizationParameter = GetSetting("authorizationParameter");
+            Type = GetSetting("type", "application/json");
         }
 
         public override TaskStatus Run()
@@ -37,13 +37,24 @@ namespace Wexflow.Tasks.HttpPatch
             var status = Status.Success;
             try
             {
-                using (var client = new WebClient())
+                using (var client = new HttpClient())
+                using (var httpContent = new StringContent(Payload, Encoding.UTF8, Type))
                 {
                     ServicePointManager.Expect100Continue = true;
                     ServicePointManager.SecurityProtocol = Tls12;
 
-                    var response = client.UploadValues(Url, "PATCH", Params);
-                    var responseString = Encoding.Default.GetString(response);
+                    if (!string.IsNullOrEmpty(AuthorizationScheme) && !string.IsNullOrEmpty(AuthorizationParameter))
+                    {
+                        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(AuthorizationScheme, AuthorizationParameter);
+                    }
+
+                    var request = new HttpRequestMessage(new HttpMethod("PATCH"), Url)
+                    {
+                        Content = httpContent
+                    };
+                    var response = client.SendAsync(request).Result;
+                    var responseString = response.Content.ReadAsStringAsync().Result;
+
                     var destFile = Path.Combine(Workflow.WorkflowTempFolder, string.Format("HttpPatch_{0:yyyy-MM-dd-HH-mm-ss-fff}.txt", DateTime.Now));
                     File.WriteAllText(destFile, responseString);
                     Files.Add(new FileInf(destFile, Id));

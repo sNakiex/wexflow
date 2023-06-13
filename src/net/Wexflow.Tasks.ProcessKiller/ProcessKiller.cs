@@ -5,7 +5,7 @@ using Wexflow.Core;
 
 namespace Wexflow.Tasks.ProcessKiller
 {
-    public class ProcessKiller:Task
+    public class ProcessKiller : Task
     {
         public static string ProcessName { get; private set; }
 
@@ -19,7 +19,7 @@ namespace Wexflow.Tasks.ProcessKiller
         {
             try
             {
-                string processCmd = "/im \"" + ProcessName + "\" /f";
+                var processCmd = $"/im \"{ProcessName}\" /f";
                 var startInfo = new ProcessStartInfo("taskkill", processCmd)
                 {
                     CreateNoWindow = true,
@@ -31,7 +31,7 @@ namespace Wexflow.Tasks.ProcessKiller
                 var process = new Process { StartInfo = startInfo };
                 process.OutputDataReceived += OutputHandler;
                 process.ErrorDataReceived += ErrorHandler;
-                process.Start();
+                _ = process.Start();
                 process.BeginOutputReadLine();
                 process.BeginErrorReadLine();
                 process.WaitForExit();

@@ -1,12 +1,12 @@
 ﻿using System;
-using Wexflow.Core;
-using System.Xml.Linq;
-using System.Threading;
 using System.IO;
+using System.Threading;
+using System.Xml.Linq;
+using Wexflow.Core;
 
 namespace Wexflow.Tasks.FilesExist
 {
-    public class FilesExist:Task
+    public class FilesExist : Task
     {
         public string[] FFiles { get; private set; }
         public string[] Folders { get; private set; }
@@ -22,15 +22,15 @@ namespace Wexflow.Tasks.FilesExist
         {
             Info("Checking...");
 
-            bool success = true;
+            var success = true;
 
             try
             {
                 var xmlPath = Path.Combine(Workflow.WorkflowTempFolder,
                        string.Format("FilesExist_{0:yyyy-MM-dd-HH-mm-ss-fff}.xml", DateTime.Now));
-                var xdoc = new XDocument(new XElement("Root"));
-                var xFiles = new XElement("Files");
-                var xFolders = new XElement("Folders");
+                XDocument xdoc = new(new XElement("Root"));
+                XElement xFiles = new("Files");
+                XElement xFolders = new("Folders");
 
                 foreach (var file in FFiles)
                 {

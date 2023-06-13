@@ -1,5 +1,5 @@
-﻿using System.IO;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System.IO;
 
 namespace Wexflow.NetCore.Tests
 {
@@ -24,15 +24,15 @@ namespace Wexflow.NetCore.Tests
         [TestMethod]
         public void ProcessLauncherTest()
         {
-            string[] files = GetFiles();
+            var files = GetFiles();
             Assert.AreEqual(0, files.Length);
-            Helper.StartWorkflow(12);
+            _ = Helper.StartWorkflow(12);
             files = GetFiles();
             Assert.AreEqual(1, files.Length);
             Assert.AreEqual(true, File.Exists(Dest));
         }
 
-        private string[] GetFiles()
+        private static string[] GetFiles()
         {
             return Directory.GetFiles(Mp3Folder, "*.mp3");
         }

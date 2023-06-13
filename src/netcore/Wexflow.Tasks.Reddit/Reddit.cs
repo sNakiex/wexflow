@@ -22,8 +22,8 @@ namespace Wexflow.Tasks.Reddit
         {
             Info("Posting on Reddit...");
 
-            bool success = true;
-            bool atLeastOneSucceed = false;
+            var success = true;
+            var atLeastOneSucceed = false;
 
             var files = SelectFiles();
             if (files.Length > 0)
@@ -46,7 +46,7 @@ namespace Wexflow.Tasks.Reddit
                     return new TaskStatus(Status.Error);
                 }
 
-                foreach (FileInf file in files)
+                foreach (var file in files)
                 {
                     try
                     {
@@ -71,7 +71,10 @@ namespace Wexflow.Tasks.Reddit
                             {
                                 InfoFormat("Post '{0}' sent. Id: {1}", title, selfPost.Id);
 
-                                if (!atLeastOneSucceed) atLeastOneSucceed = true;
+                                if (!atLeastOneSucceed)
+                                {
+                                    atLeastOneSucceed = true;
+                                }
                             }
                         }
 
@@ -94,11 +97,12 @@ namespace Wexflow.Tasks.Reddit
                             {
                                 InfoFormat("Link post '{0}' sent. Id: {1}", title, linkPost.Id);
 
-                                if (!atLeastOneSucceed) atLeastOneSucceed = true;
-
+                                if (!atLeastOneSucceed)
+                                {
+                                    atLeastOneSucceed = true;
+                                }
                             }
                         }
-
                     }
                     catch (ThreadAbortException)
                     {

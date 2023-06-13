@@ -4,6 +4,7 @@ using Oracle.ManagedDataAccess.Client;
 using System;
 using System.Collections.Generic;
 using System.Data.Common;
+using System.Data.Odbc;
 using System.Data.OleDb;
 using System.Data.SqlClient;
 using System.Data.SQLite;
@@ -12,7 +13,6 @@ using System.Threading;
 using System.Xml.Linq;
 using Teradata.Client.Provider;
 using Wexflow.Core;
-using System.Data.Odbc;
 
 namespace Wexflow.Tasks.SqlToCsv
 {
@@ -52,8 +52,16 @@ namespace Wexflow.Tasks.SqlToCsv
             QuoteString = GetSetting("quote", string.Empty);
             EndOfLine = GetSetting("endline", "\r\n");
             Separator = QuoteString + GetSetting("separator", ";") + QuoteString;
-            if (bool.TryParse(GetSetting("headers", bool.TrueString), out var result1)) Headers = result1;
-            if (bool.TryParse(GetSetting("singlerecordheaders", bool.TrueString), out var result2)) SingleRecordHeaders = result2;
+            if (bool.TryParse(GetSetting("headers", bool.TrueString), out var result1))
+            {
+                Headers = result1;
+            }
+
+            if (bool.TryParse(GetSetting("singlerecordheaders", bool.TrueString), out var result2))
+            {
+                SingleRecordHeaders = result2;
+            }
+
             DoNotGenerateFilesIfEmpty = bool.Parse(GetSetting("doNotGenerateFilesIfEmpty", "false"));
             SmbComputerName = GetSetting("smbComputerName");
             SmbDomain = GetSetting("smbDomain");
@@ -65,8 +73,8 @@ namespace Wexflow.Tasks.SqlToCsv
         {
             Info("Executing SQL scripts...");
 
-            bool success = true;
-            bool atLeastOneSuccess = false;
+            var success = true;
+            var atLeastOneSuccess = false;
 
             try
             {
@@ -130,7 +138,7 @@ namespace Wexflow.Tasks.SqlToCsv
             }
 
             // Execute SQL files scripts
-            foreach (FileInf file in SelectFiles())
+            foreach (var file in SelectFiles())
             {
                 try
                 {
@@ -138,7 +146,10 @@ namespace Wexflow.Tasks.SqlToCsv
                     ExecuteSql(sql);
                     InfoFormat("The script {0} has been executed.", file.Path);
 
-                    if (!atLeastOneSuccess) atLeastOneSuccess = true;
+                    if (!atLeastOneSuccess)
+                    {
+                        atLeastOneSuccess = true;
+                    }
                 }
                 catch (ThreadAbortException)
                 {
@@ -220,19 +231,19 @@ namespace Wexflow.Tasks.SqlToCsv
         {
             conn.Open();
             var reader = comm.ExecuteReader();
-            string destPath = Path.Combine(Workflow.WorkflowTempFolder, string.Format("SqlToCsv_{0:yyyy-MM-dd-HH-mm-ss-fff}.csv", DateTime.Now));
+            var destPath = Path.Combine(Workflow.WorkflowTempFolder, string.Format("SqlToCsv_{0:yyyy-MM-dd-HH-mm-ss-fff}.csv", DateTime.Now));
 
             using (var sw = new StreamWriter(destPath))
             {
-                bool hasRows = reader.HasRows;
+                var hasRows = reader.HasRows;
 
                 while (hasRows)
                 {
-                    List<string> columns = new List<string>();
-                    List<string> values = new List<string>();
-                    bool readColumns = false;
-                    bool headerDone = false;
-                    bool readRecord = false;
+                    var columns = new List<string>();
+                    var values = new List<string>();
+                    var readColumns = false;
+                    var headerDone = false;
+                    var readRecord = false;
                     while (reader.Read())
                     {
                         if (readRecord)
@@ -290,7 +301,6 @@ namespace Wexflow.Tasks.SqlToCsv
                 Files.Add(new FileInf(destPath, Id));
                 InfoFormat("CSV file generated: {0}", destPath);
             }
-
         }
     }
 }

@@ -77,9 +77,12 @@ namespace Wexflow.Tasks.FilesDecryptor
                 var files = SelectFiles();
                 foreach (var file in files)
                 {
-                    string destPath = Path.Combine(Workflow.WorkflowTempFolder, file.FileName);
+                    var destPath = Path.Combine(Workflow.WorkflowTempFolder, file.FileName);
                     success &= Decrypt(file.Path, destPath, Workflow.PassPhrase, Workflow.DerivationIterations);
-                    if (!atLeastOneSuccess && success) atLeastOneSuccess = true;
+                    if (!atLeastOneSuccess && success)
+                    {
+                        atLeastOneSuccess = true;
+                    }
                 }
             }
             catch (ThreadAbortException)
@@ -98,16 +101,18 @@ namespace Wexflow.Tasks.FilesDecryptor
         {
             try
             {
-                using (FileStream fsCrypt = new FileStream(inputFile, FileMode.Open))
+                using (var fsCrypt = new FileStream(inputFile, FileMode.Open))
                 {
-                    byte[] saltBytes = new byte[32];
-                    fsCrypt.Read(saltBytes, 0, saltBytes.Length);
+                    var saltBytes = new byte[32];
+                    _ = fsCrypt.Read(saltBytes, 0, saltBytes.Length);
 
-                    UnicodeEncoding ue = new UnicodeEncoding();
+                    var ue = new UnicodeEncoding();
 
-                    RijndaelManaged rmcrypto = new RijndaelManaged();
-                    rmcrypto.KeySize = 256;
-                    rmcrypto.BlockSize = 128;
+                    var rmcrypto = new RijndaelManaged
+                    {
+                        KeySize = 256,
+                        BlockSize = 128
+                    };
 
                     var key = new Rfc2898DeriveBytes(ue.GetBytes(passphrase), saltBytes, derivationIterations);
                     rmcrypto.Key = key.GetBytes(rmcrypto.KeySize / 8);
@@ -115,14 +120,13 @@ namespace Wexflow.Tasks.FilesDecryptor
                     rmcrypto.Padding = PaddingMode.Zeros;
                     rmcrypto.Mode = CipherMode.CBC;
 
-
-                    using (CryptoStream cs = new CryptoStream(fsCrypt, rmcrypto.CreateDecryptor(), CryptoStreamMode.Read))
-                    using (FileStream fsOut = new FileStream(outputFile, FileMode.Create))
+                    using (var cs = new CryptoStream(fsCrypt, rmcrypto.CreateDecryptor(), CryptoStreamMode.Read))
+                    using (var fsOut = new FileStream(outputFile, FileMode.Create))
                     {
                         int data;
                         while ((data = cs.ReadByte()) != -1)
                         {
-                            byte b = (byte)data;
+                            var b = (byte)data;
                             fsOut.WriteByte(b);
                         }
                     }
@@ -138,6 +142,5 @@ namespace Wexflow.Tasks.FilesDecryptor
                 return false;
             }
         }
-
     }
 }

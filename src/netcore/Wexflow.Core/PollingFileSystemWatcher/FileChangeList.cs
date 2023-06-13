@@ -2,19 +2,20 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 
-namespace System.IO
+namespace Wexflow.Core.PollingFileSystemWatcher
 {
     internal struct FileChangeList
     {
-        const int DefaultListSize = 4;
+        private const int DefaultListSize = 4;
+        private FileChange[] _changes;
+        private int _count;
 
-        FileChange[] _changes;
-        int _count;
-
-        public bool IsEmpty { get { return _changes == null || _count == 0; } }
+        public readonly bool IsEmpty => _changes == null || _count == 0;
 
         internal void AddAdded(string directory, string path)
         {
@@ -40,12 +41,9 @@ namespace System.IO
             _changes[_count++] = new FileChange(directory, path, WatcherChangeTypes.Deleted);
         }
 
-        void EnsureCapacity()
+        private void EnsureCapacity()
         {
-            if (_changes == null)
-            {
-                _changes = new FileChange[DefaultListSize];
-            }
+            _changes ??= new FileChange[DefaultListSize];
             if (_count >= _changes.Length)
             {
                 var larger = new FileChange[_changes.Length * 2];
@@ -54,17 +52,17 @@ namespace System.IO
             }
         }
 
-        void Sort()
+        private readonly void Sort()
         {
             Array.Sort(_changes, 0, _count, Comparer.Default);
         }
 
-        public override string ToString()
+        public override readonly string ToString()
         {
             return _count.ToString();
         }
 
-        public FileChange[] ToArray()
+        public readonly FileChange[] ToArray()
         {
             Sort();
             var result = new FileChange[_count];
@@ -72,16 +70,14 @@ namespace System.IO
             return result;
         }
 
-        class Comparer : IComparer<FileChange>
+        private class Comparer : IComparer<FileChange>
         {
             public static IComparer<FileChange> Default = new Comparer();
 
             public int Compare(FileChange left, FileChange right)
             {
-                var nameOrder = String.CompareOrdinal(left.Name, right.Name);
-                if (nameOrder != 0) return nameOrder;
-
-                return left.ChangeType.CompareTo(right.ChangeType);
+                var nameOrder = string.CompareOrdinal(left.Name, right.Name);
+                return nameOrder != 0 ? nameOrder : left.ChangeType.CompareTo(right.ChangeType);
             }
         }
     }

@@ -1,13 +1,13 @@
-﻿using InstagramApiSharp.API.Builder;
+﻿using InstagramApiSharp.API;
+using InstagramApiSharp.API.Builder;
 using InstagramApiSharp.Classes;
+using InstagramApiSharp.Classes.Models;
 using InstagramApiSharp.Logger;
 using System;
 using System.IO;
 using System.Threading;
 using System.Xml.Linq;
 using System.Xml.XPath;
-using InstagramApiSharp.API;
-using InstagramApiSharp.Classes.Models;
 using Wexflow.Core;
 
 namespace Wexflow.Tasks.InstagramUploadVideo
@@ -82,7 +82,6 @@ namespace Wexflow.Tasks.InstagramUploadVideo
             var success = true;
             try
             {
-
                 var authTask = Authenticate();
                 authTask.Wait();
 
@@ -102,19 +101,22 @@ namespace Wexflow.Tasks.InstagramUploadVideo
                 {
                     try
                     {
-                        XDocument xdoc = XDocument.Load(file.Path);
+                        var xdoc = XDocument.Load(file.Path);
 
                         foreach (var xvideo in xdoc.XPathSelectElements("/Videos/Video"))
                         {
-                            string filePath = xvideo.Element("FilePath").Value;
-                            string thumbnailPath = xvideo.Element("ThumbnailPath").Value;
-                            string caption = xvideo.Element("Caption").Value;
+                            var filePath = xvideo.Element("FilePath").Value;
+                            var thumbnailPath = xvideo.Element("ThumbnailPath").Value;
+                            var caption = xvideo.Element("Caption").Value;
 
                             var uploadVideoTask = UploadVideo(authTask.Result, filePath, thumbnailPath, caption);
                             uploadVideoTask.Wait();
                             success &= uploadVideoTask.Result;
 
-                            if (success && !atLeastOneSuccess) atLeastOneSuccess = true;
+                            if (success && !atLeastOneSuccess)
+                            {
+                                atLeastOneSuccess = true;
+                            }
                         }
                     }
                     catch (ThreadAbortException)
@@ -127,7 +129,6 @@ namespace Wexflow.Tasks.InstagramUploadVideo
                         success = false;
                     }
                 }
-
             }
             catch (ThreadAbortException)
             {
@@ -193,7 +194,7 @@ namespace Wexflow.Tasks.InstagramUploadVideo
             // this returns you session as json string.
             using (var fileStream = File.Create(stateFile))
             {
-                state.Seek(0, SeekOrigin.Begin);
+                _ = state.Seek(0, SeekOrigin.Begin);
                 state.CopyTo(fileStream);
             }
 
@@ -216,7 +217,6 @@ namespace Wexflow.Tasks.InstagramUploadVideo
                 {
                     InfoFormat("Unable to upload video: {0}", result.Info.Message);
                     return false;
-
                 }
 
                 InfoFormat("Media created: {0}, {1}", result.Value.Pk, result.Value.Caption.Text);
@@ -227,8 +227,6 @@ namespace Wexflow.Tasks.InstagramUploadVideo
                 ErrorFormat("An error occured while uploading the video: {0}", e, filePath);
                 return false;
             }
-
         }
-
     }
 }

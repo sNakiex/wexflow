@@ -1,7 +1,9 @@
 package com.wexflow;
 
 import android.app.Activity;
-import android.support.v4.content.ContextCompat;
+
+import androidx.core.content.ContextCompat;
+
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -10,6 +12,7 @@ import android.widget.TextView;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Objects;
 
 import static com.wexflow.Constants.COL_ID;
 import static com.wexflow.Constants.COL_LAUNCHTYPE;
@@ -20,6 +23,7 @@ class ListViewAdapter extends BaseAdapter {
     private final ArrayList<HashMap<String, String>> list;
     private final Activity activity;
     private int selectedPos = NOT_SELECTED;
+
     private TextView txtId;
     private TextView txtName;
     private TextView txtLaunchType;
@@ -53,7 +57,7 @@ class ListViewAdapter extends BaseAdapter {
     @Override
     @SuppressWarnings("unchecked")
     public long getItemId(int position) {
-        return Long.valueOf(((HashMap<String, String>) getItem(position)).get(COL_ID));
+        return Long.parseLong(Objects.requireNonNull(((HashMap<String, String>) getItem(position)).get(COL_ID)));
     }
 
     @Override
@@ -66,18 +70,18 @@ class ListViewAdapter extends BaseAdapter {
         return position;
     }
 
+
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
 
         LayoutInflater inflater = activity.getLayoutInflater();
 
-        //if (convertView == null) {
-        convertView = inflater.inflate(R.layout.row, parent, false);
-
-        txtId = convertView.findViewById(R.id.txtId);
-        txtName = convertView.findViewById(R.id.txtName);
-        txtLaunchType = convertView.findViewById(R.id.txtLaunchType);
-        //}
+        if (convertView == null) {
+            convertView = inflater.inflate(R.layout.row, parent, false);
+            txtId = convertView.findViewById(R.id.txtId);
+            txtName = convertView.findViewById(R.id.txtName);
+            txtLaunchType = convertView.findViewById(R.id.txtLaunchType);
+        }
 
         if (position == selectedPos) {
             txtId.setTextColor(ContextCompat.getColor(txtId.getContext(), R.color.list_row_selected_text));

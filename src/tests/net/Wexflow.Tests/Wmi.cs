@@ -1,6 +1,6 @@
-﻿using System;
+﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System;
 using System.IO;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Wexflow.Tests
 {
@@ -35,10 +35,10 @@ namespace Wexflow.Tests
         {
             var files = GetFiles();
             Assert.AreEqual(0, files.Length);
-            Helper.StartWorkflow(23);
+            _ = Helper.StartWorkflow(23);
             files = GetFiles();
             Assert.AreEqual(1, files.Length);
-            string content = File.ReadAllText(files[0]);
+            var content = File.ReadAllText(files[0]);
             Assert.AreEqual(_expectedResult, content);
         }
 

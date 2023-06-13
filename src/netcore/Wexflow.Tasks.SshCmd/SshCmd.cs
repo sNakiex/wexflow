@@ -10,11 +10,11 @@ using Wexflow.Core;
 
 namespace Wexflow.Tasks.SshCmd
 {
-    public class SshCmd : Task
+    public partial class SshCmd : Task
     {
-        public static readonly Regex Prompt = new Regex("[a-zA-Z0-9_.-]*\\@[a-zA-Z0-9_.-]*\\:\\~[#$] ", RegexOptions.Compiled);
-        public static readonly Regex PwdPrompt = new Regex("password for .*\\:", RegexOptions.Compiled);
-        public static readonly Regex PromptOrPwd = new Regex(Prompt + "|" + PwdPrompt, RegexOptions.Compiled);
+        public static readonly Regex Prompt = MyRegex();
+        public static readonly Regex PwdPrompt = MyRegex1();
+        public static readonly Regex PromptOrPwd = new($"{Prompt}|{PwdPrompt}", RegexOptions.Compiled);
 
         public string Host { get; private set; }
         public int Port { get; private set; }
@@ -44,10 +44,10 @@ namespace Wexflow.Tasks.SshCmd
 
             try
             {
-                var connectionInfo = new ConnectionInfo(Host, Port, Username, new PasswordAuthenticationMethod(Username, Password));
-                SshClient sshclient = new SshClient(connectionInfo);
+                ConnectionInfo connectionInfo = new(Host, Port, Username, new PasswordAuthenticationMethod(Username, Password));
+                SshClient sshclient = new(connectionInfo);
                 sshclient.Connect();
-                var modes = new Dictionary<TerminalModes, uint> { { TerminalModes.ECHO, 53 } };
+                Dictionary<TerminalModes, uint> modes = new() { { TerminalModes.ECHO, 53 } };
                 stream = sshclient.CreateShellStream("xterm", 80, 24, 800, 600, 4096, modes);
                 var result = stream.Expect(Prompt, ExpectTimeout);
 
@@ -75,10 +75,7 @@ namespace Wexflow.Tasks.SshCmd
             }
             finally
             {
-                if (stream != null)
-                {
-                    stream.Close();
-                }
+                stream?.Close();
             }
             var status = Status.Success;
 
@@ -151,5 +148,10 @@ namespace Wexflow.Tasks.SshCmd
                 }
             }
         }
+
+        [GeneratedRegex("[a-zA-Z0-9_.-]*\\@[a-zA-Z0-9_.-]*\\:\\~[#$] ", RegexOptions.Compiled)]
+        private static partial Regex MyRegex();
+        [GeneratedRegex("password for .*\\:", RegexOptions.Compiled)]
+        private static partial Regex MyRegex1();
     }
 }

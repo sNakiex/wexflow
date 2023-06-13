@@ -5,12 +5,12 @@
 	<DebugType>Full</DebugType>
     <Platforms>AnyCPU;x64;x86</Platforms>
 	
-    <Version>6.5.0</Version>
+    <Version>6.8.0</Version>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Newtonsoft.Json" Version="13.0.2" />
-    <PackageReference Include="VimeoDotNet" Version="2.2.0" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+    <PackageReference Include="VimeoDotNet" Version="3.2.3" />
   </ItemGroup>
 
   <ItemGroup>

@@ -2,12 +2,14 @@
 using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
+using System.Runtime.Versioning;
 using System.Threading;
 using System.Xml.Linq;
 using Wexflow.Core;
 
 namespace Wexflow.Tasks.ImagesOverlay
 {
+    [SupportedOSPlatform("windows")]
     public class ImagesOverlay : Task
     {
         public ImagesOverlay(XElement xe, Workflow wf)
@@ -18,7 +20,7 @@ namespace Wexflow.Tasks.ImagesOverlay
         public override TaskStatus Run()
         {
             Info("Overlaying images...");
-            Status status = Status.Success;
+            var status = Status.Success;
 
             try
             {
@@ -56,38 +58,33 @@ namespace Wexflow.Tasks.ImagesOverlay
             return new TaskStatus(status);
         }
 
-
         private bool OverlayImages(FileInf[] imageFiles, string destPath)
         {
             try
             {
-                List<int> imageHeights = new List<int>();
-                List<int> imageWidths = new List<int>();
-                
-                foreach (FileInf imageFile in imageFiles)
+                List<int> imageHeights = new();
+                List<int> imageWidths = new();
+
+                foreach (var imageFile in imageFiles)
                 {
-                    using (Image img = Image.FromFile(imageFile.Path))
-                    {
-                        imageHeights.Add(img.Height);
-                        imageWidths.Add(img.Width);
-                    }
+                    using var img = Image.FromFile(imageFile.Path);
+                    imageHeights.Add(img.Height);
+                    imageWidths.Add(img.Width);
                 }
                 imageHeights.Sort();
                 imageWidths.Sort();
 
-                int height = imageHeights[imageHeights.Count - 1];
-                int width = imageWidths[imageWidths.Count - 1];
+                var height = imageHeights[^1];
+                var width = imageWidths[^1];
 
-                using (Bitmap finalImage = new Bitmap(width, height))
-                using (Graphics graphics = Graphics.FromImage(finalImage))
+                using (Bitmap finalImage = new(width, height))
+                using (var graphics = Graphics.FromImage(finalImage))
                 {
                     graphics.Clear(SystemColors.AppWorkspace);
-                    foreach (FileInf imageFile in imageFiles)
+                    foreach (var imageFile in imageFiles)
                     {
-                        using (Image img = Image.FromFile(imageFile.Path))
-                        {
-                            graphics.DrawImage(img, new Point(0, 0));
-                        }
+                        using var img = Image.FromFile(imageFile.Path);
+                        graphics.DrawImage(img, new Point(0, 0));
                     }
 
                     finalImage.Save(destPath);
@@ -108,6 +105,5 @@ namespace Wexflow.Tasks.ImagesOverlay
                 return false;
             }
         }
-
     }
 }

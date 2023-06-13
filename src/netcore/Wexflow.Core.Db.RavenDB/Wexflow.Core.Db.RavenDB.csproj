@@ -4,11 +4,11 @@
     <TargetFramework>net7.0</TargetFramework>
 	<DebugType>Full</DebugType>
     <Platforms>AnyCPU;x64;x86</Platforms> 
-    <Version>6.5.0</Version>
+    <Version>6.8.0</Version>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="RavenDB.Client" Version="5.4.5" />
+    <PackageReference Include="RavenDB.Client" Version="5.4.104" />
   </ItemGroup>
 
   <ItemGroup>

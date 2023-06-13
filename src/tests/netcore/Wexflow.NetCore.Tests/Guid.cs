@@ -1,8 +1,8 @@
-﻿using System.IO;
+﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Xml.Linq;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Wexflow.NetCore.Tests
 {
@@ -26,9 +26,9 @@ namespace Wexflow.NetCore.Tests
         [TestMethod]
         public void GuidTest()
         {
-            string[] files = GetFiles();
+            var files = GetFiles();
             Assert.AreEqual(0, files.Length);
-            Helper.StartWorkflow(68);
+            _ = Helper.StartWorkflow(68);
             files = GetFiles();
             Assert.AreEqual(1, files.Length);
             var xdoc = XDocument.Load(files[0]);
@@ -42,7 +42,7 @@ namespace Wexflow.NetCore.Tests
             }
         }
 
-        private string[] GetFiles()
+        private static string[] GetFiles()
         {
             return Directory.GetFiles(GuidFolder, "Guid_*.xml");
         }

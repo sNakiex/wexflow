@@ -29,7 +29,6 @@ namespace Wexflow.Tasks.CsvToYaml
         {
             Info("Converting CSV files to YAML files...");
 
-
             var success = true;
             var atLeastOneSuccess = false;
 
@@ -72,7 +71,6 @@ namespace Wexflow.Tasks.CsvToYaml
             return new TaskStatus(status);
         }
 
-
         private bool ConvertFiles(ref bool atLeastOneSuccess)
         {
             var success = true;
@@ -87,7 +85,10 @@ namespace Wexflow.Tasks.CsvToYaml
                     File.WriteAllText(destPath, yaml);
                     Files.Add(new FileInf(destPath, Id));
                     InfoFormat("The CSV file {0} has been converted -> {1}", csvFile.Path, destPath);
-                    if (!atLeastOneSuccess) atLeastOneSuccess = true;
+                    if (!atLeastOneSuccess)
+                    {
+                        atLeastOneSuccess = true;
+                    }
                 }
                 catch (ThreadAbortException)
                 {
@@ -108,7 +109,7 @@ namespace Wexflow.Tasks.CsvToYaml
             var csv = new List<string[]>();
             var lines = File.ReadAllLines(path);
 
-            foreach (string line in lines)
+            foreach (var line in lines)
             {
                 csv.Add(line.Split(new string[] { separator }, StringSplitOptions.RemoveEmptyEntries));
             }
@@ -117,10 +118,10 @@ namespace Wexflow.Tasks.CsvToYaml
 
             var listObjResult = new List<Dictionary<string, string>>();
 
-            for (int i = 1; i < lines.Length; i++)
+            for (var i = 1; i < lines.Length; i++)
             {
                 var objResult = new Dictionary<string, string>();
-                for (int j = 0; j < properties.Length; j++)
+                for (var j = 0; j < properties.Length; j++)
                 {
                     objResult.Add(properties[j], csv[i][j]);
                 }
@@ -132,6 +133,5 @@ namespace Wexflow.Tasks.CsvToYaml
             var yaml = serializer.Serialize(listObjResult);
             return yaml;
         }
-
     }
 }

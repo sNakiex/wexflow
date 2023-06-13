@@ -4,9 +4,9 @@ using Wexflow.Core.Db.PostgreSQL;
 
 namespace Wexflow.Scripts.PostgreSQL
 {
-    class Program
+    internal class Program
     {
-        static void Main()
+        private static void Main()
         {
             try
             {
@@ -15,7 +15,7 @@ namespace Wexflow.Scripts.PostgreSQL
                 .Build();
 
                 var workflowsFolder = config["workflowsFolder"];
-                Db db = new Db(config["connectionString"]);
+                Db db = new(config["connectionString"]);
                 Core.Helper.InsertWorkflowsAndUser(db, workflowsFolder);
                 Core.Helper.InsertRecords(db, "postgresql", config["recordsFolder"], config["documentFile"], config["invoiceFile"], config["timesheetFile"]);
                 db.Dispose();
@@ -26,7 +26,7 @@ namespace Wexflow.Scripts.PostgreSQL
             }
 
             Console.Write("Press any key to exit...");
-            Console.ReadKey();
+            _ = Console.ReadKey();
         }
     }
 }

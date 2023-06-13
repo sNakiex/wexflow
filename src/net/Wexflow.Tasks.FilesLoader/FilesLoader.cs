@@ -1,9 +1,9 @@
 ﻿using System;
-using Wexflow.Core;
-using System.Xml.Linq;
-using System.Threading;
 using System.IO;
 using System.Text.RegularExpressions;
+using System.Threading;
+using System.Xml.Linq;
+using Wexflow.Core;
 
 namespace Wexflow.Tasks.FilesLoader
 {
@@ -76,7 +76,7 @@ namespace Wexflow.Tasks.FilesLoader
             var success = true;
             if (Recursive)
             {
-                foreach (string folder in Folders)
+                foreach (var folder in Folders)
                 {
                     var files = GetFilesRecursive(folder);
 
@@ -93,9 +93,9 @@ namespace Wexflow.Tasks.FilesLoader
             }
             else
             {
-                foreach (string folder in Folders)
+                foreach (var folder in Folders)
                 {
-                    foreach (string file in Directory.GetFiles(folder))
+                    foreach (var file in Directory.GetFiles(folder))
                     {
                         if (string.IsNullOrEmpty(RegexPattern) || Regex.IsMatch(file, RegexPattern))
                         {
@@ -107,7 +107,7 @@ namespace Wexflow.Tasks.FilesLoader
                 }
             }
 
-            foreach (string file in FlFiles)
+            foreach (var file in FlFiles)
             {
                 if (File.Exists(file))
                 {
@@ -128,6 +128,5 @@ namespace Wexflow.Tasks.FilesLoader
         {
             return Directory.GetFiles(dir, "*.*", SearchOption.AllDirectories);
         }
-
     }
 }

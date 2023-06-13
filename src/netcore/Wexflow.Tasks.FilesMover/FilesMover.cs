@@ -1,12 +1,12 @@
 ﻿using System;
-using Wexflow.Core;
-using System.Xml.Linq;
 using System.IO;
 using System.Threading;
+using System.Xml.Linq;
+using Wexflow.Core;
 
 namespace Wexflow.Tasks.FilesMover
 {
-    public class FilesMover:Task
+    public class FilesMover : Task
     {
         public string DestFolder { get; private set; }
         public bool Overwrite { get; private set; }
@@ -30,7 +30,7 @@ namespace Wexflow.Tasks.FilesMover
             var atLeastOneSucceed = false;
 
             var files = SelectFiles();
-            for (var i = files.Length - 1; i > -1; i--) 
+            for (var i = files.Length - 1; i > -1; i--)
             {
                 var file = files[i];
                 var fileName = Path.GetFileName(file.Path);
@@ -68,7 +68,7 @@ namespace Wexflow.Tasks.FilesMover
                     if (AllowCreateDirectory && !Directory.Exists(Path.GetDirectoryName(destFilePath)))
                     {
                         InfoFormat("Creating directory: {0}", Path.GetDirectoryName(destFilePath));
-                        Directory.CreateDirectory(Path.GetDirectoryName(destFilePath));
+                        _ = Directory.CreateDirectory(Path.GetDirectoryName(destFilePath));
                     }
 
                     if (File.Exists(destFilePath))
@@ -86,18 +86,21 @@ namespace Wexflow.Tasks.FilesMover
                     }
 
                     File.Move(file.Path, destFilePath);
-                    var fi = new FileInf(destFilePath, Id);
+                    FileInf fi = new(destFilePath, Id);
                     Files.Add(fi);
-                    Workflow.FilesPerTask[file.TaskId].Remove(file);
+                    _ = Workflow.FilesPerTask[file.TaskId].Remove(file);
                     InfoFormat("File moved: {0} -> {1}", file.Path, destFilePath);
-                    if (!atLeastOneSucceed) atLeastOneSucceed = true;
+                    if (!atLeastOneSucceed)
+                    {
+                        atLeastOneSucceed = true;
+                    }
                 }
                 catch (ThreadAbortException)
                 {
                     throw;
                 }
                 catch (Exception e)
-                { 
+                {
                     ErrorFormat("An error occured while moving the file {0} to {1}", e, file.Path, destFilePath);
                     success = false;
                 }

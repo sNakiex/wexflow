@@ -1,8 +1,8 @@
-﻿using System.Collections.Generic;
-using Wexflow.Core;
-using FluentFTP;
+﻿using FluentFTP;
 using FluentFTP.Client.BaseClient;
+using System.Collections.Generic;
 using System.Net;
+using Wexflow.Core;
 
 namespace Wexflow.Tasks.Ftp
 {
@@ -74,7 +74,9 @@ namespace Wexflow.Tasks.Ftp
             files.AddRange(ftpFiles);
 
             foreach (var file in files)
+            {
                 Task.InfoFormat("[PluginFTPS] file {0} found on {1}.", file.Path, Server);
+            }
 
             client.Disconnect();
 

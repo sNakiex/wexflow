@@ -1,5 +1,5 @@
-﻿using System.IO;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System.IO;
 
 namespace Wexflow.Tests
 {
@@ -12,21 +12,25 @@ namespace Wexflow.Tests
         [TestInitialize]
         public void TestInitialize()
         {
-            if (!Directory.Exists(Temp)) Directory.CreateDirectory(Temp);
+            if (!Directory.Exists(Temp))
+            {
+                _ = Directory.CreateDirectory(Temp);
+            }
+
             Helper.CopyDirRec(Src, Temp);
         }
 
         [TestCleanup]
         public void TestCleanup()
         {
-            Helper.CopyDirRec(Path.Combine(Temp, "Rmdir") , @"C:\WexflowTesting");
+            Helper.CopyDirRec(Path.Combine(Temp, "Rmdir"), @"C:\WexflowTesting");
         }
 
         [TestMethod]
         public void RmdirTest()
         {
             Assert.AreEqual(true, Directory.Exists(Src));
-            Helper.StartWorkflow(14);
+            _ = Helper.StartWorkflow(14);
             Assert.AreEqual(false, Directory.Exists(Src));
         }
     }

@@ -1,8 +1,8 @@
 ﻿using System;
-using Wexflow.Core;
-using System.Xml.Linq;
 using System.IO;
 using System.Threading;
+using System.Xml.Linq;
+using Wexflow.Core;
 
 namespace Wexflow.Tasks.FilesSplitter
 {
@@ -76,20 +76,20 @@ namespace Wexflow.Tasks.FilesSplitter
 
             if (files.Length > 0)
             {
-                foreach (FileInf file in files)
+                foreach (var file in files)
                 {
                     try
                     {
-                        int index = 0;
+                        var index = 0;
 
                         const int bufferSize = 20 * 1024;
-                        byte[] buffer = new byte[bufferSize];
+                        var buffer = new byte[bufferSize];
 
                         using (Stream input = File.OpenRead(file.Path))
                         {
                             while (input.Position < input.Length)
                             {
-                                string chunkPath = Path.Combine(Workflow.WorkflowTempFolder, file.FileName + "_" + (index + 1));
+                                var chunkPath = Path.Combine(Workflow.WorkflowTempFolder, $"{file.FileName}_{index + 1}");
                                 using (Stream output = File.Create(chunkPath))
                                 {
                                     int remaining = ChunkSize, bytesRead;
@@ -107,7 +107,10 @@ namespace Wexflow.Tasks.FilesSplitter
 
                         InfoFormat("The file {0} was splitted into {1} chunks.", file.Path, index + 1);
 
-                        if (!atLeastOneSucceed) atLeastOneSucceed = true;
+                        if (!atLeastOneSucceed)
+                        {
+                            atLeastOneSucceed = true;
+                        }
                     }
                     catch (ThreadAbortException)
                     {

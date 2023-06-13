@@ -1,5 +1,5 @@
-﻿using System.IO;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System.IO;
 
 namespace Wexflow.NetCore.Tests
 {
@@ -7,7 +7,7 @@ namespace Wexflow.NetCore.Tests
     public class CsvToXml
     {
         private static readonly string ExpectedResult =
-            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\r\n"+
+            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\r\n" +
             "<Lines>\r\n" +
             "  <Line>\r\n" +
             "    <Column>content</Column>\r\n" +
@@ -29,7 +29,7 @@ namespace Wexflow.NetCore.Tests
         [TestInitialize]
         public void TestInitialize()
         {
-           DeleteXmls();
+            DeleteXmls();
         }
 
         [TestCleanup]
@@ -41,7 +41,7 @@ namespace Wexflow.NetCore.Tests
         [TestMethod]
         public void CsvToXmlTest()
         {
-            Helper.StartWorkflow(1);
+            _ = Helper.StartWorkflow(1);
 
             // Check the workflow result
             var xmlFiles = Directory.GetFiles(@"C:\WexflowTesting\CsvToXml\", "*.xml");
@@ -54,7 +54,7 @@ namespace Wexflow.NetCore.Tests
             }
         }
 
-        private void DeleteXmls()
+        private static void DeleteXmls()
         {
             foreach (var file in Directory.GetFiles(@"C:\WexflowTesting\CsvToXml\", "*.xml"))
             {

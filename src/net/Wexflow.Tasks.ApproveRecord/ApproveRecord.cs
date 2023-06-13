@@ -94,19 +94,19 @@ namespace Wexflow.Tasks.ApproveRecord
                                     AssignedOn = DateTime.Now,
                                     IsRead = false
                                 };
-                                Workflow.Database.InsertNotification(notification);
+                                _ = Workflow.Database.InsertNotification(notification);
 
                                 if (Workflow.WexflowEngine.EnableEmailNotifications)
                                 {
-                                    string subject = "Wexflow notification from " + approverUser.Username;
-                                    string body = notificationMessage;
+                                    var subject = $"Wexflow notification from {approverUser.Username}";
+                                    var body = notificationMessage;
 
-                                    string host = Workflow.WexflowEngine.SmptHost;
-                                    int port = Workflow.WexflowEngine.SmtpPort;
-                                    bool enableSsl = Workflow.WexflowEngine.SmtpEnableSsl;
-                                    string smtpUser = Workflow.WexflowEngine.SmtpUser;
-                                    string smtpPassword = Workflow.WexflowEngine.SmtpPassword;
-                                    string from = Workflow.WexflowEngine.SmtpFrom;
+                                    var host = Workflow.WexflowEngine.SmptHost;
+                                    var port = Workflow.WexflowEngine.SmtpPort;
+                                    var enableSsl = Workflow.WexflowEngine.SmtpEnableSsl;
+                                    var smtpUser = Workflow.WexflowEngine.SmtpUser;
+                                    var smtpPassword = Workflow.WexflowEngine.SmtpPassword;
+                                    var from = Workflow.WexflowEngine.SmtpFrom;
 
                                     Send(host, port, enableSsl, smtpUser, smtpPassword, assignedTo.Email, from, subject, body);
                                 }
@@ -178,19 +178,19 @@ namespace Wexflow.Tasks.ApproveRecord
                                                     AssignedOn = DateTime.Now,
                                                     IsRead = false
                                                 };
-                                                Workflow.Database.InsertNotification(notification);
+                                                _ = Workflow.Database.InsertNotification(notification);
 
                                                 if (Workflow.WexflowEngine.EnableEmailNotifications)
                                                 {
-                                                    string subject = "Wexflow notification from " + approverUser.Username;
-                                                    string body = notificationMessage;
+                                                    var subject = $"Wexflow notification from {approverUser.Username}";
+                                                    var body = notificationMessage;
 
-                                                    string host = Workflow.WexflowEngine.SmptHost;
-                                                    int port = Workflow.WexflowEngine.SmtpPort;
-                                                    bool enableSsl = Workflow.WexflowEngine.SmtpEnableSsl;
-                                                    string smtpUser = Workflow.WexflowEngine.SmtpUser;
-                                                    string smtpPassword = Workflow.WexflowEngine.SmtpPassword;
-                                                    string from = Workflow.WexflowEngine.SmtpFrom;
+                                                    var host = Workflow.WexflowEngine.SmptHost;
+                                                    var port = Workflow.WexflowEngine.SmtpPort;
+                                                    var enableSsl = Workflow.WexflowEngine.SmtpEnableSsl;
+                                                    var smtpUser = Workflow.WexflowEngine.SmtpUser;
+                                                    var smtpPassword = Workflow.WexflowEngine.SmtpPassword;
+                                                    var from = Workflow.WexflowEngine.SmtpFrom;
 
                                                     Send(host, port, enableSsl, smtpUser, smtpPassword, assignedTo.Email, from, subject, body);
                                                 }
@@ -201,7 +201,7 @@ namespace Wexflow.Tasks.ApproveRecord
                                                 ClearFiles();
                                                 foreach (var task in tasks)
                                                 {
-                                                    task.Run();
+                                                    _ = task.Run();
                                                 }
 
                                                 break;
@@ -220,19 +220,19 @@ namespace Wexflow.Tasks.ApproveRecord
                                                     AssignedOn = DateTime.Now,
                                                     IsRead = false
                                                 };
-                                                Workflow.Database.InsertNotification(notification);
+                                                _ = Workflow.Database.InsertNotification(notification);
 
                                                 if (Workflow.WexflowEngine.EnableEmailNotifications)
                                                 {
-                                                    string subject = "Wexflow notification from " + approverUser.Username;
-                                                    string body = notificationMessage;
+                                                    var subject = $"Wexflow notification from {approverUser.Username}";
+                                                    var body = notificationMessage;
 
-                                                    string host = Workflow.WexflowEngine.SmptHost;
-                                                    int port = Workflow.WexflowEngine.SmtpPort;
-                                                    bool enableSsl = Workflow.WexflowEngine.SmtpEnableSsl;
-                                                    string smtpUser = Workflow.WexflowEngine.SmtpUser;
-                                                    string smtpPassword = Workflow.WexflowEngine.SmtpPassword;
-                                                    string from = Workflow.WexflowEngine.SmtpFrom;
+                                                    var host = Workflow.WexflowEngine.SmptHost;
+                                                    var port = Workflow.WexflowEngine.SmtpPort;
+                                                    var enableSsl = Workflow.WexflowEngine.SmtpEnableSsl;
+                                                    var smtpUser = Workflow.WexflowEngine.SmtpUser;
+                                                    var smtpPassword = Workflow.WexflowEngine.SmtpPassword;
+                                                    var from = Workflow.WexflowEngine.SmtpFrom;
 
                                                     Send(host, port, enableSsl, smtpUser, smtpPassword, assignedTo.Email, from, subject, body);
                                                 }
@@ -245,7 +245,7 @@ namespace Wexflow.Tasks.ApproveRecord
                                                 currApprover.UserId = currentApprover.GetDbId();
                                                 currApprover.Approved = true;
                                                 currApprover.ApprovedOn = DateTime.Now;
-                                                Workflow.WexflowEngine.UpdateApprover(currApprover.GetDbId(), currApprover);
+                                                _ = Workflow.WexflowEngine.UpdateApprover(currApprover.GetDbId(), currApprover);
                                                 var otherApprovers = recordApprovers.Where(a => a.UserId != approverUser.GetDbId()).ToArray();
                                                 var approved = true;
                                                 foreach (var otherApprover in otherApprovers)
@@ -270,7 +270,7 @@ namespace Wexflow.Tasks.ApproveRecord
                                                         Workflow.WexflowEngine.StopCronJobs(removedWorkflow.Id);
                                                         lock (Workflow.WexflowEngine.Workflows)
                                                         {
-                                                            Workflow.WexflowEngine.Workflows.Remove(removedWorkflow);
+                                                            _ = Workflow.WexflowEngine.Workflows.Remove(removedWorkflow);
                                                         }
 
                                                         if (Workflow.WexflowEngine.EnableWorkflowsHotFolder)
@@ -296,7 +296,7 @@ namespace Wexflow.Tasks.ApproveRecord
                                                         AssignedOn = DateTime.Now,
                                                         IsRead = false
                                                     };
-                                                    Workflow.Database.InsertNotification(notification);
+                                                    _ = Workflow.Database.InsertNotification(notification);
 
                                                     notification = new Notification
                                                     {
@@ -306,19 +306,19 @@ namespace Wexflow.Tasks.ApproveRecord
                                                         AssignedOn = DateTime.Now,
                                                         IsRead = false
                                                     };
-                                                    Workflow.Database.InsertNotification(notification);
+                                                    _ = Workflow.Database.InsertNotification(notification);
 
                                                     if (Workflow.WexflowEngine.EnableEmailNotifications)
                                                     {
-                                                        string subject = "Wexflow notification on the record " + record.Name;
-                                                        string body = notificationMessage;
+                                                        var subject = $"Wexflow notification on the record {record.Name}";
+                                                        var body = notificationMessage;
 
-                                                        string host = Workflow.WexflowEngine.SmptHost;
-                                                        int port = Workflow.WexflowEngine.SmtpPort;
-                                                        bool enableSsl = Workflow.WexflowEngine.SmtpEnableSsl;
-                                                        string smtpUser = Workflow.WexflowEngine.SmtpUser;
-                                                        string smtpPassword = Workflow.WexflowEngine.SmtpPassword;
-                                                        string from = Workflow.WexflowEngine.SmtpFrom;
+                                                        var host = Workflow.WexflowEngine.SmptHost;
+                                                        var port = Workflow.WexflowEngine.SmtpPort;
+                                                        var enableSsl = Workflow.WexflowEngine.SmtpEnableSsl;
+                                                        var smtpUser = Workflow.WexflowEngine.SmtpUser;
+                                                        var smtpPassword = Workflow.WexflowEngine.SmtpPassword;
+                                                        var from = Workflow.WexflowEngine.SmtpFrom;
 
                                                         Send(host, port, enableSsl, smtpUser, smtpPassword, assignedTo.Email, from, subject, body);
                                                         Send(host, port, enableSsl, smtpUser, smtpPassword, approverUser.Email, from, subject, body);
@@ -335,19 +335,19 @@ namespace Wexflow.Tasks.ApproveRecord
                                                             AssignedOn = DateTime.Now,
                                                             IsRead = false
                                                         };
-                                                        Workflow.Database.InsertNotification(notification);
+                                                        _ = Workflow.Database.InsertNotification(notification);
 
                                                         if (Workflow.WexflowEngine.EnableEmailNotifications)
                                                         {
-                                                            string subject = "Wexflow notification on the record " + record.Name;
-                                                            string body = notificationMessage;
+                                                            var subject = $"Wexflow notification on the record {record.Name}";
+                                                            var body = notificationMessage;
 
-                                                            string host = Workflow.WexflowEngine.SmptHost;
-                                                            int port = Workflow.WexflowEngine.SmtpPort;
-                                                            bool enableSsl = Workflow.WexflowEngine.SmtpEnableSsl;
-                                                            string smtpUser = Workflow.WexflowEngine.SmtpUser;
-                                                            string smtpPassword = Workflow.WexflowEngine.SmtpPassword;
-                                                            string from = Workflow.WexflowEngine.SmtpFrom;
+                                                            var host = Workflow.WexflowEngine.SmptHost;
+                                                            var port = Workflow.WexflowEngine.SmtpPort;
+                                                            var enableSsl = Workflow.WexflowEngine.SmtpEnableSsl;
+                                                            var smtpUser = Workflow.WexflowEngine.SmtpUser;
+                                                            var smtpPassword = Workflow.WexflowEngine.SmtpPassword;
+                                                            var from = Workflow.WexflowEngine.SmtpFrom;
 
                                                             var otherApproverUser = Workflow.WexflowEngine.GetUserById(otherApprover.UserId);
                                                             Send(host, port, enableSsl, smtpUser, smtpPassword, otherApproverUser.Email, from, subject, body);
@@ -365,12 +365,12 @@ namespace Wexflow.Tasks.ApproveRecord
 
                                                 foreach (var task in tasks)
                                                 {
-                                                    task.Run();
+                                                    _ = task.Run();
                                                 }
 
                                                 if (latestVersion != null)
                                                 {
-                                                    Files.RemoveAll(f => f.Path == latestVersion.FilePath);
+                                                    _ = Files.RemoveAll(f => f.Path == latestVersion.FilePath);
                                                 }
 
                                                 break;
@@ -389,19 +389,19 @@ namespace Wexflow.Tasks.ApproveRecord
                                                     AssignedOn = DateTime.Now,
                                                     IsRead = false
                                                 };
-                                                Workflow.Database.InsertNotification(notification);
+                                                _ = Workflow.Database.InsertNotification(notification);
 
                                                 if (Workflow.WexflowEngine.EnableEmailNotifications)
                                                 {
-                                                    string subject = "Wexflow notification from " + approverUser.Username;
-                                                    string body = notificationMessage;
+                                                    var subject = $"Wexflow notification from {approverUser.Username}";
+                                                    var body = notificationMessage;
 
-                                                    string host = Workflow.WexflowEngine.SmptHost;
-                                                    int port = Workflow.WexflowEngine.SmtpPort;
-                                                    bool enableSsl = Workflow.WexflowEngine.SmtpEnableSsl;
-                                                    string smtpUser = Workflow.WexflowEngine.SmtpUser;
-                                                    string smtpPassword = Workflow.WexflowEngine.SmtpPassword;
-                                                    string from = Workflow.WexflowEngine.SmtpFrom;
+                                                    var host = Workflow.WexflowEngine.SmptHost;
+                                                    var port = Workflow.WexflowEngine.SmtpPort;
+                                                    var enableSsl = Workflow.WexflowEngine.SmtpEnableSsl;
+                                                    var smtpUser = Workflow.WexflowEngine.SmtpUser;
+                                                    var smtpPassword = Workflow.WexflowEngine.SmtpPassword;
+                                                    var from = Workflow.WexflowEngine.SmtpFrom;
 
                                                     Send(host, port, enableSsl, smtpUser, smtpPassword, assignedTo.Email, from, subject, body);
                                                 }
@@ -414,7 +414,7 @@ namespace Wexflow.Tasks.ApproveRecord
                                                 currApprover.UserId = rejectedUser.GetDbId();
                                                 currApprover.Approved = false;
                                                 currApprover.ApprovedOn = null;
-                                                Workflow.WexflowEngine.UpdateApprover(currApprover.GetDbId(), currApprover);
+                                                _ = Workflow.WexflowEngine.UpdateApprover(currApprover.GetDbId(), currApprover);
 
                                                 record.Approved = false;
                                                 Workflow.Database.UpdateRecord(record.GetDbId(), record);
@@ -430,12 +430,12 @@ namespace Wexflow.Tasks.ApproveRecord
 
                                                 foreach (var task in tasks)
                                                 {
-                                                    task.Run();
+                                                    _ = task.Run();
                                                 }
 
                                                 if (latestVersion != null)
                                                 {
-                                                    Files.RemoveAll(f => f.Path == latestVersion.FilePath);
+                                                    _ = Files.RemoveAll(f => f.Path == latestVersion.FilePath);
                                                 }
 
                                                 break;
@@ -455,7 +455,7 @@ namespace Wexflow.Tasks.ApproveRecord
                                                     AssignedOn = DateTime.Now,
                                                     IsRead = false
                                                 };
-                                                Workflow.Database.InsertNotification(notification);
+                                                _ = Workflow.Database.InsertNotification(notification);
                                                 notification = new Notification
                                                 {
                                                     Message = notificationMessage + " The task has not been completed.",
@@ -464,19 +464,19 @@ namespace Wexflow.Tasks.ApproveRecord
                                                     AssignedOn = DateTime.Now,
                                                     IsRead = false
                                                 };
-                                                Workflow.Database.InsertNotification(notification);
+                                                _ = Workflow.Database.InsertNotification(notification);
 
                                                 if (Workflow.WexflowEngine.EnableEmailNotifications)
                                                 {
-                                                    string subject = "Wexflow notification on the record " + record.Name;
-                                                    string body = notificationMessage;
+                                                    var subject = $"Wexflow notification on the record {record.Name}";
+                                                    var body = notificationMessage;
 
-                                                    string host = Workflow.WexflowEngine.SmptHost;
-                                                    int port = Workflow.WexflowEngine.SmtpPort;
-                                                    bool enableSsl = Workflow.WexflowEngine.SmtpEnableSsl;
-                                                    string smtpUser = Workflow.WexflowEngine.SmtpUser;
-                                                    string smtpPassword = Workflow.WexflowEngine.SmtpPassword;
-                                                    string from = Workflow.WexflowEngine.SmtpFrom;
+                                                    var host = Workflow.WexflowEngine.SmptHost;
+                                                    var port = Workflow.WexflowEngine.SmtpPort;
+                                                    var enableSsl = Workflow.WexflowEngine.SmtpEnableSsl;
+                                                    var smtpUser = Workflow.WexflowEngine.SmtpUser;
+                                                    var smtpPassword = Workflow.WexflowEngine.SmtpPassword;
+                                                    var from = Workflow.WexflowEngine.SmtpFrom;
 
                                                     Send(host, port, enableSsl, smtpUser, smtpPassword, assignedTo.Email, from, subject, body);
                                                     Send(host, port, enableSsl, smtpUser, smtpPassword, approverUser.Email, from, subject, body + " The task has not been completed.");
@@ -495,12 +495,12 @@ namespace Wexflow.Tasks.ApproveRecord
 
                                                 foreach (var task in tasks)
                                                 {
-                                                    task.Run();
+                                                    _ = task.Run();
                                                 }
 
                                                 if (latestVersion != null)
                                                 {
-                                                    Files.RemoveAll(f => f.Path == latestVersion.FilePath);
+                                                    _ = Files.RemoveAll(f => f.Path == latestVersion.FilePath);
                                                 }
                                                 reminderNotificationDone = true;
                                             }
@@ -517,7 +517,7 @@ namespace Wexflow.Tasks.ApproveRecord
                                                     AssignedOn = DateTime.Now,
                                                     IsRead = false
                                                 };
-                                                Workflow.Database.InsertNotification(notification);
+                                                _ = Workflow.Database.InsertNotification(notification);
                                                 notification = new Notification
                                                 {
                                                     Message = notificationMessage,
@@ -526,19 +526,19 @@ namespace Wexflow.Tasks.ApproveRecord
                                                     AssignedOn = DateTime.Now,
                                                     IsRead = false
                                                 };
-                                                Workflow.Database.InsertNotification(notification);
+                                                _ = Workflow.Database.InsertNotification(notification);
 
                                                 if (Workflow.WexflowEngine.EnableEmailNotifications)
                                                 {
-                                                    string subject = "Wexflow notification on the record " + record.Name;
-                                                    string body = notificationMessage;
+                                                    var subject = $"Wexflow notification on the record {record.Name}";
+                                                    var body = notificationMessage;
 
-                                                    string host = Workflow.WexflowEngine.SmptHost;
-                                                    int port = Workflow.WexflowEngine.SmtpPort;
-                                                    bool enableSsl = Workflow.WexflowEngine.SmtpEnableSsl;
-                                                    string smtpUser = Workflow.WexflowEngine.SmtpUser;
-                                                    string smtpPassword = Workflow.WexflowEngine.SmtpPassword;
-                                                    string from = Workflow.WexflowEngine.SmtpFrom;
+                                                    var host = Workflow.WexflowEngine.SmptHost;
+                                                    var port = Workflow.WexflowEngine.SmtpPort;
+                                                    var enableSsl = Workflow.WexflowEngine.SmtpEnableSsl;
+                                                    var smtpUser = Workflow.WexflowEngine.SmtpUser;
+                                                    var smtpPassword = Workflow.WexflowEngine.SmtpPassword;
+                                                    var from = Workflow.WexflowEngine.SmtpFrom;
 
                                                     Send(host, port, enableSsl, smtpUser, smtpPassword, assignedTo.Email, from, subject, body);
                                                     Send(host, port, enableSsl, smtpUser, smtpPassword, approverUser.Email, from, subject, body);
@@ -557,12 +557,12 @@ namespace Wexflow.Tasks.ApproveRecord
 
                                                 foreach (var task in tasks)
                                                 {
-                                                    task.Run();
+                                                    _ = task.Run();
                                                 }
 
                                                 if (latestVersion != null)
                                                 {
-                                                    Files.RemoveAll(f => f.Path == latestVersion.FilePath);
+                                                    _ = Files.RemoveAll(f => f.Path == latestVersion.FilePath);
                                                 }
 
                                                 break;
@@ -580,7 +580,7 @@ namespace Wexflow.Tasks.ApproveRecord
                                                     AssignedOn = DateTime.Now,
                                                     IsRead = false
                                                 };
-                                                Workflow.Database.InsertNotification(notification);
+                                                _ = Workflow.Database.InsertNotification(notification);
                                                 Info($"ApproveRecord.OnStopped: User {assignedTo.Username} notified for the stop of the approval process of the record {record.GetDbId()} - {record.Name}.");
 
                                                 var tasks = GetTasks(OnStopped);
@@ -593,12 +593,12 @@ namespace Wexflow.Tasks.ApproveRecord
 
                                                 foreach (var task in tasks)
                                                 {
-                                                    task.Run();
+                                                    _ = task.Run();
                                                 }
 
                                                 if (latestVersion != null)
                                                 {
-                                                    Files.RemoveAll(f => f.Path == latestVersion.FilePath);
+                                                    _ = Files.RemoveAll(f => f.Path == latestVersion.FilePath);
                                                 }
 
                                                 break;
@@ -656,19 +656,19 @@ namespace Wexflow.Tasks.ApproveRecord
                             AssignedOn = DateTime.Now,
                             IsRead = false
                         };
-                        Workflow.Database.InsertNotification(notification);
+                        _ = Workflow.Database.InsertNotification(notification);
 
                         if (Workflow.WexflowEngine.EnableEmailNotifications)
                         {
-                            string subject = "Wexflow notification from " + assignedBy.Username;
-                            string body = notificationMessage;
+                            var subject = $"Wexflow notification from {assignedBy.Username}";
+                            var body = notificationMessage;
 
-                            string host = Workflow.WexflowEngine.SmptHost;
-                            int port = Workflow.WexflowEngine.SmtpPort;
-                            bool enableSsl = Workflow.WexflowEngine.SmtpEnableSsl;
-                            string smtpUser = Workflow.WexflowEngine.SmtpUser;
-                            string smtpPassword = Workflow.WexflowEngine.SmtpPassword;
-                            string from = Workflow.WexflowEngine.SmtpFrom;
+                            var host = Workflow.WexflowEngine.SmptHost;
+                            var port = Workflow.WexflowEngine.SmtpPort;
+                            var enableSsl = Workflow.WexflowEngine.SmtpEnableSsl;
+                            var smtpUser = Workflow.WexflowEngine.SmtpUser;
+                            var smtpPassword = Workflow.WexflowEngine.SmtpPassword;
+                            var from = Workflow.WexflowEngine.SmtpFrom;
 
                             Send(host, port, enableSsl, smtpUser, smtpPassword, assignedTo.Email, from, subject, body);
                         }
@@ -685,12 +685,12 @@ namespace Wexflow.Tasks.ApproveRecord
 
                         foreach (var task in tasks)
                         {
-                            task.Run();
+                            _ = task.Run();
                         }
 
                         if (latestVersion != null)
                         {
-                            Files.RemoveAll(f => f.Path == latestVersion.FilePath);
+                            _ = Files.RemoveAll(f => f.Path == latestVersion.FilePath);
                         }
                     }
                 }
@@ -717,7 +717,7 @@ namespace Wexflow.Tasks.ApproveRecord
 
         private Task[] GetTasks(string evt)
         {
-            List<Task> tasks = new List<Task>();
+            var tasks = new List<Task>();
 
             if (!string.IsNullOrEmpty(evt))
             {

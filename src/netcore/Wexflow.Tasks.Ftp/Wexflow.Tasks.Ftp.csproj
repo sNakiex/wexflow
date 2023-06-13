@@ -4,7 +4,7 @@
     <TargetFramework>net7.0</TargetFramework>
 	<DebugType>Full</DebugType>
     <Platforms>AnyCPU;x64;x86</Platforms> 
-    <Version>6.5.0</Version>
+    <Version>6.8.0</Version>
   </PropertyGroup>
 
   <ItemGroup>
@@ -18,7 +18,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="FluentFTP" Version="42.1.0" />
+    <PackageReference Include="FluentFTP" Version="46.0.2" />
     <PackageReference Include="SSH.NET" Version="2020.0.2" />
   </ItemGroup>
 

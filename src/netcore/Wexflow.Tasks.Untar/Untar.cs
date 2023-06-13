@@ -1,9 +1,10 @@
-﻿using System;
-using Wexflow.Core;
-using System.Xml.Linq;
+﻿using ICSharpCode.SharpZipLib.Tar;
+using System;
 using System.IO;
+using System.Text;
 using System.Threading;
-using ICSharpCode.SharpZipLib.Tar;
+using System.Xml.Linq;
+using Wexflow.Core;
 
 namespace Wexflow.Tasks.Untar
 {
@@ -58,13 +59,13 @@ namespace Wexflow.Tasks.Untar
 
             if (tars.Length > 0)
             {
-                foreach (FileInf tar in tars)
+                foreach (var tar in tars)
                 {
                     try
                     {
-                        string destFolder = Path.Combine(DestDir
-                            , Path.GetFileNameWithoutExtension(tar.Path) + "_" + string.Format("{0:yyyy-MM-dd-HH-mm-ss-fff}", DateTime.Now));
-                        Directory.CreateDirectory(destFolder);
+                        var destFolder = Path.Combine(DestDir
+                            , $"{Path.GetFileNameWithoutExtension(tar.Path)}_{string.Format("{0:yyyy-MM-dd-HH-mm-ss-fff}", DateTime.Now)}");
+                        _ = Directory.CreateDirectory(destFolder);
                         ExtractTarByEntry(tar.Path, destFolder);
 
                         foreach (var file in Directory.GetFiles(destFolder, "*.*", SearchOption.AllDirectories))
@@ -74,7 +75,10 @@ namespace Wexflow.Tasks.Untar
 
                         InfoFormat("TAR {0} extracted to {1}", tar.Path, destFolder);
 
-                        if (!atLeastOneSuccess) atLeastOneSuccess = true;
+                        if (!atLeastOneSuccess)
+                        {
+                            atLeastOneSuccess = true;
+                        }
                     }
                     catch (ThreadAbortException)
                     {
@@ -91,45 +95,44 @@ namespace Wexflow.Tasks.Untar
             return success;
         }
 
-        private void ExtractTarByEntry(string tarFileName, string targetDir)
+        private static void ExtractTarByEntry(string tarFileName, string targetDir)
         {
-            using (FileStream fsIn = new FileStream(tarFileName, FileMode.Open, FileAccess.Read))
+            using FileStream fsIn = new(tarFileName, FileMode.Open, FileAccess.Read);
+
+            TarInputStream tarIn = new(fsIn, Encoding.UTF8);
+            TarEntry tarEntry;
+            while ((tarEntry = tarIn.GetNextEntry()) != null)
             {
-                TarInputStream tarIn = new TarInputStream(fsIn);
-                TarEntry tarEntry;
-                while ((tarEntry = tarIn.GetNextEntry()) != null)
+                if (tarEntry.IsDirectory)
                 {
-                    if (tarEntry.IsDirectory)
-                    {
-                        continue;
-                    }
-                    // Converts the unix forward slashes in the filenames to windows backslashes
-                    //
-                    string name = tarEntry.Name.Replace('/', Path.DirectorySeparatorChar);
-
-                    // Remove any root e.g. '\' because a PathRooted filename defeats Path.Combine
-                    if (Path.IsPathRooted(name))
-                    {
-                        name = name.Substring(Path.GetPathRoot(name).Length);
-                    }
-
-                    // Apply further name transformations here as necessary
-                    string outName = Path.Combine(targetDir, name);
-
-                    string directoryName = Path.GetDirectoryName(outName);
-                    Directory.CreateDirectory(directoryName);
-
-                    FileStream outStr = new FileStream(outName, FileMode.Create);
-
-                    tarIn.CopyEntryContents(outStr);
-
-                    outStr.Close();
-                    // Set the modification date/time. This approach seems to solve timezone issues.
-                    DateTime myDt = DateTime.SpecifyKind(tarEntry.ModTime, DateTimeKind.Utc);
-                    File.SetLastWriteTime(outName, myDt);
+                    continue;
                 }
-                tarIn.Close();
+                // Converts the unix forward slashes in the filenames to windows backslashes
+                //
+                var name = tarEntry.Name.Replace('/', Path.DirectorySeparatorChar);
+
+                // Remove any root e.g. '\' because a PathRooted filename defeats Path.Combine
+                if (Path.IsPathRooted(name))
+                {
+                    name = name[Path.GetPathRoot(name).Length..];
+                }
+
+                // Apply further name transformations here as necessary
+                var outName = Path.Combine(targetDir, name);
+
+                var directoryName = Path.GetDirectoryName(outName);
+                _ = Directory.CreateDirectory(directoryName);
+
+                FileStream outStr = new(outName, FileMode.Create);
+
+                tarIn.CopyEntryContents(outStr);
+
+                outStr.Close();
+                // Set the modification date/time. This approach seems to solve timezone issues.
+                var myDt = DateTime.SpecifyKind(tarEntry.ModTime, DateTimeKind.Utc);
+                File.SetLastWriteTime(outName, myDt);
             }
+            tarIn.Close();
         }
     }
 }

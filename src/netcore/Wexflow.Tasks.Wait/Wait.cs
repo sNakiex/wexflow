@@ -1,13 +1,13 @@
 ﻿using System;
-using Wexflow.Core;
-using System.Xml.Linq;
 using System.Threading;
+using System.Xml.Linq;
+using Wexflow.Core;
 
 namespace Wexflow.Tasks.Wait
 {
     public class Wait : Task
     {
-        private CancellationTokenSource _cancellationTokenSource;
+        private readonly CancellationTokenSource _cancellationTokenSource;
 
         public TimeSpan Duration { get; private set; }
 
@@ -21,11 +21,11 @@ namespace Wexflow.Tasks.Wait
         {
             InfoFormat("Waiting for {0} ...", Duration);
 
-            bool success = true;
+            var success = true;
 
             try
             {
-                _cancellationTokenSource.Token.WaitHandle.WaitOne(Duration);
+                _ = _cancellationTokenSource.Token.WaitHandle.WaitOne(Duration);
             }
             catch (ThreadAbortException)
             {

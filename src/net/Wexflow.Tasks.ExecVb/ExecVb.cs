@@ -31,7 +31,10 @@ namespace Wexflow.Tasks.ExecVb
                     Exec(csFile.Path, exePath);
                     Files.Add(new FileInf(exePath, Id));
                     InfoFormat("The script {0} has been executed -> {1}", csFile.Path, exePath);
-                    if (!atLeastOneSuccess) atLeastOneSuccess = true;
+                    if (!atLeastOneSuccess)
+                    {
+                        atLeastOneSuccess = true;
+                    }
                 }
                 catch (ThreadAbortException)
                 {
@@ -59,33 +62,33 @@ namespace Wexflow.Tasks.ExecVb
 
         private void Exec(string csPath, string exePath)
         {
-            var exeGenerated = CompileExecutable(csPath, exePath);
+            _ = CompileExecutable(csPath, exePath);
             StartProcess(exePath, string.Empty, false);
         }
 
         private bool CompileExecutable(string sourceName, string exeName)
         {
-            FileInfo sourceFile = new FileInfo(sourceName);
-            CodeDomProvider provider = CodeDomProvider.CreateProvider("VisualBasic");
-            bool compileOk = false;
+            var provider = CodeDomProvider.CreateProvider("VisualBasic");
+            bool compileOk;
 
-            CompilerParameters cp = new CompilerParameters();
+            var cp = new CompilerParameters
+            {
+                // Generate an executable instead of 
+                // a class library.
+                GenerateExecutable = true,
 
-            // Generate an executable instead of 
-            // a class library.
-            cp.GenerateExecutable = true;
+                // Specify the assembly file name to generate.
+                OutputAssembly = exeName,
 
-            // Specify the assembly file name to generate.
-            cp.OutputAssembly = exeName;
+                // Save the assembly as a physical file.
+                GenerateInMemory = false,
 
-            // Save the assembly as a physical file.
-            cp.GenerateInMemory = false;
-
-            // Set whether to treat all warnings as errors.
-            cp.TreatWarningsAsErrors = false;
+                // Set whether to treat all warnings as errors.
+                TreatWarningsAsErrors = false
+            };
 
             // Invoke compilation of the source file.
-            CompilerResults cr = provider.CompileAssemblyFromFile(cp, sourceName);
+            var cr = provider.CompileAssemblyFromFile(cp, sourceName);
 
             if (cr.Errors.Count > 0)
             {
@@ -103,14 +106,7 @@ namespace Wexflow.Tasks.ExecVb
             }
 
             // Return the results of the compilation.
-            if (cr.Errors.Count > 0)
-            {
-                compileOk = false;
-            }
-            else
-            {
-                compileOk = true;
-            }
+            compileOk = cr.Errors.Count <= 0;
 
             return compileOk;
         }
@@ -128,7 +124,7 @@ namespace Wexflow.Tasks.ExecVb
             var process = new Process { StartInfo = startInfo };
             process.OutputDataReceived += OutputHandler;
             process.ErrorDataReceived += ErrorHandler;
-            process.Start();
+            _ = process.Start();
             process.BeginOutputReadLine();
             process.BeginErrorReadLine();
             process.WaitForExit();
@@ -143,6 +139,5 @@ namespace Wexflow.Tasks.ExecVb
         {
             ErrorFormat("{0}", outLine.Data);
         }
-
     }
 }

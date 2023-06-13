@@ -82,9 +82,12 @@ namespace Wexflow.Tasks.ImagesResizer
                 var images = SelectFiles();
                 foreach (var image in images)
                 {
-                    string destPath = Path.Combine(Workflow.WorkflowTempFolder, image.FileName);
+                    var destPath = Path.Combine(Workflow.WorkflowTempFolder, image.FileName);
                     success &= Resize(image.Path, destPath);
-                    if (!atLeastOneSuccess && success) atLeastOneSuccess = true;
+                    if (!atLeastOneSuccess && success)
+                    {
+                        atLeastOneSuccess = true;
+                    }
                 }
             }
             catch (ThreadAbortException)
@@ -103,7 +106,7 @@ namespace Wexflow.Tasks.ImagesResizer
         {
             try
             {
-                using (Image src = Image.FromFile(srcPath))
+                using (var src = Image.FromFile(srcPath))
                 using (Image dest = ResizeImage(src, Width, Height))
                 {
                     dest.Save(destPath);
@@ -147,6 +150,5 @@ namespace Wexflow.Tasks.ImagesResizer
 
             return destImage;
         }
-
     }
 }

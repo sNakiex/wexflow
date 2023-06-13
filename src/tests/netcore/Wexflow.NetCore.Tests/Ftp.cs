@@ -1,5 +1,5 @@
-﻿using System.IO;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System.IO;
 
 namespace Wexflow.NetCore.Tests
 {
@@ -29,7 +29,11 @@ namespace Wexflow.NetCore.Tests
         [TestInitialize]
         public void TestInitialize()
         {
-            if (!Directory.Exists(Temp)) Directory.CreateDirectory(Temp);
+            if (!Directory.Exists(Temp))
+            {
+                _ = Directory.CreateDirectory(Temp);
+            }
+
             Helper.DeleteFilesAndFolders(Temp);
             Helper.DeleteFiles(FtpDownload);
         }
@@ -47,7 +51,7 @@ namespace Wexflow.NetCore.Tests
             Assert.IsFalse(File.Exists(File2));
             var files = GetFiles();
             Assert.AreEqual(0, files.Length);
-            Helper.StartWorkflow(55); // list+upload+download+delete
+            _ = Helper.StartWorkflow(55); // list+upload+download+delete
             files = GetFiles();
             Assert.AreEqual(1, files.Length);
             var content = File.ReadAllText(files[0]);
@@ -57,7 +61,7 @@ namespace Wexflow.NetCore.Tests
             // TODO sftp and ftps
         }
 
-        private string[] GetFiles()
+        private static string[] GetFiles()
         {
             return Directory.GetFiles(Temp, "ListFiles_*.xml", SearchOption.AllDirectories);
         }

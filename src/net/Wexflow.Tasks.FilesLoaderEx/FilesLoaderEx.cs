@@ -1,11 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
-using Wexflow.Core;
-using System.Xml.Linq;
-using System.Threading;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
+using System.Threading;
+using System.Xml.Linq;
+using Wexflow.Core;
 
 namespace Wexflow.Tasks.FilesLoaderEx
 {
@@ -46,7 +46,7 @@ namespace Wexflow.Tasks.FilesLoaderEx
         {
             Info("Loading files...");
 
-            bool success = true;
+            var success = true;
             var folderFiles = new List<FileInf>();
 
             try
@@ -55,7 +55,7 @@ namespace Wexflow.Tasks.FilesLoaderEx
 
                 if (Recursive)
                 {
-                    foreach (string folder in Folders)
+                    foreach (var folder in Folders)
                     {
                         var files = GetFilesRecursive(folder);
 
@@ -71,9 +71,9 @@ namespace Wexflow.Tasks.FilesLoaderEx
                 }
                 else
                 {
-                    foreach (string folder in Folders)
+                    foreach (var folder in Folders)
                     {
-                        foreach (string file in Directory.GetFiles(folder).OrderBy(f => f))
+                        foreach (var file in Directory.GetFiles(folder).OrderBy(f => f))
                         {
                             if (string.IsNullOrEmpty(RegexPattern) || Regex.IsMatch(file, RegexPattern))
                             {
@@ -84,10 +84,12 @@ namespace Wexflow.Tasks.FilesLoaderEx
                     }
                 }
 
-                foreach (string file in FlFiles)
+                foreach (var file in FlFiles)
                 {
                     if (File.Exists(file))
+                    {
                         folderFiles.Add(new FileInf(file, Id));
+                    }
                     else
                     {
                         ErrorFormat("File not found: {0}", file);
@@ -153,15 +155,9 @@ namespace Wexflow.Tasks.FilesLoaderEx
         private void RemoveRange(List<FileInf> items, IEnumerable<FileInf> remove)
         {
             foreach (var r in remove)
-                items.Remove(r);
-        }
-    }
-
-    public static class MiscExtensions
-    {
-        public static IEnumerable<T> TakeLast<T>(this IEnumerable<T> source, int N)
-        {
-            return source.Skip(Math.Max(0, source.Count() - N));
+            {
+                _ = items.Remove(r);
+            }
         }
     }
 }

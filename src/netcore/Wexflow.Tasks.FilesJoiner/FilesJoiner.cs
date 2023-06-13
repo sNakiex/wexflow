@@ -20,10 +20,14 @@ namespace Wexflow.Tasks.FilesJoiner
             Overwrite = bool.Parse(GetSetting("overwrite", "false"));
         }
 
-        private (string RenamedPath, int Number) GetNumberPart(string path)
+        private static (string RenamedPath, int Number) GetNumberPart(string path)
         {
             var lastUnderscoreIndex = path.LastIndexOf("_", StringComparison.InvariantCulture);
-            if (lastUnderscoreIndex == -1) return (path, -1);
+            if (lastUnderscoreIndex == -1)
+            {
+                return (path, -1);
+            }
+
             var substring = path.Substring(lastUnderscoreIndex + 1, path.Length - lastUnderscoreIndex - 1);
             var part = int.TryParse(substring, out var result) ? result : -1;
             return part == -1 ? (path, -1) : (path.Remove(lastUnderscoreIndex), part);
@@ -33,11 +37,11 @@ namespace Wexflow.Tasks.FilesJoiner
         {
             var files = SelectFiles().Select(f =>
             {
-                var info = GetNumberPart(f.Path);
+                (var RenamedPath, var Number) = GetNumberPart(f.Path);
                 return new
                 {
-                    info.RenamedPath,
-                    info.Number,
+                    RenamedPath,
+                    Number,
                     FileInf = f
                 };
             });
@@ -58,15 +62,19 @@ namespace Wexflow.Tasks.FilesJoiner
         {
             Info("Concatenating files...");
 
-            bool success = true;
-            bool atLeastOneSucceed = false;
+            var success = true;
+            var atLeastOneSucceed = false;
 
             foreach (var file in GetFiles())
             {
                 if (JoinFiles(file.FileName, file.Files.ToArray()))
+                {
                     atLeastOneSucceed = true;
+                }
                 else
+                {
                     success = false;
+                }
             }
 
             var status = Status.Success;
@@ -106,19 +114,19 @@ namespace Wexflow.Tasks.FilesJoiner
                 }
 
                 if (File.Exists(tempPath))
-                    File.Delete(tempPath);
-
-                using (var output = new FileStream(tempPath, FileMode.CreateNew, FileAccess.Write, FileShare.None))
                 {
-                    foreach (FileInf file in files)
+                    File.Delete(tempPath);
+                }
+
+                using (FileStream output = new(tempPath, FileMode.CreateNew, FileAccess.Write, FileShare.None))
+                {
+                    foreach (var file in files)
                     {
-                        Info("Joiner " + file.Path);
+                        Info($"Joiner {file.Path}");
                         try
                         {
-                            using (var input = File.OpenRead(file.Path))
-                            {
-                                input.CopyTo(output);
-                            }
+                            using var input = File.OpenRead(file.Path);
+                            input.CopyTo(output);
                         }
                         catch (ThreadAbortException)
                         {

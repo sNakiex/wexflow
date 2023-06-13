@@ -56,7 +56,6 @@ namespace Wexflow.Tasks.CsvToJson
                 success = false;
             }
 
-
             var status = Status.Success;
 
             if (!success && atLeastOneSuccess)
@@ -86,7 +85,10 @@ namespace Wexflow.Tasks.CsvToJson
                     File.WriteAllText(destPath, json);
                     Files.Add(new FileInf(destPath, Id));
                     InfoFormat("The CSV file {0} has been converted -> {1}", csvFile.Path, destPath);
-                    if (!atLeastOneSuccess) atLeastOneSuccess = true;
+                    if (!atLeastOneSuccess)
+                    {
+                        atLeastOneSuccess = true;
+                    }
                 }
                 catch (ThreadAbortException)
                 {
@@ -107,7 +109,7 @@ namespace Wexflow.Tasks.CsvToJson
             var csv = new List<string[]>();
             var lines = File.ReadAllLines(path);
 
-            foreach (string line in lines)
+            foreach (var line in lines)
             {
                 csv.Add(line.Split(new string[] { separator }, StringSplitOptions.RemoveEmptyEntries));
             }
@@ -116,10 +118,10 @@ namespace Wexflow.Tasks.CsvToJson
 
             var listObjResult = new List<Dictionary<string, string>>();
 
-            for (int i = 1; i < lines.Length; i++)
+            for (var i = 1; i < lines.Length; i++)
             {
                 var objResult = new Dictionary<string, string>();
-                for (int j = 0; j < properties.Length; j++)
+                for (var j = 0; j < properties.Length; j++)
                 {
                     objResult.Add(properties[j], csv[i][j]);
                 }
@@ -129,6 +131,5 @@ namespace Wexflow.Tasks.CsvToJson
 
             return JsonConvert.SerializeObject(listObjResult);
         }
-
     }
 }

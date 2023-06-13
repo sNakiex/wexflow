@@ -4,33 +4,31 @@ namespace Wexflow.Core.Db.PostgreSQL
 {
     public class Helper
     {
-        private string _connectionString;
+        private readonly string _connectionString;
 
         public Helper(string connectionString)
         {
             _connectionString = connectionString;
         }
 
-        public void CreateDatabaseIfNotExists(string server, string userId, string password, string databaseName)
+        public static void CreateDatabaseIfNotExists(string server, string userId, string password, string databaseName, int port)
         {
-            using (var conn = new NpgsqlConnection("Server=" + server + ";User Id=" + userId + ";Password=" + password + ";"))
+            using (var conn = new NpgsqlConnection("Server=" + server + ";User Id=" + userId + ";Password=" + password + ";Database=postgres" + ";Port=" + port + ";"))
             {
                 conn.Open();
 
                 using (var command1 = new NpgsqlCommand("SELECT COUNT(*) FROM pg_database WHERE datname = '" + databaseName + "'", conn))
                 {
-
                     var count = (long)command1.ExecuteScalar();
 
                     if (count == 0)
                     {
                         using (var command2 = new NpgsqlCommand("CREATE DATABASE " + databaseName + ";", conn))
                         {
-                            command2.ExecuteNonQuery();
+                            _ = command2.ExecuteNonQuery();
                         }
                     }
                 }
-
             }
         }
 
@@ -42,10 +40,9 @@ namespace Wexflow.Core.Db.PostgreSQL
 
                 using (var command = new NpgsqlCommand("CREATE TABLE IF NOT EXISTS " + tableName + tableStruct + ";", conn))
                 {
-                    command.ExecuteNonQuery();
+                    _ = command.ExecuteNonQuery();
                 }
             }
         }
-
     }
 }

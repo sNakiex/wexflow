@@ -1,8 +1,8 @@
 ﻿using System;
-using Wexflow.Core;
-using System.Xml.Linq;
 using System.IO;
 using System.Threading;
+using System.Xml.Linq;
+using Wexflow.Core;
 
 namespace Wexflow.Tasks.Mkdir
 {
@@ -72,14 +72,21 @@ namespace Wexflow.Tasks.Mkdir
         private bool CreateFolders(ref bool atLeastOneSucceed)
         {
             var success = true;
-            foreach (string folder in Folders)
+            foreach (var folder in Folders)
             {
                 try
                 {
-                    if (!Directory.Exists(folder)) Directory.CreateDirectory(folder);
+                    if (!Directory.Exists(folder))
+                    {
+                        _ = Directory.CreateDirectory(folder);
+                    }
+
                     InfoFormat("Folder {0} created.", folder);
 
-                    if (!atLeastOneSucceed) atLeastOneSucceed = true;
+                    if (!atLeastOneSucceed)
+                    {
+                        atLeastOneSucceed = true;
+                    }
                 }
                 catch (ThreadAbortException)
                 {
@@ -92,7 +99,6 @@ namespace Wexflow.Tasks.Mkdir
                 }
             }
             return success;
-
         }
     }
 }

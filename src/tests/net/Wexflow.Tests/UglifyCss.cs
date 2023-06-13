@@ -27,7 +27,7 @@ namespace Wexflow.Tests
         {
             var files = GetFiles();
             Assert.AreEqual(0, files.Length);
-            Helper.StartWorkflow(105);
+            _ = Helper.StartWorkflow(105);
             files = GetFiles();
             Assert.AreEqual(2, files.Length);
             Assert.IsTrue(File.Exists(File1));

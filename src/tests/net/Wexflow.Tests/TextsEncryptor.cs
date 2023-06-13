@@ -27,7 +27,7 @@ namespace Wexflow.Tests
         {
             var files = GetFiles(TextsEncryptorFolder);
             Assert.AreEqual(0, files.Length);
-            Helper.StartWorkflow(83);
+            _ = Helper.StartWorkflow(83);
             files = GetFiles(TextsEncryptorFolder);
             Assert.AreEqual(2, files.Length);
             files = GetFiles(TextsDecryptorSrcFolder);
@@ -38,6 +38,5 @@ namespace Wexflow.Tests
         {
             return Directory.GetFiles(dir);
         }
-
     }
 }

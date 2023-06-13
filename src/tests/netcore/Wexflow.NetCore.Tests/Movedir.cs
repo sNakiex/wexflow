@@ -1,5 +1,5 @@
-﻿using System.IO;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System.IO;
 
 namespace Wexflow.NetCore.Tests
 {
@@ -30,7 +30,7 @@ namespace Wexflow.NetCore.Tests
         {
             Assert.AreEqual(true, Directory.Exists(Src));
             Assert.AreEqual(false, Directory.Exists(Dest));
-            Helper.StartWorkflow(44);
+            _ = Helper.StartWorkflow(44);
             Assert.AreEqual(false, Directory.Exists(Src));
             Assert.AreEqual(true, Directory.Exists(Dest));
         }

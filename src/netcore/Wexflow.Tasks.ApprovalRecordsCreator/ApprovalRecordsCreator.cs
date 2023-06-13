@@ -24,7 +24,7 @@ namespace Wexflow.Tasks.ApprovalRecordsCreator
 
             try
             {
-                var recordIds = new List<string>();
+                List<string> recordIds = new();
                 var files = SelectFiles();
 
                 foreach (var file in files)

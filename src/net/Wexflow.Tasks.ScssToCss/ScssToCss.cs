@@ -83,7 +83,10 @@ namespace Wexflow.Tasks.ScssToCss
                     File.WriteAllText(destPath, result.Css);
                     Files.Add(new FileInf(destPath, Id));
                     InfoFormat("The SCSS file {0} has been converted -> {1}", scssFile.Path, destPath);
-                    if (!atLeastOneSuccess) atLeastOneSuccess = true;
+                    if (!atLeastOneSuccess)
+                    {
+                        atLeastOneSuccess = true;
+                    }
                 }
                 catch (ThreadAbortException)
                 {

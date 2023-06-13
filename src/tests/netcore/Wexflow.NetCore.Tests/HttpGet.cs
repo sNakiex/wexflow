@@ -25,12 +25,12 @@ namespace Wexflow.NetCore.Tests
         {
             var files = GetFiles();
             Assert.AreEqual(0, files.Length);
-            Helper.StartWorkflow(108);
+            _ = Helper.StartWorkflow(108);
             files = GetFiles();
             Assert.AreEqual(1, files.Length);
         }
 
-        private string[] GetFiles()
+        private static string[] GetFiles()
         {
             return Helper.GetFiles(DestDir, "*.*", SearchOption.TopDirectoryOnly);
         }

@@ -78,9 +78,12 @@ namespace Wexflow.Tasks.TextsDecryptor
                 var files = SelectFiles();
                 foreach (var file in files)
                 {
-                    string destPath = Path.Combine(Workflow.WorkflowTempFolder, file.FileName);
+                    var destPath = Path.Combine(Workflow.WorkflowTempFolder, file.FileName);
                     success &= Decrypt(file.Path, destPath, Workflow.PassPhrase);
-                    if (!atLeastOneSuccess && success) atLeastOneSuccess = true;
+                    if (!atLeastOneSuccess && success)
+                    {
+                        atLeastOneSuccess = true;
+                    }
                 }
             }
             catch (ThreadAbortException)
@@ -99,8 +102,8 @@ namespace Wexflow.Tasks.TextsDecryptor
         {
             try
             {
-                string srcStr = File.ReadAllText(inputFile);
-                string destStr = Decrypt(srcStr, passphrase, Workflow.KeySize, Workflow.DerivationIterations);
+                var srcStr = File.ReadAllText(inputFile);
+                var destStr = Decrypt(srcStr, passphrase, Workflow.KeySize, Workflow.DerivationIterations);
                 File.WriteAllText(outputFile, destStr);
                 InfoFormat("The file {0} has been decrypted -> {1}", inputFile, outputFile);
                 Files.Add(new FileInf(outputFile, Id));
@@ -123,7 +126,7 @@ namespace Wexflow.Tasks.TextsDecryptor
             // Get the IV bytes by extracting the next 32 bytes from the supplied cipherText bytes.
             var ivStringBytes = cipherTextBytesWithSaltAndIv.Skip(keysize / 8).Take(keysize / 8).ToArray();
             // Get the actual cipher text bytes by removing the first 64 bytes from the cipherText string.
-            var cipherTextBytes = cipherTextBytesWithSaltAndIv.Skip((keysize / 8) * 2).Take(cipherTextBytesWithSaltAndIv.Length - ((keysize / 8) * 2)).ToArray();
+            var cipherTextBytes = cipherTextBytesWithSaltAndIv.Skip(keysize / 8 * 2).Take(cipherTextBytesWithSaltAndIv.Length - (keysize / 8 * 2)).ToArray();
 
             using (var password = new Rfc2898DeriveBytes(passPhrase, saltStringBytes, derivationIterations))
             {
@@ -150,6 +153,5 @@ namespace Wexflow.Tasks.TextsDecryptor
                 }
             }
         }
-
     }
 }

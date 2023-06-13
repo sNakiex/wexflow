@@ -82,13 +82,13 @@ namespace Wexflow.Tasks.Vimeo
                 {
                     try
                     {
-                        XDocument xdoc = XDocument.Load(file.Path);
+                        var xdoc = XDocument.Load(file.Path);
 
                         foreach (var xvideo in xdoc.XPathSelectElements("/Videos/Video"))
                         {
-                            string title = xvideo.Element("Title").Value;
-                            string desc = xvideo.Element("Description").Value;
-                            string filePath = xvideo.Element("FilePath").Value;
+                            var title = xvideo.Element("Title").Value;
+                            var desc = xvideo.Element("Description").Value;
+                            var filePath = xvideo.Element("FilePath").Value;
 
                             try
                             {
@@ -100,7 +100,10 @@ namespace Wexflow.Tasks.Vimeo
                                     InfoFormat("Video {0} uploaded to Vimeo. VideoId: {1}", filePath, videoId);
                                 }
 
-                                if (success && !atLeastOneSuccess) atLeastOneSuccess = true;
+                                if (success && !atLeastOneSuccess)
+                                {
+                                    atLeastOneSuccess = true;
+                                }
                             }
                             catch (Exception e)
                             {
@@ -119,7 +122,6 @@ namespace Wexflow.Tasks.Vimeo
                         success = false;
                     }
                 }
-
             }
             catch (ThreadAbortException)
             {
@@ -132,6 +134,5 @@ namespace Wexflow.Tasks.Vimeo
             }
             return success;
         }
-
     }
 }

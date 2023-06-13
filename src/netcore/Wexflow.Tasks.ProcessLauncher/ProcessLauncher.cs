@@ -1,14 +1,14 @@
 ﻿using System;
-using Wexflow.Core;
-using System.Xml.Linq;
-using System.Text.RegularExpressions;
-using System.IO;
 using System.Diagnostics;
+using System.IO;
+using System.Text.RegularExpressions;
 using System.Threading;
+using System.Xml.Linq;
+using Wexflow.Core;
 
 namespace Wexflow.Tasks.ProcessLauncher
 {
-    public class ProcessLauncher:Task
+    public partial class ProcessLauncher : Task
     {
         public string ProcessPath { get; set; }
         public string ProcessCmd { get; set; }
@@ -35,69 +35,68 @@ namespace Wexflow.Tasks.ProcessLauncher
         {
             Info("Launching process...");
 
-            if (GeneratesFiles && !(ProcessCmd.Contains(VarFileName) && (ProcessCmd.Contains(VarOutput) && (ProcessCmd.Contains(VarFileName) || ProcessCmd.Contains(VarFileNameWithoutExtension)))))
+            if (GeneratesFiles && !(ProcessCmd.Contains(VarFileName) && ProcessCmd.Contains(VarOutput) && (ProcessCmd.Contains(VarFileName) || ProcessCmd.Contains(VarFileNameWithoutExtension))))
             {
                 Error("Error in process command. Please read the documentation.");
                 return new TaskStatus(Status.Error, false);
             }
 
-            bool success = true;
-            bool atLeastOneSucceed = false;
+            var success = true;
+            var atLeastOneSucceed = false;
 
             if (!GeneratesFiles)
             {
                 return StartProcess(ProcessPath, ProcessCmd, HideGui);
             }
-            
-			foreach (FileInf file in SelectFiles())
-			{
-				string cmd;
-				string outputFilePath;
 
-				try
-				{
-					cmd = ProcessCmd.Replace(string.Format("{{{0}}}", VarFilePath), string.Format("\"{0}\"", file.Path));
+            foreach (var file in SelectFiles())
+            {
+                string cmd;
+                string outputFilePath;
 
-					const string outputRegexPattern = @"{\$output:(?:\$fileNameWithoutExtension|\$fileName)(?:[a-zA-Z0-9._-]*})";
-					var outputRegex = new Regex(outputRegexPattern);
-					var m = outputRegex.Match(cmd);
+                try
+                {
+                    cmd = ProcessCmd.Replace(string.Format("{{{0}}}", VarFilePath), string.Format("\"{0}\"", file.Path));
 
-					if (m.Success)
-					{
-						string val = m.Value;
-						outputFilePath = val;
-						if (outputFilePath.Contains(VarFileNameWithoutExtension))
-						{
-							outputFilePath = outputFilePath.Replace(VarFileNameWithoutExtension, Path.GetFileNameWithoutExtension(file.FileName));
-						}
-						else if (outputFilePath.Contains(VarFileName))
-						{
-							outputFilePath = outputFilePath.Replace(VarFileName, file.FileName);
-						}
-						outputFilePath = outputFilePath.Replace("{" + VarOutput + ":", Workflow.WorkflowTempFolder.Trim('\\') + "\\");
-						outputFilePath = outputFilePath.Trim('}');
+                    var outputRegex = OutputRegex();
+                    var m = outputRegex.Match(cmd);
 
-						cmd = cmd.Replace(val, "\"" + outputFilePath + "\"");
-					}
-					else
-					{
-						Error("Error in process command. Please read the documentation.");
-						return new TaskStatus(Status.Error, false);
-					}
-				}
-				catch (ThreadAbortException)
-				{
-					throw;
-				}
-				catch (Exception e)
-				{
-					ErrorFormat("Error in process command. Please read the documentation. Error: {0}", e.Message);
-					return new TaskStatus(Status.Error, false);
-				}
+                    if (m.Success)
+                    {
+                        var val = m.Value;
+                        outputFilePath = val;
+                        if (outputFilePath.Contains(VarFileNameWithoutExtension))
+                        {
+                            outputFilePath = outputFilePath.Replace(VarFileNameWithoutExtension, Path.GetFileNameWithoutExtension(file.FileName));
+                        }
+                        else if (outputFilePath.Contains(VarFileName))
+                        {
+                            outputFilePath = outputFilePath.Replace(VarFileName, file.FileName);
+                        }
+                        outputFilePath = outputFilePath.Replace($"{{{VarOutput}:", Workflow.WorkflowTempFolder.Trim('\\') + "\\");
+                        outputFilePath = outputFilePath.Trim('}');
 
-				if (StartProcess(ProcessPath, cmd, HideGui).Status == Status.Success)
-				{
-					Files.Add(new FileInf(outputFilePath, Id));
+                        cmd = cmd.Replace(val, $"\"{outputFilePath}\"");
+                    }
+                    else
+                    {
+                        Error("Error in process command. Please read the documentation.");
+                        return new TaskStatus(Status.Error, false);
+                    }
+                }
+                catch (ThreadAbortException)
+                {
+                    throw;
+                }
+                catch (Exception e)
+                {
+                    ErrorFormat("Error in process command. Please read the documentation. Error: {0}", e.Message);
+                    return new TaskStatus(Status.Error, false);
+                }
+
+                if (StartProcess(ProcessPath, cmd, HideGui).Status == Status.Success)
+                {
+                    Files.Add(new FileInf(outputFilePath, Id));
 
                     if (LoadAllFiles)
                     {
@@ -112,13 +111,16 @@ namespace Wexflow.Tasks.ProcessLauncher
                         }
                     }
 
-                    if (!atLeastOneSucceed) atLeastOneSucceed = true;
-				}
-				else
-				{
-					success = false;
-				}
-			}
+                    if (!atLeastOneSucceed)
+                    {
+                        atLeastOneSucceed = true;
+                    }
+                }
+                else
+                {
+                    success = false;
+                }
+            }
 
             var status = Status.Success;
 
@@ -139,7 +141,7 @@ namespace Wexflow.Tasks.ProcessLauncher
         {
             try
             {
-                var startInfo = new ProcessStartInfo(processPath, processCmd)
+                ProcessStartInfo startInfo = new(processPath, processCmd)
                 {
                     CreateNoWindow = hideGui,
                     UseShellExecute = false,
@@ -147,14 +149,14 @@ namespace Wexflow.Tasks.ProcessLauncher
                     RedirectStandardError = true
                 };
 
-                var process = new Process {StartInfo = startInfo};
+                Process process = new() { StartInfo = startInfo };
                 process.OutputDataReceived += OutputHandler;
                 process.ErrorDataReceived += ErrorHandler;
-                process.Start();
+                _ = process.Start();
                 process.BeginOutputReadLine();
                 process.BeginErrorReadLine();
                 process.WaitForExit();
-               
+
                 return new TaskStatus(Status.Success, false);
             }
             catch (ThreadAbortException)
@@ -177,5 +179,8 @@ namespace Wexflow.Tasks.ProcessLauncher
         {
             ErrorFormat("{0}", outLine.Data);
         }
+
+        [GeneratedRegex("{\\$output:(?:\\$fileNameWithoutExtension|\\$fileName)(?:[a-zA-Z0-9._-]*})")]
+        private static partial Regex OutputRegex();
     }
 }

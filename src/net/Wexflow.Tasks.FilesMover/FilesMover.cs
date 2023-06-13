@@ -1,8 +1,8 @@
 ﻿using System;
-using Wexflow.Core;
-using System.Xml.Linq;
 using System.IO;
 using System.Threading;
+using System.Xml.Linq;
+using Wexflow.Core;
 
 namespace Wexflow.Tasks.FilesMover
 {
@@ -118,7 +118,7 @@ namespace Wexflow.Tasks.FilesMover
                     if (AllowCreateDirectory && !Directory.Exists(Path.GetDirectoryName(destFilePath)))
                     {
                         InfoFormat("Creating directory: {0}", Path.GetDirectoryName(destFilePath));
-                        Directory.CreateDirectory(Path.GetDirectoryName(destFilePath));
+                        _ = Directory.CreateDirectory(Path.GetDirectoryName(destFilePath));
                     }
 
                     if (File.Exists(destFilePath))
@@ -138,9 +138,12 @@ namespace Wexflow.Tasks.FilesMover
                     File.Move(file.Path, destFilePath);
                     var fi = new FileInf(destFilePath, Id);
                     Files.Add(fi);
-                    Workflow.FilesPerTask[file.TaskId].Remove(file);
+                    _ = Workflow.FilesPerTask[file.TaskId].Remove(file);
                     InfoFormat("File moved: {0} -> {1}", file.Path, destFilePath);
-                    if (!atLeastOneSucceed) atLeastOneSucceed = true;
+                    if (!atLeastOneSucceed)
+                    {
+                        atLeastOneSucceed = true;
+                    }
                 }
                 catch (ThreadAbortException)
                 {
@@ -154,7 +157,6 @@ namespace Wexflow.Tasks.FilesMover
             }
 
             return success;
-
         }
     }
 }

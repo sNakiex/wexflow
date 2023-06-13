@@ -5,9 +5,9 @@ using Wexflow.Scripts.Core;
 
 namespace Wexflow.Scripts.MongoDB
 {
-    class Program
+    internal class Program
     {
-        static void Main()
+        private static void Main()
         {
             try
             {
@@ -16,7 +16,7 @@ namespace Wexflow.Scripts.MongoDB
                 .Build();
 
                 var workflowsFolder = config["workflowsFolder"];
-                Db db = new Db(config["connectionString"]);
+                Db db = new(config["connectionString"]);
                 Helper.InsertWorkflowsAndUser(db, workflowsFolder);
                 Helper.InsertRecords(db, "mongodb", config["recordsFolder"], config["documentFile"], config["invoiceFile"], config["timesheetFile"]);
                 db.Dispose();
@@ -27,7 +27,7 @@ namespace Wexflow.Scripts.MongoDB
             }
 
             Console.Write("Press any key to exit...");
-            Console.ReadKey();
+            _ = Console.ReadKey();
         }
     }
 }

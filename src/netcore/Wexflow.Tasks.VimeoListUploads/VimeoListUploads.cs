@@ -23,17 +23,17 @@ namespace Wexflow.Tasks.VimeoListUploads
         {
             Info("Listing uploads...");
 
-            Status status = Status.Success;
+            var status = Status.Success;
 
             try
             {
                 var xmlPath = Path.Combine(Workflow.WorkflowTempFolder,
                 string.Format("{0}_{1:yyyy-MM-dd-HH-mm-ss-fff}.xml", "VimeoListUploads", DateTime.Now));
 
-                var xdoc = new XDocument(new XElement("VimeoListUploads"));
-                var xvideos = new XElement("Videos");
+                XDocument xdoc = new(new XElement("VimeoListUploads"));
+                XElement xvideos = new("Videos");
 
-                var vimeoApi = new VimeoClient(Token);
+                VimeoClient vimeoApi = new(Token);
                 var videosTask = vimeoApi.GetVideosAsync(UserId, null, null);
                 videosTask.Wait();
                 var videos = videosTask.Result.Data;
@@ -66,6 +66,5 @@ namespace Wexflow.Tasks.VimeoListUploads
             Info("Task finished.");
             return new TaskStatus(status);
         }
-
     }
 }

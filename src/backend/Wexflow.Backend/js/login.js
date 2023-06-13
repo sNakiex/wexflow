@@ -1,8 +1,8 @@
-function Login() {
+window.Login = function () {
 
     let auth = "";
-    let uri = Common.trimEnd(Settings.Uri, "/");
-    let suser = getUser();
+    let uri = window.Common.trimEnd(window.Settings.Uri, "/");
+    let suser = window.getUser();
 
     document.body.style.display = 'none';
     const load = () => document.body.style.display = 'block';
@@ -15,12 +15,12 @@ function Login() {
         auth = "Basic " + btoa(qusername + ":" + qpassword);
 
         const _logout = () => {
-            logout(() => {
+            window.logout(() => {
                 load();
             });
         };
 
-        Common.get(uri + "/user?username=" + encodeURIComponent(user.Username),
+        window.Common.get(uri + "/user?username=" + encodeURIComponent(user.Username),
             function (u) {
                 if (u && user.Password === u.Password) {
                     window.location.replace("dashboard.html");
@@ -43,7 +43,7 @@ function Login() {
         document.getElementById("btn-login").value = language.get("login");
     };
 
-    let language = new Language("lang", updateLanguage);
+    let language = new window.Language("lang", updateLanguage);
     language.init();
 
     let loginBtn = document.getElementById("btn-login");
@@ -66,21 +66,21 @@ function Login() {
 
         let username = usernameTxt.value;
         let password = passwordTxt.value;
-        let passwordHash = MD5(password);
+        let passwordHash = window.MD5(password);
         auth = "Basic " + btoa(username + ":" + passwordHash);
 
         if (username === "" || password === "") {
-            Common.toastInfo(language.get("valid-username"));
+            window.Common.toastInfo(language.get("valid-username"));
         } else {
-            Common.get(uri + "/user?username=" + encodeURIComponent(username), function (user) {
+            window.Common.get(uri + "/user?username=" + encodeURIComponent(username), function (user) {
                 if (typeof user === "undefined" || user === null) {
-                    Common.toastError(language.get("wrong-credentials"));
+                    window.Common.toastError(language.get("wrong-credentials"));
                 } else {
                     if (passwordHash === user.Password) {
-                        authorize(username, passwordHash, user.UserProfile);
+                        window.authorize(username, passwordHash, user.UserProfile);
                         window.location.replace("dashboard.html");
                     } else {
-                        Common.toastError(language.get("wrong-password"));
+                        window.Common.toastError(language.get("wrong-password"));
                     }
 
                 }

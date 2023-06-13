@@ -7,7 +7,7 @@ using Wexflow.Core;
 
 namespace Wexflow.Tasks.WebToHtml
 {
-    public class WebToHtml: Task
+    public class WebToHtml : Task
     {
         public string[] Urls { get; private set; }
 
@@ -21,8 +21,8 @@ namespace Wexflow.Tasks.WebToHtml
             Info("Getting HTML sources...");
             var status = Status.Success;
 
-            bool success = true;
-            bool atLeastOneSuccess = false;
+            var success = true;
+            var atLeastOneSuccess = false;
 
             foreach (var url in Urls)
             {
@@ -37,7 +37,10 @@ namespace Wexflow.Tasks.WebToHtml
                     var source = driver.PageSource;
                     File.WriteAllText(destFile, source);
 
-                    if (!atLeastOneSuccess) atLeastOneSuccess = true;
+                    if (!atLeastOneSuccess)
+                    {
+                        atLeastOneSuccess = true;
+                    }
 
                     InfoFormat("HTML source of {0} retrieved with success -> {1}", url, destFile);
                     Files.Add(new FileInf(destFile, Id));
@@ -52,7 +55,6 @@ namespace Wexflow.Tasks.WebToHtml
                     success = false;
                 }
             }
-
 
             if (!success && atLeastOneSuccess)
             {

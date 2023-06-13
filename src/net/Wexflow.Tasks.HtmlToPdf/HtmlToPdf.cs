@@ -77,18 +77,18 @@ namespace Wexflow.Tasks.HtmlToPdf
 
             if (files.Length > 0)
             {
-                foreach (FileInf file in files)
+                foreach (var file in files)
                 {
                     try
                     {
-                        string pdfPath = Path.Combine(Workflow.WorkflowTempFolder,
+                        var pdfPath = Path.Combine(Workflow.WorkflowTempFolder,
                             string.Format("{0}_{1:yyyy-MM-dd-HH-mm-ss-fff}.pdf", Path.GetFileNameWithoutExtension(file.FileName), DateTime.Now));
 
                         var doc = new Document();
-                        PdfWriter.GetInstance(doc, new FileStream(pdfPath, FileMode.Create));
-#pragma warning disable CS0612
+                        _ = PdfWriter.GetInstance(doc, new FileStream(pdfPath, FileMode.Create));
+#pragma warning disable CS0612 // Le type ou le membre est obsolète
                         var worker = new HTMLWorker(doc);
-#pragma warning restore CS0612
+#pragma warning restore CS0612 // Le type ou le membre est obsolète
                         doc.Open();
                         worker.StartDocument();
                         worker.Parse(new StreamReader(new FileStream(file.Path, FileMode.Open)));
@@ -100,7 +100,10 @@ namespace Wexflow.Tasks.HtmlToPdf
                         Files.Add(new FileInf(pdfPath, Id));
                         InfoFormat("PDF {0} generated from the file {1}", pdfPath, file.Path);
 
-                        if (!atLeastOneSuccess) atLeastOneSuccess = true;
+                        if (!atLeastOneSuccess)
+                        {
+                            atLeastOneSuccess = true;
+                        }
                     }
                     catch (ThreadAbortException)
                     {
@@ -115,6 +118,5 @@ namespace Wexflow.Tasks.HtmlToPdf
             }
             return success;
         }
-
     }
 }

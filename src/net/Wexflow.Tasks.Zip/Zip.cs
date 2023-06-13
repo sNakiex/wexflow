@@ -1,9 +1,9 @@
-﻿using System;
-using Wexflow.Core;
-using System.Xml.Linq;
-using ICSharpCode.SharpZipLib.Zip;
+﻿using ICSharpCode.SharpZipLib.Zip;
+using System;
 using System.IO;
 using System.Threading;
+using System.Xml.Linq;
+using Wexflow.Core;
 
 namespace Wexflow.Tasks.Zip
 {
@@ -81,7 +81,7 @@ namespace Wexflow.Tasks.Zip
 
                         var buffer = new byte[4096];
 
-                        foreach (FileInf file in files)
+                        foreach (var file in files)
                         {
                             // Using GetFileName makes the result compatible with XP
                             // as the resulting path is not absolute.
@@ -95,7 +95,7 @@ namespace Wexflow.Tasks.Zip
                             // Could also use the last write time or similar for the file.
                             s.PutNextEntry(entry);
 
-                            using (FileStream fs = File.OpenRead(file.Path))
+                            using (var fs = File.OpenRead(file.Path))
                             {
                                 // Using a fixed size buffer here makes no noticeable difference for output
                                 // but keeps a lid on memory usage.

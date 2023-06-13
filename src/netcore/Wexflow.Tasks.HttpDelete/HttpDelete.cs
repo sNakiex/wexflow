@@ -49,9 +49,9 @@ namespace Wexflow.Tasks.HttpDelete
             return new TaskStatus(status);
         }
 
-        public async System.Threading.Tasks.Task<string> Delete(string url, string authScheme, string authParam)
+        public static async System.Threading.Tasks.Task<string> Delete(string url, string authScheme, string authParam)
         {
-            using (var httpClient = new HttpClient())
+            using (HttpClient httpClient = new())
             {
                 if (!string.IsNullOrEmpty(authScheme) && !string.IsNullOrEmpty(authParam))
                 {

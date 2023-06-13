@@ -1,12 +1,12 @@
 ﻿using System;
-using Wexflow.Core;
-using System.Xml.Linq;
 using System.IO;
 using System.Threading;
+using System.Xml.Linq;
+using Wexflow.Core;
 
 namespace Wexflow.Tasks.Mkdir
 {
-    public class Mkdir:Task
+    public class Mkdir : Task
     {
         public string[] Folders { get; private set; }
 
@@ -19,18 +19,25 @@ namespace Wexflow.Tasks.Mkdir
         public override TaskStatus Run()
         {
             Info("Creating folders...");
-            
-            bool success = true;
-            bool atLeastOneSucceed = false;
 
-            foreach (string folder in Folders)
+            var success = true;
+            var atLeastOneSucceed = false;
+
+            foreach (var folder in Folders)
             {
                 try
                 {
-                    if (!Directory.Exists(folder)) Directory.CreateDirectory(folder);
+                    if (!Directory.Exists(folder))
+                    {
+                        _ = Directory.CreateDirectory(folder);
+                    }
+
                     InfoFormat("Folder {0} created.", folder);
-                    
-                    if (!atLeastOneSucceed) atLeastOneSucceed = true;
+
+                    if (!atLeastOneSucceed)
+                    {
+                        atLeastOneSucceed = true;
+                    }
                 }
                 catch (ThreadAbortException)
                 {

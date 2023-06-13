@@ -1,13 +1,14 @@
 ﻿using System;
 using System.Configuration;
+using System.IO;
 using Wexflow.Core.Db.LiteDB;
 using Wexflow.Scripts.Core;
 
 namespace Wexflow.Scripts.LiteDB
 {
-    class Program
+    internal class Program
     {
-        static void Main()
+        private static void Main()
         {
             try
             {
@@ -15,6 +16,13 @@ namespace Wexflow.Scripts.LiteDB
                 Helper.InsertWorkflowsAndUser(db);
                 Helper.InsertRecords(db, "litedb");
                 db.Dispose();
+
+                _ = bool.TryParse(ConfigurationManager.AppSettings["buildDevDatabase"], out var buildDevDatabase);
+
+                if (buildDevDatabase)
+                {
+                    BuildDatabase("Windows");
+                }
             }
             catch (Exception e)
             {
@@ -22,8 +30,35 @@ namespace Wexflow.Scripts.LiteDB
             }
 
             Console.Write("Press any key to exit...");
-            Console.ReadKey();
+            _ = Console.ReadKey();
         }
 
+        private static void BuildDatabase(string info)
+        {
+            Console.WriteLine($"=== Build {info} database ===");
+            var path1 = Path.Combine(
+                AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "..", "..",
+                "samples", "net", "Wexflow", "Database", "Wexflow.db");
+            var path2 = Path.Combine(
+                AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "..", "..",
+                "samples", "net", "Wexflow", "Database", "Wexflow-log.db");
+
+            var connString = $"Filename={path1}; Connection=direct";
+
+            if (File.Exists(path1))
+            {
+                File.Delete(path1);
+            }
+
+            if (File.Exists(path2))
+            {
+                File.Delete(path2);
+            }
+
+            var db = new Db(connString);
+            Helper.InsertWorkflowsAndUser(db);
+            Helper.InsertRecords(db, "litedb");
+            db.Dispose();
+        }
     }
 }

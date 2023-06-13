@@ -1,7 +1,7 @@
 ﻿using System;
-using Wexflow.Core;
-using System.Xml.Linq;
 using System.Threading;
+using System.Xml.Linq;
+using Wexflow.Core;
 
 namespace Wexflow.Tasks.FileExists
 {
@@ -30,7 +30,6 @@ namespace Wexflow.Tasks.FileExists
 
             try
             {
-
                 try
                 {
                     if (!string.IsNullOrEmpty(SmbComputerName) && !string.IsNullOrEmpty(SmbUsername) && !string.IsNullOrEmpty(SmbPassword))
@@ -54,7 +53,6 @@ namespace Wexflow.Tasks.FileExists
                     ErrorFormat("An error occured while checking the file.", e);
                     success = false;
                 }
-
             }
             catch (ThreadAbortException)
             {

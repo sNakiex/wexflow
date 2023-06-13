@@ -1,5 +1,5 @@
-﻿using System.IO;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System.IO;
 
 namespace Wexflow.Tests
 {
@@ -23,9 +23,9 @@ namespace Wexflow.Tests
         [TestMethod]
         public void MailsReceiverTest()
         {
-            string[] files = GetFiles();
+            var files = GetFiles();
             Assert.AreEqual(0, files.Length);
-            Helper.StartWorkflow(56);
+            _ = Helper.StartWorkflow(56);
             files = GetFiles();
             Assert.IsTrue(files.Length > 0);
         }

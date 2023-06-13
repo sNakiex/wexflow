@@ -91,7 +91,10 @@ namespace Wexflow.Tasks.HtmlToText
                     File.WriteAllText(destPath, result.Code);
                     Files.Add(new FileInf(destPath, Id));
                     InfoFormat("Text has been extracted from the HTML file {0} -> {1}", htmlFile.Path, destPath);
-                    if (!atLeastOneSuccess) atLeastOneSuccess = true;
+                    if (!atLeastOneSuccess)
+                    {
+                        atLeastOneSuccess = true;
+                    }
                 }
                 catch (ThreadAbortException)
                 {
@@ -105,6 +108,5 @@ namespace Wexflow.Tasks.HtmlToText
             }
             return success;
         }
-
     }
 }

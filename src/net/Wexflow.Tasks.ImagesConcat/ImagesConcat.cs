@@ -101,12 +101,12 @@ namespace Wexflow.Tasks.ImagesConcat
         {
             try
             {
-                List<int> imageHeights = new List<int>();
-                int nIndex = 0;
-                int width = 0;
-                foreach (FileInf imageFile in imageFiles)
+                var imageHeights = new List<int>();
+                var nIndex = 0;
+                var width = 0;
+                foreach (var imageFile in imageFiles)
                 {
-                    using (Image img = Image.FromFile(imageFile.Path))
+                    using (var img = Image.FromFile(imageFile.Path))
                     {
                         imageHeights.Add(img.Height);
                         width += img.Width;
@@ -114,15 +114,15 @@ namespace Wexflow.Tasks.ImagesConcat
                 }
                 imageHeights.Sort();
 
-                int height = imageHeights[imageHeights.Count - 1];
+                var height = imageHeights[imageHeights.Count - 1];
 
-                using (Bitmap finalImage = new Bitmap(width, height))
-                using (Graphics graphics = Graphics.FromImage(finalImage))
+                using (var finalImage = new Bitmap(width, height))
+                using (var graphics = Graphics.FromImage(finalImage))
                 {
                     graphics.Clear(SystemColors.AppWorkspace);
-                    foreach (FileInf imageFile in imageFiles)
+                    foreach (var imageFile in imageFiles)
                     {
-                        using (Image img = Image.FromFile(imageFile.Path))
+                        using (var img = Image.FromFile(imageFile.Path))
                         {
                             if (nIndex == 0)
                             {
@@ -156,6 +156,5 @@ namespace Wexflow.Tasks.ImagesConcat
                 return false;
             }
         }
-
     }
 }

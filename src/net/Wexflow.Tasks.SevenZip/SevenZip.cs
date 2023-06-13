@@ -88,9 +88,11 @@ namespace Wexflow.Tasks.SevenZip
 #endif
 
                     SevenZipBase.SetLibraryPath(libraryPath);
-                    SevenZipCompressor sevenZipCompressor = new SevenZipCompressor();
-                    sevenZipCompressor.CompressionLevel = CompressionLevel.Ultra;
-                    sevenZipCompressor.CompressionMethod = CompressionMethod.Lzma;
+                    var sevenZipCompressor = new SevenZipCompressor
+                    {
+                        CompressionLevel = CompressionLevel.Ultra,
+                        CompressionMethod = CompressionMethod.Lzma
+                    };
                     var filesParam = files.Select(f => f.Path).ToArray();
                     sevenZipCompressor.CompressFiles(sevenZipPath, filesParam);
                     Files.Add(new FileInf(sevenZipPath, Id));

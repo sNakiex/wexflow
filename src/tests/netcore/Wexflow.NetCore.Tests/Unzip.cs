@@ -1,5 +1,5 @@
-﻿using System.IO;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System.IO;
 
 namespace Wexflow.NetCore.Tests
 {
@@ -23,14 +23,14 @@ namespace Wexflow.NetCore.Tests
         [TestMethod]
         public void UnzipTest()
         {
-            string[] files = GetFiles();
+            var files = GetFiles();
             Assert.AreEqual(0, files.Length);
-            Helper.StartWorkflow(60);
+            _ = Helper.StartWorkflow(60);
             files = GetFiles();
             Assert.AreEqual(3, files.Length);
         }
 
-        private string[] GetFiles()
+        private static string[] GetFiles()
         {
             return Directory.GetFiles(ZipFolder, "*.*", SearchOption.AllDirectories);
         }

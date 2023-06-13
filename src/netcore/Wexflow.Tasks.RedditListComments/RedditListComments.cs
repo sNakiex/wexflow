@@ -25,7 +25,7 @@ namespace Wexflow.Tasks.RedditListComments
         {
             Info("Retrieving comment history...");
 
-            Status status = Status.Success;
+            var status = Status.Success;
 
             RedditClient reddit;
             try
@@ -45,17 +45,16 @@ namespace Wexflow.Tasks.RedditListComments
                 return new TaskStatus(Status.Error);
             }
 
-
             try
             {
                 // Retrieve the authenticated user's recent comment history.
                 var comments = reddit.Account.Me.GetCommentHistory(sort: "new", limit: MaxResults, show: "all");
 
-                var xdoc = new XDocument(new XElement("Comments"));
+                XDocument xdoc = new(new XElement("Comments"));
 
-                foreach(var comment in comments)
+                foreach (var comment in comments)
                 {
-                    var xcomment = new XElement("Comment", new XAttribute("id", SecurityElement.Escape(comment.Id)), new XAttribute("subreddit", SecurityElement.Escape(comment.Subreddit)), new XAttribute("author", SecurityElement.Escape(comment.Author)), new XAttribute("upvotes", comment.UpVotes), new XAttribute("downvotes", comment.DownVotes), new XCData(comment.BodyHTML));
+                    XElement xcomment = new("Comment", new XAttribute("id", SecurityElement.Escape(comment.Id)), new XAttribute("subreddit", SecurityElement.Escape(comment.Subreddit)), new XAttribute("author", SecurityElement.Escape(comment.Author)), new XAttribute("upvotes", comment.UpVotes), new XAttribute("downvotes", comment.DownVotes), new XCData(comment.BodyHTML));
                     xdoc.Root.Add(xcomment);
                 }
 
@@ -64,7 +63,6 @@ namespace Wexflow.Tasks.RedditListComments
                 xdoc.Save(xmlPath);
                 Files.Add(new FileInf(xmlPath, Id));
                 InfoFormat("Comment history written in {0}", xmlPath);
-
             }
             catch (ThreadAbortException)
             {

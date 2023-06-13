@@ -1,10 +1,12 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Drawing;
 using System.IO;
+using System.Runtime.Versioning;
 
 namespace Wexflow.NetCore.Tests
 {
     [TestClass]
+    [SupportedOSPlatform("windows")]
     public class ImagesConcat
     {
         private static readonly string DestFolder = @"C:\WexflowTesting\ImagesConcatDest\";
@@ -26,31 +28,26 @@ namespace Wexflow.NetCore.Tests
         {
             var images = GetFiles();
             Assert.AreEqual(0, images.Length);
-            Helper.StartWorkflow(77);
+            _ = Helper.StartWorkflow(77);
             images = GetFiles();
             Assert.AreEqual(1, images.Length);
 
             // Checking the image size
-            using (Image image = Image.FromFile(images[0]))
-            {
-                Assert.AreEqual(3072, image.Width);
-                Assert.AreEqual(768, image.Height);
-            }
+            using var image = Image.FromFile(images[0]);
+            Assert.AreEqual(3072, image.Width);
+            Assert.AreEqual(768, image.Height);
         }
 
-        private string[] GetFiles()
+        private static string[] GetFiles()
         {
             return Directory.GetFiles(DestFolder, "*.jpg");
         }
 
-        private void CheckImageSize(string path)
-        {
-            using (Image image = Image.FromFile(path))
-            {
-                Assert.AreEqual(512, image.Width);
-                Assert.AreEqual(384, image.Height);
-            }
-        }
-
+        //private static void CheckImageSize(string path)
+        //{
+        //    using var image = Image.FromFile(path);
+        //    Assert.AreEqual(512, image.Width);
+        //    Assert.AreEqual(384, image.Height);
+        //}
     }
 }

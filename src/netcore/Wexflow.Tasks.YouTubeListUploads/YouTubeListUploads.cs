@@ -10,7 +10,7 @@ using Wexflow.Core;
 
 namespace Wexflow.Tasks.YouTubeListUploads
 {
-    public class YouTubeListUploads:Task
+    public class YouTubeListUploads : Task
     {
         public string User { get; }
         public string ApplicationName { get; }
@@ -27,7 +27,7 @@ namespace Wexflow.Tasks.YouTubeListUploads
         {
             Info("Listing uploads...");
 
-            Status status = Status.Success;
+            var status = Status.Success;
 
             try
             {
@@ -50,20 +50,22 @@ namespace Wexflow.Tasks.YouTubeListUploads
         private async System.Threading.Tasks.Task ListUploads()
         {
             UserCredential credential;
-            using (var stream = new FileStream(ClientSecrets, FileMode.Open, FileAccess.Read))
+            using (FileStream stream = new(ClientSecrets, FileMode.Open, FileAccess.Read))
             {
+#pragma warning disable CS0618 // Le type ou le membre est obsolète
                 credential = await GoogleWebAuthorizationBroker.AuthorizeAsync(
                     GoogleClientSecrets.Load(stream).Secrets,
                     // This OAuth 2.0 access scope allows for read-only access to the authenticated 
                     // user's account, but not other types of account access.
-                    new[] {YouTubeService.Scope.YoutubeReadonly},
+                    new[] { YouTubeService.Scope.YoutubeReadonly },
                     User,
                     CancellationToken.None,
                     new FileDataStore(GetType().ToString())
                 );
+#pragma warning restore CS0618 // Le type ou le membre est obsolète
             }
 
-            var youtubeService = new YouTubeService(new BaseClientService.Initializer()
+            YouTubeService youtubeService = new(new BaseClientService.Initializer()
             {
                 HttpClientInitializer = credential,
                 ApplicationName = ApplicationName
@@ -78,9 +80,9 @@ namespace Wexflow.Tasks.YouTubeListUploads
             var xmlPath = Path.Combine(Workflow.WorkflowTempFolder,
                 string.Format("{0}_{1:yyyy-MM-dd-HH-mm-ss-fff}.xml", "YouTubeListUploads", DateTime.Now));
 
-            var xdoc = new XDocument(new XElement("YouTubeListUploads"));
-            var xchannels = new XElement("Channels");
-            
+            XDocument xdoc = new(new XElement("YouTubeListUploads"));
+            XElement xchannels = new("Channels");
+
             foreach (var channel in channelsListResponse.Items)
             {
                 // From the API response, extract the playlist ID that identifies the list
@@ -89,8 +91,8 @@ namespace Wexflow.Tasks.YouTubeListUploads
 
                 InfoFormat("Videos in list {0}", uploadsListId);
 
-                var xchannel = new XElement("Channel", new XAttribute("id", uploadsListId));
-                var xvideos = new XElement("Videos");
+                XElement xchannel = new("Channel", new XAttribute("id", uploadsListId));
+                XElement xvideos = new("Videos");
 
                 var nextPageToken = "";
                 while (nextPageToken != null)
@@ -123,6 +125,5 @@ namespace Wexflow.Tasks.YouTubeListUploads
             Files.Add(new FileInf(xmlPath, Id));
             InfoFormat("Results written in {0}", xmlPath);
         }
-
     }
 }

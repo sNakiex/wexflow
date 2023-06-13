@@ -1,10 +1,10 @@
 ﻿using System;
-using Wexflow.Core;
+using System.Threading;
 using System.Xml.Linq;
 using System.Xml.XPath;
-using System.Threading;
 using Tweetinvi;
 using Tweetinvi.Models;
+using Wexflow.Core;
 
 namespace Wexflow.Tasks.Twitter
 {
@@ -27,8 +27,8 @@ namespace Wexflow.Tasks.Twitter
         {
             Info("Sending tweets...");
 
-            bool success = true;
-            bool atLeastOneSucceed = false;
+            var success = true;
+            var atLeastOneSucceed = false;
 
             var files = SelectFiles();
 
@@ -39,7 +39,7 @@ namespace Wexflow.Tasks.Twitter
                 {
                     var credentials = new TwitterCredentials(ConsumerKey, ConsumerSecret, AccessToken, AccessTokenSecret);
                     client = new TwitterClient(credentials);
-                    
+
                     //TweetinviConfig.ApplicationSettings.HttpRequestTimeout = 20000;
                     //TweetinviConfig.CurrentThreadSettings.InitialiseFrom(TweetinviConfig.ApplicationSettings);
 
@@ -66,12 +66,12 @@ namespace Wexflow.Tasks.Twitter
                     return new TaskStatus(Status.Error);
                 }
 
-                foreach (FileInf file in files)
+                foreach (var file in files)
                 {
                     try
                     {
                         var xdoc = XDocument.Load(file.Path);
-                        foreach (XElement xTweet in xdoc.XPathSelectElements("Tweets/Tweet"))
+                        foreach (var xTweet in xdoc.XPathSelectElements("Tweets/Tweet"))
                         {
                             var status = xTweet.Value;
                             //var tweet = Tweet.PublishTweet(status);
@@ -83,7 +83,10 @@ namespace Wexflow.Tasks.Twitter
                             {
                                 InfoFormat("Tweet '{0}' sent. Id: {1}", status, tweet.Id);
 
-                                if (!atLeastOneSucceed) atLeastOneSucceed = true;
+                                if (!atLeastOneSucceed)
+                                {
+                                    atLeastOneSucceed = true;
+                                }
                             }
                             else
                             {
@@ -91,7 +94,6 @@ namespace Wexflow.Tasks.Twitter
                                 success = false;
                             }
                         }
-
                     }
                     catch (ThreadAbortException)
                     {

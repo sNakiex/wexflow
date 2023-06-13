@@ -1,10 +1,9 @@
-﻿using System;
-using Wexflow.Core;
-using System.Xml.Linq;
+﻿using MediaInfoDotNet;
+using System;
 using System.IO;
 using System.Threading;
-using MediaInfoDotNet.Models;
-using MediaInfoDotNet;
+using System.Xml.Linq;
+using Wexflow.Core;
 
 namespace Wexflow.Tasks.MediaInfo
 {
@@ -29,7 +28,6 @@ namespace Wexflow.Tasks.MediaInfo
         public override TaskStatus Run()
         {
             Info("Generating MediaInfo informations...");
-
 
             try
             {
@@ -88,7 +86,7 @@ namespace Wexflow.Tasks.MediaInfo
         private XDocument Inform(FileInf[] files)
         {
             var xdoc = new XDocument(new XElement("Files"));
-            foreach (FileInf file in files)
+            foreach (var file in files)
             {
                 try
                 {
@@ -120,7 +118,7 @@ namespace Wexflow.Tasks.MediaInfo
                                 break;
                             }
 
-                            string[] tag = line.Split(':');
+                            var tag = line.Split(':');
                             xgeneral.Add(new XElement("Tag",
                                 new XAttribute("name", tag[0].Trim()),
                                 new XAttribute("value", tag[1].Trim())));
@@ -144,7 +142,7 @@ namespace Wexflow.Tasks.MediaInfo
                                     break;
                                 }
 
-                                string[] tag = line.Split(':');
+                                var tag = line.Split(':');
                                 xvideo.Add(new XElement("Tag",
                                     new XAttribute("name", tag[0].Trim()),
                                     new XAttribute("value", tag[1].Trim())));
@@ -169,7 +167,7 @@ namespace Wexflow.Tasks.MediaInfo
                                     break;
                                 }
 
-                                string[] tag = line.Split(':');
+                                var tag = line.Split(':');
                                 xaudio.Add(new XElement("Tag",
                                     new XAttribute("name", tag[0].Trim()),
                                     new XAttribute("value", tag[1].Trim())));
@@ -195,7 +193,10 @@ namespace Wexflow.Tasks.MediaInfo
                     }
                     InfoFormat("MediaInfo of the file {0} generated.", file.Path);
 
-                    if (!_atLeastOneSucceed) _atLeastOneSucceed = true;
+                    if (!_atLeastOneSucceed)
+                    {
+                        _atLeastOneSucceed = true;
+                    }
                 }
                 catch (ThreadAbortException)
                 {

@@ -10,7 +10,6 @@ namespace Wexflow.Tasks.FilesDecryptor
 {
     public class FilesDecryptor : Task
     {
-
         public FilesDecryptor(XElement xe, Workflow wf) : base(xe, wf)
         {
         }
@@ -18,18 +17,21 @@ namespace Wexflow.Tasks.FilesDecryptor
         public override TaskStatus Run()
         {
             Info("Decrypting files...");
-            Status status = Status.Success;
-            bool succeeded = true;
-            bool atLeastOneSuccess = false;
+            var status = Status.Success;
+            var succeeded = true;
+            var atLeastOneSuccess = false;
 
             try
             {
                 var files = SelectFiles();
                 foreach (var file in files)
                 {
-                    string destPath = Path.Combine(Workflow.WorkflowTempFolder, file.FileName);
+                    var destPath = Path.Combine(Workflow.WorkflowTempFolder, file.FileName);
                     succeeded &= Decrypt(file.Path, destPath, Workflow.PassPhrase, Workflow.DerivationIterations);
-                    if (!atLeastOneSuccess && succeeded) atLeastOneSuccess = true;
+                    if (!atLeastOneSuccess && succeeded)
+                    {
+                        atLeastOneSuccess = true;
+                    }
                 }
 
                 if (!succeeded && atLeastOneSuccess)
@@ -59,33 +61,34 @@ namespace Wexflow.Tasks.FilesDecryptor
         {
             try
             {
-                using (FileStream fsCrypt = new FileStream(inputFile, FileMode.Open))
+                using (FileStream fsCrypt = new(inputFile, FileMode.Open))
                 {
-                    byte[] saltBytes = new byte[32];
-                    fsCrypt.Read(saltBytes, 0, saltBytes.Length);
+                    var saltBytes = new byte[32];
+                    _ = fsCrypt.Read(saltBytes, 0, saltBytes.Length);
 
-                    UnicodeEncoding ue = new UnicodeEncoding();
+                    UnicodeEncoding ue = new();
 
-                    RijndaelManaged rmcrypto = new RijndaelManaged();
+                    //RijndaelManaged rmcrypto = new()
+                    //{
+                    //    KeySize = 256,
+                    //    BlockSize = 128
+                    //};
+                    using var rmcrypto = Aes.Create();
                     rmcrypto.KeySize = 256;
                     rmcrypto.BlockSize = 128;
-
-                    var key = new Rfc2898DeriveBytes(ue.GetBytes(passphrase), saltBytes, derivationIterations);
+                    Rfc2898DeriveBytes key = new(ue.GetBytes(passphrase), saltBytes, derivationIterations, HashAlgorithmName.SHA256);
                     rmcrypto.Key = key.GetBytes(rmcrypto.KeySize / 8);
                     rmcrypto.IV = key.GetBytes(rmcrypto.BlockSize / 8);
-                    rmcrypto.Padding = PaddingMode.Zeros;
+                    rmcrypto.Padding = PaddingMode.PKCS7;
                     rmcrypto.Mode = CipherMode.CBC;
 
-
-                    using (CryptoStream cs = new CryptoStream(fsCrypt, rmcrypto.CreateDecryptor(), CryptoStreamMode.Read))
-                    using (FileStream fsOut = new FileStream(outputFile, FileMode.Create))
+                    using CryptoStream cs = new(fsCrypt, rmcrypto.CreateDecryptor(), CryptoStreamMode.Read);
+                    using FileStream fsOut = new(outputFile, FileMode.Create);
+                    int data;
+                    while ((data = cs.ReadByte()) != -1)
                     {
-                        int data;
-                        while ((data = cs.ReadByte()) != -1)
-                        {
-                            byte b = (byte)data;
-                            fsOut.WriteByte(b);
-                        }
+                        var b = (byte)data;
+                        fsOut.WriteByte(b);
                     }
                 }
 
@@ -99,6 +102,5 @@ namespace Wexflow.Tasks.FilesDecryptor
                 return false;
             }
         }
-
     }
 }

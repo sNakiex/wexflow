@@ -1,10 +1,11 @@
 ﻿using System;
-using Wexflow.Core;
-using System.Threading;
-using System.Xml.Linq;
-using System.IO;
 using System.Drawing;
 using System.Drawing.Imaging;
+using System.IO;
+using System.Runtime.Versioning;
+using System.Threading;
+using System.Xml.Linq;
+using Wexflow.Core;
 
 namespace Wexflow.Tasks.ImagesTransformer
 {
@@ -21,7 +22,8 @@ namespace Wexflow.Tasks.ImagesTransformer
         Wmf
     }
 
-    public class ImagesTransformer:Task
+    [SupportedOSPlatform("windows")]
+    public class ImagesTransformer : Task
     {
         public string OutputFilePattern { get; private set; }
         public ImgFormat OutputFormat { get; private set; }
@@ -37,17 +39,17 @@ namespace Wexflow.Tasks.ImagesTransformer
         {
             Info("Transforming images...");
 
-            bool success = true;
-            bool atLeastOneSucceed = false;
+            var success = true;
+            var atLeastOneSucceed = false;
 
-            foreach (FileInf file in SelectFiles())
+            foreach (var file in SelectFiles())
             {
                 try
                 {
                     var destFilePath = Path.Combine(Workflow.WorkflowTempFolder,
                         OutputFilePattern.Replace("$fileNameWithoutExtension", Path.GetFileNameWithoutExtension(file.FileName)).Replace("$fileName", file.FileName));
 
-                    using (Image img = Image.FromFile(file.Path))
+                    using (var img = Image.FromFile(file.Path))
                     {
                         switch (OutputFormat)
                         {
@@ -82,8 +84,11 @@ namespace Wexflow.Tasks.ImagesTransformer
                     }
                     Files.Add(new FileInf(destFilePath, Id));
                     InfoFormat("Image {0} transformed to {1}", file.Path, destFilePath);
-                    
-                    if (!atLeastOneSucceed) atLeastOneSucceed = true;
+
+                    if (!atLeastOneSucceed)
+                    {
+                        atLeastOneSucceed = true;
+                    }
                 }
                 catch (ThreadAbortException)
                 {

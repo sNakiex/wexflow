@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading;
 using System.Xml.Linq;
 using Wexflow.Core;
+using Wexflow.Core.PollingFileSystemWatcher;
 
 namespace Wexflow.Tasks.FileSystemWatcher
 {
@@ -68,10 +69,10 @@ namespace Wexflow.Tasks.FileSystemWatcher
                         foreach (var task in tasks)
                         {
                             task.Logs.Clear();
-                            task.Run();
+                            _ = task.Run();
                             CurrentLogs.AddRange(task.Logs);
                         }
-                        Files.RemoveAll(f => f.Path == file);
+                        _ = Files.RemoveAll(f => f.Path == file);
                     }
                     catch (IOException ex) when ((ex.HResult & 0x0000FFFF) == 32)
                     {
@@ -98,7 +99,6 @@ namespace Wexflow.Tasks.FileSystemWatcher
                 }
                 Info("Checking existing files finished.");
 
-
                 Info("Initializing PollingFileSystemWatcher...");
                 Watcher = new PollingFileSystemWatcher(FolderToWatch, Filter, new EnumerationOptions { RecurseSubdirectories = IncludeSubFolders });
 
@@ -121,10 +121,7 @@ namespace Wexflow.Tasks.FileSystemWatcher
             }
             catch (Exception e)
             {
-                if (Watcher != null)
-                {
-                    Watcher.Dispose();
-                }
+                Watcher?.Dispose();
                 ErrorFormat("An error occured while watching the folder {0}. Error: {1}", FolderToWatch, e.Message);
                 return new TaskStatus(Status.Error, false);
             }
@@ -158,10 +155,10 @@ namespace Wexflow.Tasks.FileSystemWatcher
                             foreach (var task in tasks)
                             {
                                 task.Logs.Clear();
-                                task.Run();
+                                _ = task.Run();
                                 CurrentLogs.AddRange(task.Logs);
                             }
-                            Files.RemoveAll(f => f.Path == path);
+                            _ = Files.RemoveAll(f => f.Path == path);
                         }
                         catch (IOException ex) when ((ex.HResult & 0x0000FFFF) == 32)
                         {
@@ -202,10 +199,10 @@ namespace Wexflow.Tasks.FileSystemWatcher
                             foreach (var task in tasks)
                             {
                                 task.Logs.Clear();
-                                task.Run();
+                                _ = task.Run();
                                 CurrentLogs.AddRange(task.Logs);
                             }
-                            Files.RemoveAll(f => f.Path == path);
+                            _ = Files.RemoveAll(f => f.Path == path);
                         }
                         catch (IOException ex) when ((ex.HResult & 0x0000FFFF) == 32)
                         {
@@ -238,10 +235,10 @@ namespace Wexflow.Tasks.FileSystemWatcher
                             foreach (var task in tasks)
                             {
                                 task.Logs.Clear();
-                                task.Run();
+                                _ = task.Run();
                                 CurrentLogs.AddRange(task.Logs);
                             }
-                            Files.RemoveAll(f => f.Path == path);
+                            _ = Files.RemoveAll(f => f.Path == path);
                         }
                         catch (IOException ex) when ((ex.HResult & 0x0000FFFF) == 32)
                         {
@@ -268,21 +265,16 @@ namespace Wexflow.Tasks.FileSystemWatcher
             }
         }
 
-        private string[] GetFiles()
+        private static string[] GetFiles()
         {
-            if (IncludeSubFolders)
-            {
-                return Directory.GetFiles(FolderToWatch, Filter, SearchOption.AllDirectories);
-            }
-            else
-            {
-                return Directory.GetFiles(FolderToWatch, Filter, SearchOption.TopDirectoryOnly);
-            }
+            return IncludeSubFolders
+                ? Directory.GetFiles(FolderToWatch, Filter, SearchOption.AllDirectories)
+                : Directory.GetFiles(FolderToWatch, Filter, SearchOption.TopDirectoryOnly);
         }
 
         private Task[] GetTasks(string evt)
         {
-            List<Task> tasks = new List<Task>();
+            List<Task> tasks = new();
 
             if (!string.IsNullOrEmpty(evt))
             {
@@ -305,6 +297,5 @@ namespace Wexflow.Tasks.FileSystemWatcher
                 task.Files.Clear();
             }
         }
-
     }
 }

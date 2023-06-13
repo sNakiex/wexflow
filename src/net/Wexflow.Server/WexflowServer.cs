@@ -14,18 +14,18 @@ namespace Wexflow.Server
     {
         public static NameValueCollection Config = ConfigurationManager.AppSettings;
 
-        private static string settingsFile = Config["WexflowSettingsFile"];
-        private static Core.LogLevel logLevel = !string.IsNullOrEmpty(Config["LogLevel"]) ? (Core.LogLevel)Enum.Parse(typeof(Core.LogLevel), Config["LogLevel"], true) : Core.LogLevel.All;
-        private static string superAdminUsername = Config["SuperAdminUsername"];
-        private static bool enableWorkflowsHotFolder = bool.Parse(Config["EnableWorkflowsHotFolder"]);
-        private static bool enableRecordsHotFolder = bool.Parse(Config["EnableRecordsHotFolder"]);
-        private static bool enableEmailNotifications = bool.Parse(Config["EnableEmailNotifications"]);
-        private static string smtpHost = Config["Smtp.Host"];
-        private static int smtpPort = int.Parse(Config["Smtp.Port"]);
-        private static bool smtpEnableSsl = bool.Parse(Config["Smtp.EnableSsl"]);
-        private static string smtpUser = Config["Smtp.User"];
-        private static string smtpPassword = Config["Smtp.Password"];
-        private static string smtpFrom = Config["Smtp.From"];
+        private static readonly string settingsFile = Config["WexflowSettingsFile"];
+        private static readonly Core.LogLevel logLevel = !string.IsNullOrEmpty(Config["LogLevel"]) ? (Core.LogLevel)Enum.Parse(typeof(Core.LogLevel), Config["LogLevel"], true) : Core.LogLevel.All;
+        private static readonly string superAdminUsername = Config["SuperAdminUsername"];
+        private static readonly bool enableWorkflowsHotFolder = bool.Parse(Config["EnableWorkflowsHotFolder"]);
+        private static readonly bool enableRecordsHotFolder = bool.Parse(Config["EnableRecordsHotFolder"]);
+        private static readonly bool enableEmailNotifications = bool.Parse(Config["EnableEmailNotifications"]);
+        private static readonly string smtpHost = Config["Smtp.Host"];
+        private static readonly int smtpPort = int.Parse(Config["Smtp.Port"]);
+        private static readonly bool smtpEnableSsl = bool.Parse(Config["Smtp.EnableSsl"]);
+        private static readonly string smtpUser = Config["Smtp.User"];
+        private static readonly string smtpPassword = Config["Smtp.Password"];
+        private static readonly string smtpFrom = Config["Smtp.From"];
 
         public static FileSystemWatcher WorkflowsWatcher;
         public static FileSystemWatcher RecordsWatcher;
@@ -49,7 +49,7 @@ namespace Wexflow.Server
         {
             InitializeComponent();
             ServiceName = "Wexflow";
-            Thread startThread = new Thread(StartThread) { IsBackground = true };
+            var startThread = new Thread(StartThread) { IsBackground = true };
             startThread.Start();
         }
 
@@ -94,13 +94,10 @@ namespace Wexflow.Server
 
         protected override void OnStart(string[] args)
         {
-            if (_webApp != null)
-            {
-                _webApp.Dispose();
-            }
+            _webApp?.Dispose();
 
             var port = int.Parse(Config["WexflowServicePort"]);
-            var url = "http://+:" + port;
+            var url = $"http://+:{port}";
             _webApp = WebApp.Start<Startup>(url);
         }
 
@@ -156,8 +153,7 @@ namespace Wexflow.Server
                     Logger.Info("Workflow.FileSystemWatcher.OnCreated");
 
                     var admin = WexflowEngine.GetUser(superAdminUsername);
-                    WexflowEngine.SaveWorkflowFromFile(admin.GetDbId(), Core.Db.UserProfile.SuperAdministrator, e.FullPath, true);
-
+                    _ = WexflowEngine.SaveWorkflowFromFile(admin.GetDbId(), Core.Db.UserProfile.SuperAdministrator, e.FullPath, true);
                 }
             }
             catch (Exception ex)
@@ -185,8 +181,7 @@ namespace Wexflow.Server
 
                     Thread.Sleep(500);
                     var admin = WexflowEngine.GetUser(superAdminUsername);
-                    WexflowEngine.SaveWorkflowFromFile(admin.GetDbId(), Core.Db.UserProfile.SuperAdministrator, e.FullPath, true);
-
+                    _ = WexflowEngine.SaveWorkflowFromFile(admin.GetDbId(), Core.Db.UserProfile.SuperAdministrator, e.FullPath, true);
                 }
             }
             catch (Exception ex)
@@ -260,7 +255,6 @@ namespace Wexflow.Server
                     {
                         Logger.Error($"An error occured while inserting a record from the file {e.FullPath}.");
                     }
-
                 }
             }
             catch (IOException ex) when ((ex.HResult & 0x0000FFFF) == 32)
@@ -272,7 +266,5 @@ namespace Wexflow.Server
                 Logger.ErrorFormat("Error while creating the record {0}", ex, e.FullPath);
             }
         }
-
-
     }
 }

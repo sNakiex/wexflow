@@ -1,6 +1,6 @@
-﻿using System.Diagnostics;
+﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System.Diagnostics;
 using System.Threading;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Wexflow.NetCore.Tests
 {
@@ -24,7 +24,7 @@ namespace Wexflow.NetCore.Tests
             var instanceId = Helper.StartWorkflow(workflowId);
             Thread.Sleep(500);
             Helper.RejectWorkflow(workflowId, instanceId);
-            Stopwatch stopwatch = Stopwatch.StartNew();
+            var stopwatch = Stopwatch.StartNew();
             var workflow = Helper.GetWorkflow(workflowId);
             var isRunning = workflow.IsRunning;
             while (isRunning)

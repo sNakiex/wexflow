@@ -1,9 +1,9 @@
 ﻿using System;
-using System.Text;
-using Wexflow.Core;
-using System.Xml.Linq;
 using System.IO;
+using System.Text;
 using System.Threading;
+using System.Xml.Linq;
+using Wexflow.Core;
 
 namespace Wexflow.Tasks.FilesConcat
 {
@@ -75,14 +75,14 @@ namespace Wexflow.Tasks.FilesConcat
 
             if (files.Length > 0)
             {
-                StringBuilder builder = new StringBuilder();
-                for (int i = 0; i < files.Length; i++)
+                var builder = new StringBuilder();
+                for (var i = 0; i < files.Length; i++)
                 {
                     var file = files[i];
-                    builder.Append(Path.GetFileNameWithoutExtension(file.FileName));
+                    _ = builder.Append(Path.GetFileNameWithoutExtension(file.FileName));
                     if (i < files.Length - 1)
                     {
-                        builder.Append("_");
+                        _ = builder.Append("_");
                     }
                 }
 
@@ -95,7 +95,7 @@ namespace Wexflow.Tasks.FilesConcat
 
                 using (var output = File.Create(concatPath))
                 {
-                    foreach (FileInf file in files)
+                    foreach (var file in files)
                     {
                         try
                         {
@@ -104,7 +104,10 @@ namespace Wexflow.Tasks.FilesConcat
                                 input.CopyTo(output);
                             }
 
-                            if (!atLeastOneSucceed) atLeastOneSucceed = true;
+                            if (!atLeastOneSucceed)
+                            {
+                                atLeastOneSucceed = true;
+                            }
                         }
                         catch (ThreadAbortException)
                         {
@@ -127,6 +130,5 @@ namespace Wexflow.Tasks.FilesConcat
             }
             return success;
         }
-
     }
 }

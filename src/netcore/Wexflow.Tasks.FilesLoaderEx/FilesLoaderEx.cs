@@ -1,11 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
-using Wexflow.Core;
-using System.Xml.Linq;
-using System.Threading;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
+using System.Threading;
+using System.Xml.Linq;
+using Wexflow.Core;
 
 namespace Wexflow.Tasks.FilesLoaderEx
 {
@@ -46,8 +46,8 @@ namespace Wexflow.Tasks.FilesLoaderEx
         {
             Info("Loading files...");
 
-            bool success = true;
-            var folderFiles = new List<FileInf>();
+            var success = true;
+            List<FileInf> folderFiles = new();
 
             try
             {
@@ -55,7 +55,7 @@ namespace Wexflow.Tasks.FilesLoaderEx
 
                 if (Recursive)
                 {
-                    foreach (string folder in Folders)
+                    foreach (var folder in Folders)
                     {
                         var files = GetFilesRecursive(folder);
 
@@ -63,7 +63,7 @@ namespace Wexflow.Tasks.FilesLoaderEx
                         {
                             if (string.IsNullOrEmpty(RegexPattern) || Regex.IsMatch(file, RegexPattern))
                             {
-                                var fi = new FileInf(file, Id);
+                                FileInf fi = new(file, Id);
                                 folderFiles.Add(fi);
                             }
                         }
@@ -71,23 +71,25 @@ namespace Wexflow.Tasks.FilesLoaderEx
                 }
                 else
                 {
-                    foreach (string folder in Folders)
+                    foreach (var folder in Folders)
                     {
-                        foreach (string file in Directory.GetFiles(folder).OrderBy(f => f))
+                        foreach (var file in Directory.GetFiles(folder).OrderBy(f => f))
                         {
                             if (string.IsNullOrEmpty(RegexPattern) || Regex.IsMatch(file, RegexPattern))
                             {
-                                var fi = new FileInf(file, Id);
+                                FileInf fi = new(file, Id);
                                 folderFiles.Add(fi);
                             }
                         }
                     }
                 }
 
-                foreach (string file in FlFiles)
+                foreach (var file in FlFiles)
                 {
                     if (File.Exists(file))
+                    {
                         folderFiles.Add(new FileInf(file, Id));
+                    }
                     else
                     {
                         ErrorFormat("File not found: {0}", file);
@@ -107,7 +109,7 @@ namespace Wexflow.Tasks.FilesLoaderEx
 
                 if (RemoveMaxCreateDate + RemoveMaxModifyDate + RemoveMinCreateDate + RemoveMinModifyDate > 0)
                 {
-                    var tmpFiles = new List<FileInf>(folderFiles);
+                    List<FileInf> tmpFiles = new(folderFiles);
                     RemoveRange(tmpFiles, folderFiles.OrderBy(f => f.FileInfo.CreationTime).Take(RemoveMinCreateDate));
                     RemoveRange(tmpFiles, folderFiles.OrderBy(f => f.FileInfo.CreationTime).TakeLast(RemoveMaxCreateDate));
                     RemoveRange(tmpFiles, folderFiles.OrderBy(f => f.FileInfo.LastWriteTime).Take(RemoveMinModifyDate));
@@ -145,15 +147,17 @@ namespace Wexflow.Tasks.FilesLoaderEx
             }
         }
 
-        private string[] GetFilesRecursive(string dir)
+        private static string[] GetFilesRecursive(string dir)
         {
             return Directory.GetFiles(dir, "*.*", SearchOption.AllDirectories).OrderBy(f => f).ToArray();
         }
 
-        private void RemoveRange(List<FileInf> items, IEnumerable<FileInf> remove)
+        private static void RemoveRange(List<FileInf> items, IEnumerable<FileInf> remove)
         {
             foreach (var r in remove)
-                items.Remove(r);
+            {
+                _ = items.Remove(r);
+            }
         }
     }
 }

@@ -1,10 +1,10 @@
 ﻿using System;
-using System.Text;
-using Wexflow.Core;
-using System.Xml.Linq;
 using System.IO;
 using System.Security.Cryptography;
+using System.Text;
 using System.Threading;
+using System.Xml.Linq;
+using Wexflow.Core;
 
 namespace Wexflow.Tasks.Sha512
 {
@@ -19,8 +19,8 @@ namespace Wexflow.Tasks.Sha512
         {
             Info("Generating SHA-512 hashes...");
 
-            bool success = true;
-            bool atLeastOneSucceed = false;
+            var success = true;
+            var atLeastOneSucceed = false;
 
             var files = SelectFiles();
 
@@ -29,22 +29,22 @@ namespace Wexflow.Tasks.Sha512
                 var md5Path = Path.Combine(Workflow.WorkflowTempFolder,
                     string.Format("SHA512_{0:yyyy-MM-dd-HH-mm-ss-fff}.xml", DateTime.Now));
 
-                var xdoc = new XDocument(new XElement("Files"));
-                foreach (FileInf file in files)
+                XDocument xdoc = new(new XElement("Files"));
+                foreach (var file in files)
                 {
                     try
                     {
                         var sha1 = GetSha1(file.Path);
-                        if (xdoc.Root != null)
-                        {
-                            xdoc.Root.Add(new XElement("File",
+                        xdoc.Root?.Add(new XElement("File",
                                 new XAttribute("path", file.Path),
                                 new XAttribute("name", file.FileName),
                                 new XAttribute("sha512", sha1)));
-                        }
                         InfoFormat("SHA-512 hash of the file {0} is {1}", file.Path, sha1);
-                        
-                        if (!atLeastOneSucceed) atLeastOneSucceed = true;
+
+                        if (!atLeastOneSucceed)
+                        {
+                            atLeastOneSucceed = true;
+                        }
                     }
                     catch (ThreadAbortException)
                     {
@@ -75,20 +75,16 @@ namespace Wexflow.Tasks.Sha512
             return new TaskStatus(status, false);
         }
 
-        private string GetSha1(string filePath)
+        private static string GetSha1(string filePath)
         {
-            var sb = new StringBuilder();
-            using (SHA512Managed sha1 = new SHA512Managed())
-            {
-                using (FileStream stream = File.OpenRead(filePath))
-                {
-                    var bytes = sha1.ComputeHash(stream);
+            using var stream = File.OpenRead(filePath);
+            using var alg = SHA512.Create();
+            StringBuilder sb = new();
 
-                    foreach (byte bt in bytes)
-                    {
-                        sb.Append(bt.ToString("x2"));
-                    }
-                }
+            var hashValue = alg.ComputeHash(stream);
+            foreach (var bt in hashValue)
+            {
+                _ = sb.Append(bt.ToString("x2"));
             }
             return sb.ToString();
         }

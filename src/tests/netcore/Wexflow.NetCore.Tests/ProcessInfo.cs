@@ -1,7 +1,7 @@
-﻿using System.IO;
+﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System.IO;
 using System.Linq;
 using System.Xml.Linq;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Wexflow.NetCore.Tests
 {
@@ -27,9 +27,9 @@ namespace Wexflow.NetCore.Tests
         [TestMethod]
         public void ProcessInfoTest()
         {
-            string[] files = GetFiles();
+            var files = GetFiles();
             Assert.AreEqual(0, files.Length);
-            Helper.StartWorkflow(63);
+            _ = Helper.StartWorkflow(63);
             files = GetFiles();
             Assert.AreEqual(1, files.Length);
             var xdoc = XDocument.Load(files[0]);
@@ -37,7 +37,7 @@ namespace Wexflow.NetCore.Tests
             Assert.AreEqual(1, count);
         }
 
-        private string[] GetFiles()
+        private static string[] GetFiles()
         {
             return Directory.GetFiles(ProcessInfoFolder, "ProcessInfo_*.xml");
         }

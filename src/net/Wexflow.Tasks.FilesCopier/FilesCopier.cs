@@ -79,7 +79,7 @@ namespace Wexflow.Tasks.FilesCopier
         {
             var success = true;
             var files = SelectFiles();
-            foreach (FileInf file in files)
+            foreach (var file in files)
             {
                 string destPath;
                 if (!string.IsNullOrWhiteSpace(PreserveFolderStructFrom) &&
@@ -107,13 +107,16 @@ namespace Wexflow.Tasks.FilesCopier
                     if (AllowCreateDirectory && !Directory.Exists(Path.GetDirectoryName(destPath)))
                     {
                         InfoFormat("Creating directory: {0}", Path.GetDirectoryName(destPath));
-                        Directory.CreateDirectory(Path.GetDirectoryName(destPath));
+                        _ = Directory.CreateDirectory(Path.GetDirectoryName(destPath));
                     }
 
                     File.Copy(file.Path, destPath, Overwrite);
                     Files.Add(new FileInf(destPath, Id));
                     InfoFormat("File copied: {0} -> {1}", file.Path, destPath);
-                    if (!atLeastOneSuccess) atLeastOneSuccess = true;
+                    if (!atLeastOneSuccess)
+                    {
+                        atLeastOneSuccess = true;
+                    }
                 }
                 catch (ThreadAbortException)
                 {

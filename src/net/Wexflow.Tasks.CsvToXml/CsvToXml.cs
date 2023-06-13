@@ -1,8 +1,8 @@
 ﻿using System;
-using Wexflow.Core;
-using System.Xml.Linq;
 using System.IO;
 using System.Threading;
+using System.Xml.Linq;
+using Wexflow.Core;
 
 namespace Wexflow.Tasks.CsvToXml
 {
@@ -66,7 +66,7 @@ namespace Wexflow.Tasks.CsvToXml
         private bool CreateXmls(ref bool atLeastOneSuccess)
         {
             var success = true;
-            foreach (FileInf file in SelectFiles())
+            foreach (var file in SelectFiles())
             {
                 try
                 {
@@ -75,7 +75,10 @@ namespace Wexflow.Tasks.CsvToXml
                     CreateXml(file.Path, xmlPath);
                     Files.Add(new FileInf(xmlPath, Id));
                     InfoFormat("XML file {0} created from {1}", xmlPath, file.Path);
-                    if (!atLeastOneSuccess) atLeastOneSuccess = true;
+                    if (!atLeastOneSuccess)
+                    {
+                        atLeastOneSuccess = true;
+                    }
                 }
                 catch (ThreadAbortException)
                 {
@@ -94,14 +97,21 @@ namespace Wexflow.Tasks.CsvToXml
         {
             var xdoc = new XDocument(new XElement("Lines"));
 
-            foreach (string line in File.ReadAllLines(csvPath))
+            foreach (var line in File.ReadAllLines(csvPath))
             {
                 var xLine = new XElement("Line");
-                foreach (string col in line.Split(';'))
+                foreach (var col in line.Split(';'))
                 {
-                    if (!string.IsNullOrEmpty(col)) xLine.Add(new XElement("Column", col));
+                    if (!string.IsNullOrEmpty(col))
+                    {
+                        xLine.Add(new XElement("Column", col));
+                    }
                 }
-                if (xdoc.Root == null) throw new Exception("No root node found.");
+                if (xdoc.Root == null)
+                {
+                    throw new Exception("No root node found.");
+                }
+
                 xdoc.Root.Add(xLine);
             }
 

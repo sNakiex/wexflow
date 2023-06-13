@@ -28,10 +28,10 @@ namespace Wexflow.Tasks.Xslt
         {
             Info("Transforming files...");
 
-            bool success = true;
-            bool atLeastOneSucceed = false;
+            var success = true;
+            var atLeastOneSucceed = false;
 
-            foreach (FileInf file in SelectFiles())
+            foreach (var file in SelectFiles())
             {
                 var destPath = Path.Combine(Workflow.WorkflowTempFolder,
                     string.Format(OutputFormat, Path.GetFileNameWithoutExtension(file.FileName), DateTime.Now, Extension));
@@ -43,7 +43,7 @@ namespace Wexflow.Tasks.Xslt
                     switch (Version)
                     {
                         case "1.0":
-                            var xslt = new XslCompiledTransform();
+                            XslCompiledTransform xslt = new();
                             xslt.Load(XsltPath);
                             xslt.Transform(file.Path, destPath);
                             InfoFormat("File transformed (XSLT 1.0): {0} -> {1}", file.Path, destPath);
@@ -73,9 +73,9 @@ namespace Wexflow.Tasks.Xslt
                             try
                             {
                                 var taskId = int.Parse(xFile.Attribute("taskId").Value);
-                                string fileName = xFile.Attribute("name").Value;
+                                var fileName = xFile.Attribute("name").Value;
                                 var xRenameTo = xFile.Attribute("renameTo");
-                                string renameTo = xRenameTo != null ? xRenameTo.Value : string.Empty;
+                                var renameTo = xRenameTo != null ? xRenameTo.Value : string.Empty;
                                 var tags = (from xTag in xFile.Attributes()
                                             where xTag.Name != "taskId" && xTag.Name != "name" && xTag.Name != "renameTo" && xTag.Name != "path" && xTag.Name != "renameToOrName"
                                             select new Tag(xTag.Name.ToString(), xTag.Value)).ToList();
@@ -112,7 +112,10 @@ namespace Wexflow.Tasks.Xslt
                         xdoc.Save(destPath);
                     }
 
-                    if (!atLeastOneSucceed) atLeastOneSucceed = true;
+                    if (!atLeastOneSucceed)
+                    {
+                        atLeastOneSucceed = true;
+                    }
                 }
                 catch (ThreadAbortException)
                 {

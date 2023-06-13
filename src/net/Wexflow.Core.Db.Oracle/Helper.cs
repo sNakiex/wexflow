@@ -4,7 +4,7 @@ namespace Wexflow.Core.Db.Oracle
 {
     public class Helper
     {
-        private string _connectionString;
+        private readonly string _connectionString;
 
         public Helper(string connectionString)
         {
@@ -19,10 +19,9 @@ namespace Wexflow.Core.Db.Oracle
 
                 using (var command = new OracleCommand("declare begin execute immediate 'CREATE TABLE " + tableName + tableStruct + "'; exception when others then if SQLCODE = -955 then null; else raise; end if; end;", conn))
                 {
-                    command.ExecuteNonQuery();
+                    _ = command.ExecuteNonQuery();
                 }
             }
         }
-
     }
 }

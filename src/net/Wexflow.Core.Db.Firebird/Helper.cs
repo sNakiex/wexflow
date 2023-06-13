@@ -4,7 +4,7 @@ namespace Wexflow.Core.Db.Firebird
 {
     public class Helper
     {
-        private string _connectionString;
+        private readonly string _connectionString;
 
         public Helper(string connectionString)
         {
@@ -24,12 +24,11 @@ namespace Wexflow.Core.Db.Firebird
                     {
                         using (var cmd = new FbCommand("create table " + tableName + tableStruct + ";", conn))
                         {
-                            cmd.ExecuteNonQuery();
+                            _ = cmd.ExecuteNonQuery();
                         }
                     }
                 }
             }
         }
-
     }
 }

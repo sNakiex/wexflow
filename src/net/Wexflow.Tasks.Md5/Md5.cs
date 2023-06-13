@@ -1,10 +1,10 @@
 ﻿using System;
-using System.Text;
-using Wexflow.Core;
-using System.Xml.Linq;
 using System.IO;
 using System.Security.Cryptography;
+using System.Text;
 using System.Threading;
+using System.Xml.Linq;
+using Wexflow.Core;
 
 namespace Wexflow.Tasks.Md5
 {
@@ -80,21 +80,21 @@ namespace Wexflow.Tasks.Md5
                     string.Format("MD5_{0:yyyy-MM-dd-HH-mm-ss-fff}.xml", DateTime.Now));
 
                 var xdoc = new XDocument(new XElement("Files"));
-                foreach (FileInf file in files)
+                foreach (var file in files)
                 {
                     try
                     {
                         var md5 = GetMd5(file.Path);
-                        if (xdoc.Root != null)
-                        {
-                            xdoc.Root.Add(new XElement("File",
+                        xdoc.Root?.Add(new XElement("File",
                                 new XAttribute("path", file.Path),
                                 new XAttribute("name", file.FileName),
                                 new XAttribute("md5", md5)));
-                        }
                         InfoFormat("Md5 of the file {0} is {1}", file.Path, md5);
 
-                        if (!atLeastOneSuccess) atLeastOneSuccess = true;
+                        if (!atLeastOneSuccess)
+                        {
+                            atLeastOneSuccess = true;
+                        }
                     }
                     catch (ThreadAbortException)
                     {
@@ -115,15 +115,15 @@ namespace Wexflow.Tasks.Md5
         private string GetMd5(string filePath)
         {
             var sb = new StringBuilder();
-            using (MD5 md5 = MD5.Create())
+            using (var md5 = MD5.Create())
             {
-                using (FileStream stream = File.OpenRead(filePath))
+                using (var stream = File.OpenRead(filePath))
                 {
                     var bytes = md5.ComputeHash(stream);
 
-                    foreach (byte bt in bytes)
+                    foreach (var bt in bytes)
                     {
-                        sb.Append(bt.ToString("x2"));
+                        _ = sb.Append(bt.ToString("x2"));
                     }
                 }
             }

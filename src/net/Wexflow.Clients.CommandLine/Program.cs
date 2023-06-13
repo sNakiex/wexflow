@@ -9,9 +9,9 @@ using Wexflow.Core.Service.Contracts;
 
 namespace Wexflow.Clients.CommandLine
 {
-    class Program
+    internal class Program
     {
-        enum Operation
+        private enum Operation
         {
             Start,
             Suspend,
@@ -21,7 +21,7 @@ namespace Wexflow.Clients.CommandLine
             Reject
         }
 
-        class Options
+        private class Options
         {
             [Option('o', "operation", Required = true, HelpText = "start|suspend|resume|stop|approve|reject")]
             public Operation Operation { get; set; }
@@ -36,7 +36,7 @@ namespace Wexflow.Clients.CommandLine
             public bool Wait { get; set; }
         }
 
-        static void Main(string[] args)
+        private static void Main(string[] args)
         {
             try
             {
@@ -125,12 +125,10 @@ namespace Wexflow.Clients.CommandLine
                                }
                                client.RejectWorkflow(o.WorkflowId, Guid.Parse(o.JobId), username, password);
                                break;
-
                        }
-
                    });
 
-                res.WithNotParsed(errs =>
+                _ = res.WithNotParsed(errs =>
                 {
                     var helpText = HelpText.AutoBuild(res, h => h, e =>
                     {
@@ -138,7 +136,6 @@ namespace Wexflow.Clients.CommandLine
                     });
                     Console.WriteLine(helpText);
                 });
-
             }
             catch (Exception e)
             {

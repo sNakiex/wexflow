@@ -1,17 +1,17 @@
-﻿using System;
+﻿using MySqlConnector;
+using Npgsql;
+using Oracle.ManagedDataAccess.Client;
+using System;
 using System.Data.Common;
-using Wexflow.Core;
+using System.Data.Odbc;
+using System.Data.OleDb;
+using System.Data.SqlClient;
+using System.Data.SQLite;
+using System.IO;
 using System.Threading;
 using System.Xml.Linq;
-using System.Data.SqlClient;
-using Oracle.ManagedDataAccess.Client;
-using MySqlConnector;
-using System.Data.SQLite;
-using Npgsql;
-using System.IO;
-using System.Data.OleDb;
 using Teradata.Client.Provider;
-using System.Data.Odbc;
+using Wexflow.Core;
 
 namespace Wexflow.Tasks.Sql
 {
@@ -52,8 +52,8 @@ namespace Wexflow.Tasks.Sql
         {
             Info("Executing SQL scripts...");
 
-            bool success = true;
-            bool atLeastOneSuccess = false;
+            var success = true;
+            var atLeastOneSuccess = false;
 
             // Execute SQL scripts
             try
@@ -118,7 +118,7 @@ namespace Wexflow.Tasks.Sql
                 success = false;
             }
 
-            foreach (FileInf file in SelectFiles())
+            foreach (var file in SelectFiles())
             {
                 try
                 {
@@ -126,7 +126,10 @@ namespace Wexflow.Tasks.Sql
                     ExecuteSql(sql);
                     InfoFormat("The script {0} has been executed.", file.Path);
 
-                    if (!atLeastOneSuccess) atLeastOneSuccess = true;
+                    if (!atLeastOneSuccess)
+                    {
+                        atLeastOneSuccess = true;
+                    }
                 }
                 catch (ThreadAbortException)
                 {
@@ -207,7 +210,7 @@ namespace Wexflow.Tasks.Sql
         private void ExecSql(DbConnection conn, DbCommand comm)
         {
             conn.Open();
-            comm.ExecuteNonQuery();
+            _ = comm.ExecuteNonQuery();
         }
     }
 }

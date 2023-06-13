@@ -246,7 +246,7 @@ namespace Wexflow.Core
             , string smtpFrom
             )
         {
-            log4net.Config.XmlConfigurator.Configure();
+            _ = log4net.Config.XmlConfigurator.Configure();
 
             SettingsFile = settingsFile;
             LogLevel = logLevel;
@@ -302,10 +302,7 @@ namespace Wexflow.Core
                     break;
             }
 
-            if (Database != null)
-            {
-                Database.Init();
-            }
+            Database?.Init();
 
             LoadGlobalVariables();
 
@@ -319,7 +316,7 @@ namespace Wexflow.Core
         /// <returns></returns>
         public static bool IsCronExpressionValid(string expression)
         {
-            bool res = CronExpression.IsValidExpression(expression);
+            var res = CronExpression.IsValidExpression(expression);
             return res;
         }
 
@@ -328,14 +325,30 @@ namespace Wexflow.Core
             var xdoc = XDocument.Load(SettingsFile);
             WorkflowsFolder = GetWexflowSetting(xdoc, "workflowsFolder");
             RecordsFolder = GetWexflowSetting(xdoc, "recordsFolder");
-            if (!Directory.Exists(RecordsFolder)) Directory.CreateDirectory(RecordsFolder);
+            if (!Directory.Exists(RecordsFolder))
+            {
+                _ = Directory.CreateDirectory(RecordsFolder);
+            }
+
             RecordsHotFolder = GetWexflowSetting(xdoc, "recordsHotFolder");
-            if (!Directory.Exists(RecordsHotFolder)) Directory.CreateDirectory(RecordsHotFolder);
+            if (!Directory.Exists(RecordsHotFolder))
+            {
+                _ = Directory.CreateDirectory(RecordsHotFolder);
+            }
+
             TempFolder = GetWexflowSetting(xdoc, "tempFolder");
             TasksFolder = GetWexflowSetting(xdoc, "tasksFolder");
-            if (!Directory.Exists(TempFolder)) Directory.CreateDirectory(TempFolder);
+            if (!Directory.Exists(TempFolder))
+            {
+                _ = Directory.CreateDirectory(TempFolder);
+            }
+
             RecordsTempFolder = Path.Combine(TempFolder, "Records");
-            if (!Directory.Exists(RecordsTempFolder)) Directory.CreateDirectory(RecordsTempFolder);
+            if (!Directory.Exists(RecordsTempFolder))
+            {
+                _ = Directory.CreateDirectory(RecordsTempFolder);
+            }
+
             ApprovalFolder = GetWexflowSetting(xdoc, "approvalFolder");
             XsdPath = GetWexflowSetting(xdoc, "xsd");
             TasksNamesFile = GetWexflowSetting(xdoc, "tasksNamesFile");
@@ -347,12 +360,12 @@ namespace Wexflow.Core
 
         private void LoadGlobalVariables()
         {
-            List<Variable> variables = new List<Variable>();
-            XDocument xdoc = XDocument.Load(GlobalVariablesFile);
+            var variables = new List<Variable>();
+            var xdoc = XDocument.Load(GlobalVariablesFile);
 
             foreach (var xvariable in xdoc.Descendants("Variable"))
             {
-                Variable variable = new Variable
+                var variable = new Variable
                 {
                     Key = xvariable.Attribute("name").Value,
                     Value = xvariable.Attribute("value").Value
@@ -368,8 +381,7 @@ namespace Wexflow.Core
             try
             {
                 var xValue = xdoc.XPathSelectElement(string.Format("/Wexflow/Setting[@name='{0}']", name)).Attribute("value");
-                if (xValue == null) throw new Exception("Wexflow Setting Value attribute not found.");
-                return xValue.Value;
+                return xValue == null ? throw new Exception("Wexflow Setting Value attribute not found.") : xValue.Value;
             }
             catch (Exception e)
             {
@@ -399,11 +411,11 @@ namespace Wexflow.Core
         /// <param name="workflowId">Workflow Id.</param>
         public void StopCronJobs(int workflowId)
         {
-            string jobIdentity = "Workflow Job " + workflowId;
+            var jobIdentity = $"Workflow Job {workflowId}";
             var jobKey = new JobKey(jobIdentity);
             if (QuartzScheduler.CheckExists(jobKey).Result)
             {
-                QuartzScheduler.DeleteJob(jobKey);
+                _ = QuartzScheduler.DeleteJob(jobKey);
             }
         }
 
@@ -464,7 +476,7 @@ namespace Wexflow.Core
                         // check the workflow before to save it
                         try
                         {
-                            new Workflow(
+                            _ = new Workflow(
                               this
                             , 1
                             , new Dictionary<Guid, Workflow>()
@@ -483,7 +495,7 @@ namespace Wexflow.Core
                             Logger.ErrorFormat("An error occured while saving the workflow {0}:", e, xml);
                             return "-1";
                         }
-                        string dbId = Database.InsertWorkflow(new Db.Workflow { Xml = xml });
+                        var dbId = Database.InsertWorkflow(new Db.Workflow { Xml = xml });
 
                         if (userProfile == UserProfile.Administrator)
                         {
@@ -506,7 +518,7 @@ namespace Wexflow.Core
                         // check the workflow before to save it
                         try
                         {
-                            new Workflow(
+                            _ = new Workflow(
                               this
                             , 1
                             , new Dictionary<Guid, Workflow>()
@@ -534,10 +546,10 @@ namespace Wexflow.Core
 
                         if (changedWorkflow != null)
                         {
-                            changedWorkflow.Stop(SuperAdminUsername);
+                            _ = changedWorkflow.Stop(SuperAdminUsername);
 
                             StopCronJobs(changedWorkflow.Id);
-                            Workflows.Remove(changedWorkflow);
+                            _ = Workflows.Remove(changedWorkflow);
                             Logger.InfoFormat("A change in the workflow {0} has been detected. The workflow will be reloaded.", changedWorkflow.Name);
 
                             var updatedWorkflow = LoadWorkflowFromDatabase(workflowFromDb);
@@ -550,7 +562,6 @@ namespace Wexflow.Core
                         }
                     }
                 }
-
             }
             catch (Exception e)
             {
@@ -605,12 +616,12 @@ namespace Wexflow.Core
                 if (removedWorkflow != null)
                 {
                     Logger.InfoFormat("Workflow {0} is stopped and removed.", removedWorkflow.Name);
-                    removedWorkflow.Stop(SuperAdminUsername);
+                    _ = removedWorkflow.Stop(SuperAdminUsername);
 
                     StopCronJobs(removedWorkflow.Id);
                     lock (Workflows)
                     {
-                        Workflows.Remove(removedWorkflow);
+                        _ = Workflows.Remove(removedWorkflow);
                     }
 
                     if (EnableWorkflowsHotFolder)
@@ -622,7 +633,6 @@ namespace Wexflow.Core
                         }
                     }
                 }
-
             }
             catch (Exception e)
             {
@@ -646,10 +656,10 @@ namespace Wexflow.Core
                     if (removedWorkflow != null)
                     {
                         Logger.InfoFormat("Workflow {0} is stopped and removed.", removedWorkflow.Name);
-                        removedWorkflow.Stop(SuperAdminUsername);
+                        _ = removedWorkflow.Stop(SuperAdminUsername);
 
                         StopCronJobs(removedWorkflow.Id);
-                        Workflows.Remove(removedWorkflow);
+                        _ = Workflows.Remove(removedWorkflow);
                         Database.DeleteUserWorkflowRelationsByWorkflowId(removedWorkflow.DbId);
 
                         if (EnableWorkflowsHotFolder)
@@ -721,7 +731,7 @@ namespace Wexflow.Core
             catch (Exception e)
             {
                 Logger.ErrorFormat("Error while retrieving user workflows of user {0}: {1}", userId, e.Message);
-                return new Workflow[] { };
+                return Array.Empty<Workflow>();
             }
         }
 
@@ -760,7 +770,7 @@ namespace Wexflow.Core
             catch (Exception e)
             {
                 Logger.ErrorFormat("Error while retrieving administrators: {0}", e.Message);
-                return new User[] { };
+                return Array.Empty<User>();
             }
         }
 
@@ -778,7 +788,7 @@ namespace Wexflow.Core
             catch (Exception e)
             {
                 Logger.ErrorFormat("Error while retrieving administrators: {0}", e.Message);
-                return new User[] { };
+                return Array.Empty<User>();
             }
         }
 
@@ -794,7 +804,7 @@ namespace Wexflow.Core
                 var admin = GetUser("admin");
                 foreach (var worlflowFile in workflowFiles)
                 {
-                    SaveWorkflowFromFile(admin.GetDbId(), UserProfile.SuperAdministrator, worlflowFile, false);
+                    _ = SaveWorkflowFromFile(admin.GetDbId(), UserProfile.SuperAdministrator, worlflowFile, false);
                 }
                 Logger.InfoFormat("Loading workflows from hot folder {0} finished.", WorkflowsFolder);
             }
@@ -822,7 +832,7 @@ namespace Wexflow.Core
                 {
                     if (wf.LaunchType == LaunchType.Startup)
                     {
-                        wf.StartAsync(SuperAdminUsername);
+                        _ = wf.StartAsync(SuperAdminUsername);
                     }
                     else if (wf.LaunchType == LaunchType.Periodic)
                     {
@@ -831,27 +841,26 @@ namespace Wexflow.Core
                             { "workflow", wf }
                         };
 
-                        string jobIdentity = "Workflow Job " + wf.Id;
-                        IJobDetail jobDetail = JobBuilder.Create<WorkflowJob>()
+                        var jobIdentity = $"Workflow Job {wf.Id}";
+                        var jobDetail = JobBuilder.Create<WorkflowJob>()
                             .WithIdentity(jobIdentity)
                             .SetJobData(new JobDataMap(map))
                             .Build();
 
-                        ITrigger trigger = TriggerBuilder.Create()
+                        var trigger = TriggerBuilder.Create()
                             .ForJob(jobDetail)
                             .WithSimpleSchedule(x => x.WithInterval(wf.Period).RepeatForever())
-                            .WithIdentity("Workflow Trigger " + wf.Id)
+                            .WithIdentity($"Workflow Trigger {wf.Id}")
                             .StartNow()
                             .Build();
 
                         var jobKey = new JobKey(jobIdentity);
                         if (QuartzScheduler.CheckExists(jobKey).Result)
                         {
-                            QuartzScheduler.DeleteJob(jobKey);
+                            _ = QuartzScheduler.DeleteJob(jobKey);
                         }
 
                         QuartzScheduler.ScheduleJob(jobDetail, trigger).Wait();
-
                     }
                     else if (wf.LaunchType == LaunchType.Cron)
                     {
@@ -860,23 +869,23 @@ namespace Wexflow.Core
                             { "workflow", wf }
                         };
 
-                        string jobIdentity = "Workflow Job " + wf.Id;
-                        IJobDetail jobDetail = JobBuilder.Create<WorkflowJob>()
+                        var jobIdentity = $"Workflow Job {wf.Id}";
+                        var jobDetail = JobBuilder.Create<WorkflowJob>()
                             .WithIdentity(jobIdentity)
                             .SetJobData(new JobDataMap(map))
                             .Build();
 
-                        ITrigger trigger = TriggerBuilder.Create()
+                        var trigger = TriggerBuilder.Create()
                             .ForJob(jobDetail)
                             .WithCronSchedule(wf.CronExpression)
-                            .WithIdentity("Workflow Trigger " + wf.Id)
+                            .WithIdentity($"Workflow Trigger {wf.Id}")
                             .StartNow()
                             .Build();
 
                         var jobKey = new JobKey(jobIdentity);
                         if (QuartzScheduler.CheckExists(jobKey).Result)
                         {
-                            QuartzScheduler.DeleteJob(jobKey);
+                            _ = QuartzScheduler.DeleteJob(jobKey);
                         }
 
                         QuartzScheduler.ScheduleJob(jobDetail, trigger).Wait();
@@ -904,12 +913,12 @@ namespace Wexflow.Core
             foreach (var workflow in Workflows)
             {
                 var innerWorkflows = workflow.Jobs.Values.ToArray();
-                for (int i = innerWorkflows.Length - 1; i >= 0; i--)
+                for (var i = innerWorkflows.Length - 1; i >= 0; i--)
                 {
                     var innerWorkflow = innerWorkflows[i];
                     if (innerWorkflow.IsRunning)
                     {
-                        innerWorkflow.Stop(SuperAdminUsername);
+                        _ = innerWorkflow.Stop(SuperAdminUsername);
                     }
                 }
             }
@@ -1271,12 +1280,7 @@ namespace Wexflow.Core
         public User[] GetUsers()
         {
             var q = Database.GetUsers();
-            if (q.Any())
-            {
-                return q.ToArray();
-            }
-
-            return new User[] { };
+            return q.Any() ? q.ToArray() : Array.Empty<User>();
         }
 
         /// <summary>
@@ -1286,12 +1290,7 @@ namespace Wexflow.Core
         public User[] GetUsers(string keyword, UserOrderBy uo)
         {
             var q = Database.GetUsers(keyword, uo);
-            if (q.Any())
-            {
-                return q.ToArray();
-            }
-
-            return new User[] { };
+            return q.Any() ? q.ToArray() : Array.Empty<User>();
         }
 
         /// <summary>
@@ -1349,14 +1348,7 @@ namespace Wexflow.Core
         {
             var col = Database.GetHistoryEntries(keyword, from, to, page, entriesCount, heo);
 
-            if (!col.Any())
-            {
-                return new HistoryEntry[] { };
-            }
-            else
-            {
-                return col.ToArray();
-            }
+            return !col.Any() ? Array.Empty<HistoryEntry>() : col.ToArray();
         }
 
         /// <summary>
@@ -1373,14 +1365,7 @@ namespace Wexflow.Core
         {
             var col = Database.GetEntries(keyword, from, to, page, entriesCount, heo);
 
-            if (!col.Any())
-            {
-                return new Entry[] { };
-            }
-            else
-            {
-                return col.ToArray();
-            }
+            return !col.Any() ? Array.Empty<Entry>() : col.ToArray();
         }
 
         /// <summary>
@@ -1528,7 +1513,7 @@ namespace Wexflow.Core
         /// <returns>Result.</returns>
         public bool IsDirectory(string path)
         {
-            FileAttributes attr = File.GetAttributes(path);
+            var attr = File.GetAttributes(path);
 
             var isDir = attr.HasFlag(FileAttributes.Directory);
 
@@ -1566,7 +1551,7 @@ namespace Wexflow.Core
                             var destDir = Path.Combine(RecordsFolder, DbFolderName, id, versionId);
                             if (!Directory.Exists(destDir))
                             {
-                                Directory.CreateDirectory(destDir);
+                                _ = Directory.CreateDirectory(destDir);
                             }
                             var destPath = Path.Combine(destDir, fileName);
                             File.Move(version.FilePath, destPath);
@@ -1595,8 +1580,8 @@ namespace Wexflow.Core
 
                     var recordVersions = Database.GetVersions(recordId);
 
-                    List<string> versionsToDelete = new List<string>();
-                    List<Db.Version> versionsToDeleteObjs = new List<Db.Version>();
+                    var versionsToDelete = new List<string>();
+                    var versionsToDeleteObjs = new List<Db.Version>();
                     foreach (var version in recordVersions)
                     {
                         if (!versions.Any(v => v.FilePath == version.FilePath))
@@ -1637,7 +1622,7 @@ namespace Wexflow.Core
                             var destDir = Path.Combine(RecordsFolder, DbFolderName, recordId, versionId);
                             if (!Directory.Exists(destDir))
                             {
-                                Directory.CreateDirectory(destDir);
+                                _ = Directory.CreateDirectory(destDir);
                             }
                             var destPath = Path.Combine(destDir, fileName);
                             File.Move(version.FilePath, destPath);
@@ -1680,7 +1665,7 @@ namespace Wexflow.Core
             var destDir = Path.Combine(RecordsTempFolder, DbFolderName, "-1", Guid.NewGuid().ToString());
             if (!Directory.Exists(destDir))
             {
-                Directory.CreateDirectory(destDir);
+                _ = Directory.CreateDirectory(destDir);
             }
             var destPath = Path.Combine(destDir, fileName);
             File.Move(filePath, destPath);
@@ -1707,7 +1692,7 @@ namespace Wexflow.Core
                 FilePath = destPath
             };
 
-            List<Db.Version> versions = new List<Db.Version>() { version };
+            var versions = new List<Db.Version>() { version };
 
             var recordId = SaveRecord("-1", record, versions);
             return recordId;
@@ -1996,15 +1981,11 @@ namespace Wexflow.Core
             }
             finally
             {
-                if (stream != null)
-                {
-                    stream.Close();
-                }
+                stream?.Close();
             }
 
             //file is not locked
             return false;
         }
-
     }
 }

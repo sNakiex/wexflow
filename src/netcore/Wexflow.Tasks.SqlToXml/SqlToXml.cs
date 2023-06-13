@@ -4,18 +4,18 @@ using Oracle.ManagedDataAccess.Client;
 using System;
 using System.Collections.Generic;
 using System.Data.Common;
+using System.Data.Odbc;
 using System.Data.OleDb;
 using System.Data.SqlClient;
 using System.Data.SQLite;
+using System.Data.SqlTypes;
 using System.IO;
 using System.Security;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Xml.Linq;
 using Teradata.Client.Provider;
 using Wexflow.Core;
-using System.Data.Odbc;
-using System.Text.RegularExpressions;
-using System.Data.SqlTypes;
 
 namespace Wexflow.Tasks.SqlToXml
 {
@@ -51,8 +51,8 @@ namespace Wexflow.Tasks.SqlToXml
         {
             Info("Executing SQL scripts...");
 
-            bool success = true;
-            bool atLeastOneSucceed = false;
+            var success = true;
+            var atLeastOneSucceed = false;
 
             // Execute SqlScript if necessary
             try
@@ -74,7 +74,7 @@ namespace Wexflow.Tasks.SqlToXml
             }
 
             // Execute SQL files scripts
-            foreach (FileInf file in SelectFiles())
+            foreach (var file in SelectFiles())
             {
                 try
                 {
@@ -82,7 +82,10 @@ namespace Wexflow.Tasks.SqlToXml
                     ExecuteSql(sql);
                     InfoFormat("The script {0} has been executed.", file.Path);
 
-                    if (!atLeastOneSucceed) atLeastOneSucceed = true;
+                    if (!atLeastOneSucceed)
+                    {
+                        atLeastOneSucceed = true;
+                    }
                 }
                 catch (ThreadAbortException)
                 {
@@ -115,57 +118,59 @@ namespace Wexflow.Tasks.SqlToXml
             switch (DbType)
             {
                 case Type.SqlServer:
-                    using (var connection = new SqlConnection(ConnectionString))
-                    using (var command = new SqlCommand(sql, connection))
+                    using (SqlConnection connection = new(ConnectionString))
+                    using (SqlCommand command = new(sql, connection))
                     {
                         ConvertToXml(connection, command);
                     }
                     break;
                 case Type.Access:
-                    using (var conn = new OleDbConnection(ConnectionString))
-                    using (var comm = new OleDbCommand(sql, conn))
+#pragma warning disable CA1416 // Valider la compatibilité de la plateforme
+                    using (OleDbConnection conn = new(ConnectionString))
+                    using (OleDbCommand comm = new(sql, conn))
                     {
                         ConvertToXml(conn, comm);
                     }
+#pragma warning restore CA1416 // Valider la compatibilité de la plateforme
                     break;
                 case Type.Oracle:
-                    using (var connection = new OracleConnection(ConnectionString))
-                    using (var command = new OracleCommand(sql, connection))
+                    using (OracleConnection connection = new(ConnectionString))
+                    using (OracleCommand command = new(sql, connection))
                     {
                         ConvertToXml(connection, command);
                     }
                     break;
                 case Type.MySql:
-                    using (var connection = new MySqlConnection(ConnectionString))
-                    using (var command = new MySqlCommand(sql, connection))
+                    using (MySqlConnection connection = new(ConnectionString))
+                    using (MySqlCommand command = new(sql, connection))
                     {
                         ConvertToXml(connection, command);
                     }
                     break;
                 case Type.Sqlite:
-                    using (var connection = new SQLiteConnection(ConnectionString))
-                    using (var command = new SQLiteCommand(sql, connection))
+                    using (SQLiteConnection connection = new(ConnectionString))
+                    using (SQLiteCommand command = new(sql, connection))
                     {
                         ConvertToXml(connection, command);
                     }
                     break;
                 case Type.PostGreSql:
-                    using (var connection = new NpgsqlConnection(ConnectionString))
-                    using (var command = new NpgsqlCommand(sql, connection))
+                    using (NpgsqlConnection connection = new(ConnectionString))
+                    using (NpgsqlCommand command = new(sql, connection))
                     {
                         ConvertToXml(connection, command);
                     }
                     break;
                 case Type.Teradata:
-                    using (var connenction = new TdConnection(ConnectionString))
-                    using (var command = new TdCommand(sql, connenction))
+                    using (TdConnection connenction = new(ConnectionString))
+                    using (TdCommand command = new(sql, connenction))
                     {
                         ConvertToXml(connenction, command);
                     }
                     break;
                 case Type.Odbc:
-                    using (var connenction = new OdbcConnection(ConnectionString))
-                    using (var command = new OdbcCommand(sql, connenction))
+                    using (OdbcConnection connenction = new(ConnectionString))
+                    using (OdbcCommand command = new(sql, connenction))
                     {
                         ConvertToXml(connenction, command);
                     }
@@ -180,32 +185,30 @@ namespace Wexflow.Tasks.SqlToXml
 
             if (reader.HasRows)
             {
-                var columns = new List<string>();
+                List<string> columns = new();
 
-                for (int i = 0; i < reader.FieldCount; i++)
+                for (var i = 0; i < reader.FieldCount; i++)
                 {
                     columns.Add(reader.GetName(i));
                 }
 
-                string destPath = Path.Combine(Workflow.WorkflowTempFolder,
+                var destPath = Path.Combine(Workflow.WorkflowTempFolder,
                                                string.Format("SqlToXml_{0:yyyy-MM-dd-HH-mm-ss-fff}.xml",
                                                DateTime.Now));
-                var xdoc = new XDocument();
-                var xobjects = new XElement("Records");
+                XDocument xdoc = new();
+                XElement xobjects = new("Records");
 
                 while (reader.Read())
                 {
-                    var xobject = new XElement("Record");
+                    XElement xobject = new("Record");
 
                     foreach (var column in columns)
                     {
-                        string xmlvalue = CleanInvalidXmlChars(reader[column].ToString());
+                        var xmlvalue = CleanInvalidXmlChars(reader[column].ToString());
                         var columntype = reader[column].GetType();
-                        int number;
-                        decimal decnumber;
                         if (
-                            (columntype == typeof(Int32) && int.TryParse(xmlvalue, out number) && number == 0) ||
-                            (columntype == typeof(Decimal) && decimal.TryParse(xmlvalue, out decnumber) && decnumber == 0) ||
+                            (columntype == typeof(int) && int.TryParse(xmlvalue, out var number) && number == 0) ||
+                            (columntype == typeof(decimal) && decimal.TryParse(xmlvalue, out var decnumber) && decnumber == 0) ||
                             (columntype == typeof(DateTime) && (Convert.ToDateTime(xmlvalue) == SqlDateTime.MinValue || xmlvalue == "01-01-1900 00:00:00"))
                             )
                         {
@@ -232,7 +235,7 @@ namespace Wexflow.Tasks.SqlToXml
             // From xml spec valid chars: 
             // #x9 | #xA | #xD | [#x20-#xD7FF] | [#xE000-#xFFFD] | [#x10000-#x10FFFF]     
             // any Unicode character, excluding the surrogate blocks, FFFE, and FFFF. 
-            string re = @"[^\x09\x0A\x0D\x20-\xD7FF\xE000-\xFFFD\x10000-x10FFFF]";
+            var re = @"[^\x09\x0A\x0D\x20-\xD7FF\xE000-\xFFFD\x10000-x10FFFF]";
             return Regex.Replace(text, re, "");
         }
     }

@@ -1,5 +1,5 @@
-﻿using System.IO;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System.IO;
 
 namespace Wexflow.NetCore.Tests
 {
@@ -27,26 +27,26 @@ namespace Wexflow.NetCore.Tests
         [TestMethod]
         public void XmlToCsvTest()
         {
-            string[] files = GetCsvs();
+            var files = GetCsvs();
             Assert.AreEqual(0, files.Length);
-            Helper.StartWorkflow(17);
+            _ = Helper.StartWorkflow(17);
             files = GetCsvs();
             Assert.AreEqual(2, files.Length);
             foreach (var file in files)
             {
-                string content = File.ReadAllText(file);
+                var content = File.ReadAllText(file);
                 Assert.AreEqual(ExpectedResult, content);
             }
         }
 
-        private string[] GetCsvs()
+        private static string[] GetCsvs()
         {
             return Directory.GetFiles(Dest, "csv*.csv");
         }
 
-        private void DeleteCsvs()
+        private static void DeleteCsvs()
         {
-            string[] files = GetCsvs();
+            var files = GetCsvs();
             foreach (var file in files)
             {
                 File.Delete(file);

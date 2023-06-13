@@ -61,31 +61,19 @@ namespace Wexflow.Tasks.FileMatch
 
             Info("Task finished");
 
-            if (status != null)
-            {
-                return status;
-            }
-            return new TaskStatus(Status.Success, success);
+            return status ?? new TaskStatus(Status.Success, success);
         }
 
         private bool CheckFile(ref TaskStatus status)
         {
             var success = false;
-            string fileFound = string.Empty;
+            var fileFound = string.Empty;
 
             try
             {
-                string[] files;
-
-                if (Recursive)
-                {
-                    files = Directory.GetFiles(Dir, "*.*", SearchOption.AllDirectories);
-                }
-                else
-                {
-                    files = Directory.GetFiles(Dir, "*.*", SearchOption.TopDirectoryOnly);
-                }
-
+                var files = Recursive
+                    ? Directory.GetFiles(Dir, "*.*", SearchOption.AllDirectories)
+                    : Directory.GetFiles(Dir, "*.*", SearchOption.TopDirectoryOnly);
                 foreach (var file in files)
                 {
                     if (Regex.Match(Path.GetFileName(file), Pattern).Success)

@@ -4,14 +4,14 @@ namespace Wexflow.Core.Db.MariaDB
 {
     public class Helper
     {
-        private string _connectionString;
+        private readonly string _connectionString;
 
         public Helper(string connectionString)
         {
             _connectionString = connectionString;
         }
 
-        public void CreateDatabaseIfNotExists(string server, int port, string user, string password, string database)
+        public static void CreateDatabaseIfNotExists(string server, int port, string user, string password, string database)
         {
             using (var conn = new MySqlConnection("SERVER=" + server + ";PORT=" + port + ";USER=" + user + ";PASSWORD=" + password + ";"))
             {
@@ -19,10 +19,8 @@ namespace Wexflow.Core.Db.MariaDB
 
                 using (var command = new MySqlCommand("CREATE DATABASE IF NOT EXISTS " + database + ";", conn))
                 {
-
-                    command.ExecuteNonQuery();
+                    _ = command.ExecuteNonQuery();
                 }
-
             }
         }
 
@@ -34,11 +32,9 @@ namespace Wexflow.Core.Db.MariaDB
 
                 using (var command = new MySqlCommand("CREATE TABLE IF NOT EXISTS " + tableName + tableStruct + ";", conn))
                 {
-
-                    command.ExecuteNonQuery();
+                    _ = command.ExecuteNonQuery();
                 }
             }
         }
-
     }
 }

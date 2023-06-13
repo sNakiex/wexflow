@@ -19,8 +19,7 @@ namespace Wexflow.Tasks.Ping
         {
             Info("Checking file...");
 
-            bool success = false;
-
+            bool success;
             try
             {
                 success = PingHost(Server);
@@ -33,7 +32,6 @@ namespace Wexflow.Tasks.Ping
                 {
                     InfoFormat("The server {0} did not respond to the ping request.", Server);
                 }
-
             }
             catch (ThreadAbortException)
             {
@@ -52,16 +50,15 @@ namespace Wexflow.Tasks.Ping
 
         private bool PingHost(string server)
         {
-            bool pingable = false;
+            var pingable = false;
 
-            using (System.Net.NetworkInformation.Ping pinger = new System.Net.NetworkInformation.Ping())
+            using (var pinger = new System.Net.NetworkInformation.Ping())
             {
-                PingReply reply = pinger.Send(server);
+                var reply = pinger.Send(server);
                 pingable = reply.Status == IPStatus.Success;
             }
 
             return pingable;
         }
-
     }
 }

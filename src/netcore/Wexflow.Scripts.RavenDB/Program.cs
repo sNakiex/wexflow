@@ -5,9 +5,9 @@ using Wexflow.Scripts.Core;
 
 namespace Wexflow.Scripts.RavenDB
 {
-    class Program
+    internal class Program
     {
-        static void Main()
+        private static void Main()
         {
             try
             {
@@ -16,7 +16,7 @@ namespace Wexflow.Scripts.RavenDB
                 .Build();
 
                 var workflowsFolder = config["workflowsFolder"];
-                Db db = new Db(config["connectionString"]);
+                Db db = new(config["connectionString"]);
                 Helper.InsertWorkflowsAndUser(db, workflowsFolder);
                 Helper.InsertRecords(db, "ravendb", config["recordsFolder"], config["documentFile"], config["invoiceFile"], config["timesheetFile"]);
                 db.Dispose();
@@ -27,7 +27,7 @@ namespace Wexflow.Scripts.RavenDB
             }
 
             Console.Write("Press any key to exit...");
-            Console.ReadKey();
+            _ = Console.ReadKey();
         }
     }
 }

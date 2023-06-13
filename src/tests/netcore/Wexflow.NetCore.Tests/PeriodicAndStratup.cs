@@ -1,6 +1,6 @@
-﻿using System.IO;
+﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System.IO;
 using System.Threading;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Wexflow.NetCore.Tests
 {
@@ -41,7 +41,7 @@ namespace Wexflow.NetCore.Tests
             Assert.AreEqual(1, files.Length);
         }
 
-        private string[] GetFiles(string folder)
+        private static string[] GetFiles(string folder)
         {
             return Directory.GetFiles(folder, "*.txt");
         }

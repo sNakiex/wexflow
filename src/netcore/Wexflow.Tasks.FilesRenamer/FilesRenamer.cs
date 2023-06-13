@@ -1,12 +1,12 @@
 ﻿using System;
-using Wexflow.Core;
-using System.Xml.Linq;
-using System.Threading;
 using System.IO;
+using System.Threading;
+using System.Xml.Linq;
+using Wexflow.Core;
 
 namespace Wexflow.Tasks.FilesRenamer
 {
-    public class FilesRenamer:Task
+    public class FilesRenamer : Task
     {
         public bool Overwrite { get; private set; }
 
@@ -20,8 +20,8 @@ namespace Wexflow.Tasks.FilesRenamer
         {
             Info("Renaming files...");
 
-            bool success = true;
-            bool atLeastOneSucceed = false;
+            var success = true;
+            var atLeastOneSucceed = false;
 
             foreach (var file in SelectFiles())
             {
@@ -29,8 +29,7 @@ namespace Wexflow.Tasks.FilesRenamer
                 {
                     if (!string.IsNullOrEmpty(file.RenameTo))
                     {
-                        var dirName = Path.GetDirectoryName(file.Path);
-                        if(dirName == null) throw new Exception("File directory is null");
+                        var dirName = Path.GetDirectoryName(file.Path) ?? throw new Exception("File directory is null");
                         var destPath = Path.Combine(dirName, file.RenameTo);
 
                         if (File.Exists(destPath))
@@ -59,7 +58,11 @@ namespace Wexflow.Tasks.FilesRenamer
                         InfoFormat("File {0} renamed to {1}", file.Path, file.RenameTo);
                         file.Path = destPath;
                         file.RenameTo = string.Empty;
-                        if (!atLeastOneSucceed) atLeastOneSucceed = true;
+                        if (!atLeastOneSucceed)
+                        {
+                            atLeastOneSucceed = true;
+                        }
+
                         Files.Add(new FileInf(destPath, file.TaskId));
                     }
                 }

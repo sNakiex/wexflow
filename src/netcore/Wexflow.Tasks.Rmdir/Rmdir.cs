@@ -1,12 +1,12 @@
 ﻿using System;
-using Wexflow.Core;
-using System.Xml.Linq;
 using System.IO;
 using System.Threading;
+using System.Xml.Linq;
+using Wexflow.Core;
 
 namespace Wexflow.Tasks.Rmdir
 {
-    public class Rmdir:Task
+    public class Rmdir : Task
     {
         public string[] Folders { get; private set; }
 
@@ -19,18 +19,21 @@ namespace Wexflow.Tasks.Rmdir
         public override TaskStatus Run()
         {
             Info("Removing folders...");
-            
-            bool success = true;
-            bool atLeastOneSucceed = false;
 
-            foreach (string folder in Folders)
+            var success = true;
+            var atLeastOneSucceed = false;
+
+            foreach (var folder in Folders)
             {
                 try
                 {
                     RmdirRec(folder);
                     InfoFormat("Folder {0} deleted.", folder);
-                    
-                    if (!atLeastOneSucceed) atLeastOneSucceed = true;
+
+                    if (!atLeastOneSucceed)
+                    {
+                        atLeastOneSucceed = true;
+                    }
                 }
                 catch (ThreadAbortException)
                 {
@@ -60,8 +63,16 @@ namespace Wexflow.Tasks.Rmdir
 
         private void RmdirRec(string folder)
         {
-            foreach (string file in Directory.GetFiles(folder)) File.Delete(file);
-            foreach (string dir in Directory.GetDirectories(folder)) RmdirRec(dir);
+            foreach (var file in Directory.GetFiles(folder))
+            {
+                File.Delete(file);
+            }
+
+            foreach (var dir in Directory.GetDirectories(folder))
+            {
+                RmdirRec(dir);
+            }
+
             Directory.Delete(folder);
         }
     }

@@ -1,14 +1,14 @@
 ﻿using System;
-using System.Text;
-using Wexflow.Core;
-using System.Xml.Linq;
 using System.IO;
 using System.Security.Cryptography;
+using System.Text;
 using System.Threading;
+using System.Xml.Linq;
+using Wexflow.Core;
 
 namespace Wexflow.Tasks.Md5
 {
-    public class Md5:Task
+    public class Md5 : Task
     {
         public Md5(XElement xe, Workflow wf)
             : base(xe, wf)
@@ -19,8 +19,8 @@ namespace Wexflow.Tasks.Md5
         {
             Info("Generating MD5 sums...");
 
-            bool success = true;
-            bool atLeastOneSucceed = false;
+            var success = true;
+            var atLeastOneSucceed = false;
 
             var files = SelectFiles();
 
@@ -29,22 +29,22 @@ namespace Wexflow.Tasks.Md5
                 var md5Path = Path.Combine(Workflow.WorkflowTempFolder,
                     string.Format("MD5_{0:yyyy-MM-dd-HH-mm-ss-fff}.xml", DateTime.Now));
 
-                var xdoc = new XDocument(new XElement("Files"));
-                foreach (FileInf file in files)
+                XDocument xdoc = new(new XElement("Files"));
+                foreach (var file in files)
                 {
                     try
                     {
                         var md5 = GetMd5(file.Path);
-                        if (xdoc.Root != null)
-                        {
-                            xdoc.Root.Add(new XElement("File",
+                        xdoc.Root?.Add(new XElement("File",
                                 new XAttribute("path", file.Path),
                                 new XAttribute("name", file.FileName),
                                 new XAttribute("md5", md5)));
-                        }
                         InfoFormat("Md5 of the file {0} is {1}", file.Path, md5);
-                        
-                        if (!atLeastOneSucceed) atLeastOneSucceed = true;
+
+                        if (!atLeastOneSucceed)
+                        {
+                            atLeastOneSucceed = true;
+                        }
                     }
                     catch (ThreadAbortException)
                     {
@@ -75,19 +75,17 @@ namespace Wexflow.Tasks.Md5
             return new TaskStatus(status, false);
         }
 
-        private string GetMd5(string filePath)
+        private static string GetMd5(string filePath)
         {
-            var sb = new StringBuilder();
-            using (MD5 md5 = MD5.Create())
+            StringBuilder sb = new();
+            using (var md5 = MD5.Create())
             {
-                using (FileStream stream = File.OpenRead(filePath))
-                {
-                    var bytes = md5.ComputeHash(stream);
+                using var stream = File.OpenRead(filePath);
+                var bytes = md5.ComputeHash(stream);
 
-                    foreach (byte bt in bytes)
-                    {
-                        sb.Append(bt.ToString("x2"));
-                    }
+                foreach (var bt in bytes)
+                {
+                    _ = sb.Append(bt.ToString("x2"));
                 }
             }
             return sb.ToString();

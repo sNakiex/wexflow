@@ -23,7 +23,7 @@ namespace Wexflow.Tasks.VimeoListUploads
         {
             Info("Listing uploads...");
 
-            Status status = Status.Success;
+            var status = Status.Success;
 
             try
             {
@@ -66,6 +66,5 @@ namespace Wexflow.Tasks.VimeoListUploads
             Info("Task finished.");
             return new TaskStatus(status);
         }
-
     }
 }

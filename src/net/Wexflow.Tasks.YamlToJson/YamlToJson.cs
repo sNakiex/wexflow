@@ -86,13 +86,16 @@ namespace Wexflow.Tasks.YamlToJson
                     var serializer = new JsonSerializer();
                     var writer = new StringWriter();
                     serializer.Serialize(writer, yamlObject);
-                    string json = writer.ToString();
+                    var json = writer.ToString();
 
                     var destPath = Path.Combine(Workflow.WorkflowTempFolder, Path.GetFileNameWithoutExtension(yamlFile.FileName) + ".json");
                     File.WriteAllText(destPath, json);
                     Files.Add(new FileInf(destPath, Id));
                     InfoFormat("The YAML file {0} has been converted -> {1}", yamlFile.Path, destPath);
-                    if (!atLeastOneSuccess) atLeastOneSuccess = true;
+                    if (!atLeastOneSuccess)
+                    {
+                        atLeastOneSuccess = true;
+                    }
                 }
                 catch (ThreadAbortException)
                 {

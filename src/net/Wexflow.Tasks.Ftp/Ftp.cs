@@ -1,7 +1,7 @@
 ﻿using System;
-using Wexflow.Core;
-using System.Xml.Linq;
 using System.Threading;
+using System.Xml.Linq;
+using Wexflow.Core;
 
 namespace Wexflow.Tasks.Ftp
 {
@@ -114,14 +114,18 @@ namespace Wexflow.Tasks.Ftp
             var success = true;
             if (_cmd == FtpCommad.List)
             {
-                int r = 0;
+                var r = 0;
                 while (r <= _retryCount)
                 {
                     try
                     {
                         var files = _plugin.List();
                         Files.AddRange(files);
-                        if (!atLeastOneSuccess) atLeastOneSuccess = true;
+                        if (!atLeastOneSuccess)
+                        {
+                            atLeastOneSuccess = true;
+                        }
+
                         break;
                     }
                     catch (ThreadAbortException)
@@ -148,11 +152,11 @@ namespace Wexflow.Tasks.Ftp
             else
             {
                 var files = SelectFiles();
-                for (int i = files.Length - 1; i > -1; i--)
+                for (var i = files.Length - 1; i > -1; i--)
                 {
-                    FileInf file = files[i];
+                    var file = files[i];
 
-                    int r = 0;
+                    var r = 0;
                     while (r <= _retryCount)
                     {
                         try
@@ -167,11 +171,15 @@ namespace Wexflow.Tasks.Ftp
                                     break;
                                 case FtpCommad.Delete:
                                     _plugin.Delete(file);
-                                    Workflow.FilesPerTask[file.TaskId].Remove(file);
+                                    _ = Workflow.FilesPerTask[file.TaskId].Remove(file);
                                     break;
                             }
 
-                            if (!atLeastOneSuccess) atLeastOneSuccess = true;
+                            if (!atLeastOneSuccess)
+                            {
+                                atLeastOneSuccess = true;
+                            }
+
                             break;
                         }
                         catch (ThreadAbortException)
@@ -198,6 +206,5 @@ namespace Wexflow.Tasks.Ftp
             }
             return success;
         }
-
     }
 }

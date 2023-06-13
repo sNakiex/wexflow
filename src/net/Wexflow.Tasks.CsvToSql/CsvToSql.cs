@@ -23,8 +23,8 @@ namespace Wexflow.Tasks.CsvToSql
         {
             Info("Converting CSV to SQL...");
 
-            bool succeeded = true;
-            bool atLeastOneSucceed = false;
+            var succeeded = true;
+            var atLeastOneSucceed = false;
 
             try
             {
@@ -32,12 +32,14 @@ namespace Wexflow.Tasks.CsvToSql
 
                 foreach (var csvFile in csvFiles)
                 {
-                    string sqlPath = Path.Combine(Workflow.WorkflowTempFolder,
+                    var sqlPath = Path.Combine(Workflow.WorkflowTempFolder,
                         string.Format("{0}_{1:yyyy-MM-dd-HH-mm-ss-fff}.sql", Path.GetFileNameWithoutExtension(csvFile.FileName), DateTime.Now));
                     succeeded &= ConvertCsvToSql(csvFile.Path, sqlPath, TableName, Separator);
-                    if (succeeded && !atLeastOneSucceed) atLeastOneSucceed = true;
+                    if (succeeded && !atLeastOneSucceed)
+                    {
+                        atLeastOneSucceed = true;
+                    }
                 }
-
             }
             catch (ThreadAbortException)
             {
@@ -68,36 +70,33 @@ namespace Wexflow.Tasks.CsvToSql
         {
             try
             {
-                using (StreamReader sr = new StreamReader(csvPath))
-                using (StreamWriter sw = new StreamWriter(sqlPath))
+                using (var sr = new StreamReader(csvPath))
+                using (var sw = new StreamWriter(sqlPath))
                 {
-                    string columnsLine = sr.ReadLine(); // First line contains columns
+                    var columnsLine = sr.ReadLine(); // First line contains columns
                     string line;
                     while (!string.IsNullOrEmpty(line = sr.ReadLine()))
                     {
-                        sw.Write("INSERT INTO " + tableName + "(" + columnsLine.Replace(separator, ",").TrimEnd(',') + ")" + " VALUES ");
+                        sw.Write($"INSERT INTO {tableName}({columnsLine.Replace(separator, ",").TrimEnd(',')}) VALUES ");
                         sw.Write("(");
                         var values = line.Split(new string[] { separator }, StringSplitOptions.RemoveEmptyEntries);
                         foreach (var value in values)
                         {
-                            int i;
-                            double d;
-                            float f;
-                            if (int.TryParse(value, out i))
+                            if (int.TryParse(value, out var i))
                             {
                                 sw.Write(i);
                             }
-                            else if (double.TryParse(value, out d))
+                            else if (double.TryParse(value, out var d))
                             {
                                 sw.Write(d);
                             }
-                            else if (float.TryParse(value, out f))
+                            else if (float.TryParse(value, out var f))
                             {
                                 sw.Write(f);
                             }
                             else
                             {
-                                sw.Write("'" + value + "'");
+                                sw.Write($"'{value}'");
                             }
 
                             if (!values.Last().Equals(value))
@@ -120,6 +119,5 @@ namespace Wexflow.Tasks.CsvToSql
                 return false;
             }
         }
-
     }
 }

@@ -1,8 +1,9 @@
 ﻿using Newtonsoft.Json;
 using System;
-using System.Net;
+using System.Net.Http;
 using System.Security.Cryptography;
 using System.Text;
+using System.Threading.Tasks;
 using Wexflow.Core.Service.Contracts;
 
 namespace Wexflow.Core.Service.Client
@@ -16,108 +17,116 @@ namespace Wexflow.Core.Service.Client
             Uri = uri.TrimEnd('/');
         }
 
+        private static async Task<string> DownloadStringAsync(HttpClient client, string url, string username, string password)
+        {
+            HttpRequestMessage request = new(HttpMethod.Get, url);
+            request.Headers.Add("Authorization", $"Basic {Base64Encode($"{username}:{GetMd5(password)}")}");
+            var response = client.Send(request);
+            var byteArray = await response.Content.ReadAsByteArrayAsync();
+            var responseString = Encoding.UTF8.GetString(byteArray, 0, byteArray.Length);
+            return responseString;
+        }
+
+        private static async Task<string> UploadStringAsync(HttpClient client, string url, string username, string password)
+        {
+            HttpRequestMessage request = new(HttpMethod.Post, url);
+            request.Headers.Add("Authorization", $"Basic {Base64Encode($"{username}:{GetMd5(password)}")}");
+            var response = client.Send(request);
+            var byteArray = await response.Content.ReadAsByteArrayAsync();
+            var responseString = Encoding.UTF8.GetString(byteArray, 0, byteArray.Length);
+            return responseString;
+        }
+
         private static string GetMd5(string input)
         {
             // Use input string to calculate MD5 hash
-            using (MD5 md5 = MD5.Create())
-            {
-                byte[] inputBytes = Encoding.ASCII.GetBytes(input);
-                byte[] hashBytes = md5.ComputeHash(inputBytes);
+            var inputBytes = Encoding.ASCII.GetBytes(input);
+            var hashBytes = MD5.HashData(inputBytes);
 
-                // Convert the byte array to hexadecimal string
-                StringBuilder sb = new StringBuilder();
-                for (int i = 0; i < hashBytes.Length; i++)
-                {
-                    sb.Append(hashBytes[i].ToString("x2"));
-                }
-                return sb.ToString();
+            // Convert the byte array to hexadecimal string
+            StringBuilder sb = new();
+            for (var i = 0; i < hashBytes.Length; i++)
+            {
+                _ = sb.Append(hashBytes[i].ToString("x2"));
             }
+            return sb.ToString();
         }
 
         private static string Base64Encode(string plainText)
         {
             var plainTextBytes = Encoding.UTF8.GetBytes(plainText);
-            return System.Convert.ToBase64String(plainTextBytes);
+            return Convert.ToBase64String(plainTextBytes);
         }
 
-        public WorkflowInfo[] Search(string keyword, string username, string password)
+        public async Task<WorkflowInfo[]> Search(string keyword, string username, string password)
         {
-            string uri = Uri + "/search?s=" + keyword;
-            var webClient = new WebClient { Encoding = Encoding.UTF8 };
-            webClient.Headers.Add("Authorization", Base64Encode(username + ":" + GetMd5(password)));
-            var response = webClient.DownloadString(uri);
+            var uri = $"{Uri}/search?s={keyword}";
+            using HttpClient webClient = new();
+
+            var response = await DownloadStringAsync(webClient, uri, username, password);
             var workflows = JsonConvert.DeserializeObject<WorkflowInfo[]>(response);
             return workflows;
         }
 
-        public Guid StartWorkflow(int id, string username, string password)
+        public async Task<Guid> StartWorkflow(int id, string username, string password)
         {
-            string uri = Uri + "/start?w=" + id;
-            var webClient = new WebClient();
-            webClient.Headers.Add("Authorization", Base64Encode(username + ":" + GetMd5(password)));
-            var instanceId = webClient.UploadString(uri, string.Empty);
+            var uri = $"{Uri}/start?w={id}";
+            using HttpClient webClient = new();
+            var instanceId = await UploadStringAsync(webClient, uri, username, password);
             return Guid.Parse(instanceId.Replace("\"", string.Empty));
         }
 
-        public void StopWorkflow(int id, Guid instanceId, string username, string password)
+        public async Task StopWorkflow(int id, Guid instanceId, string username, string password)
         {
-            string uri = Uri + "/stop?w=" + id + "&i=" + instanceId;
-            var webClient = new WebClient();
-            webClient.Headers.Add("Authorization", Base64Encode(username + ":" + GetMd5(password)));
-            webClient.UploadString(uri, string.Empty);
+            var uri = $"{Uri}/stop?w={id}&i={instanceId}";
+            using HttpClient webClient = new();
+            _ = await UploadStringAsync(webClient, uri, username, password);
         }
 
-        public void SuspendWorkflow(int id, Guid instanceId, string username, string password)
+        public async Task SuspendWorkflow(int id, Guid instanceId, string username, string password)
         {
-            string uri = Uri + "/suspend?w=" + id + "&i=" + instanceId;
-            var webClient = new WebClient();
-            webClient.Headers.Add("Authorization", Base64Encode(username + ":" + GetMd5(password)));
-            webClient.UploadString(uri, string.Empty);
+            var uri = $"{Uri}/suspend?w={id}&i={instanceId}";
+            using HttpClient webClient = new();
+            _ = await UploadStringAsync(webClient, uri, username, password);
         }
 
-        public void ResumeWorkflow(int id, Guid instanceId, string username, string password)
+        public async Task ResumeWorkflow(int id, Guid instanceId, string username, string password)
         {
-            string uri = Uri + "/resume?w=" + id + "&i=" + instanceId;
-            var webClient = new WebClient();
-            webClient.Headers.Add("Authorization", Base64Encode(username + ":" + GetMd5(password)));
-            webClient.UploadString(uri, string.Empty);
+            var uri = $"{Uri}/resume?w={id}&i={instanceId}";
+            using HttpClient webClient = new();
+            _ = await UploadStringAsync(webClient, uri, username, password);
         }
 
-        public void ApproveWorkflow(int id, Guid instanceId, string username, string password)
+        public async Task ApproveWorkflow(int id, Guid instanceId, string username, string password)
         {
-            string uri = Uri + "/approve?w=" + id + "&i=" + instanceId;
-            var webClient = new WebClient();
-            webClient.Headers.Add("Authorization", Base64Encode(username + ":" + GetMd5(password)));
-            webClient.UploadString(uri, string.Empty);
+            var uri = $"{Uri}/approve?w={id}&i={instanceId}";
+            using HttpClient webClient = new();
+            _ = await UploadStringAsync(webClient, uri, username, password);
         }
 
-        public void RejectWorkflow(int id, Guid instanceId, string username, string password)
+        public async Task RejectWorkflow(int id, Guid instanceId, string username, string password)
         {
-            string uri = Uri + "/reject?w=" + id + "&i=" + instanceId;
-            var webClient = new WebClient();
-            webClient.Headers.Add("Authorization", Base64Encode(username + ":" + GetMd5(password)));
-            webClient.UploadString(uri, string.Empty);
+            var uri = $"{Uri}/reject?w={id}&i={instanceId}";
+            using HttpClient webClient = new();
+            _ = await UploadStringAsync(webClient, uri, username, password);
         }
 
-        public WorkflowInfo GetWorkflow(string username, string password, int id)
+        public async Task<WorkflowInfo> GetWorkflow(string username, string password, int id)
         {
-            string uri = Uri + "/workflow?w=" + id;
-            var webClient = new WebClient();
-            webClient.Headers.Add("Authorization", Base64Encode(username + ":" + GetMd5(password)));
-            var response = webClient.DownloadString(uri);
+            var uri = $"{Uri}/workflow?w={id}";
+            using HttpClient webClient = new();
+            var response = await DownloadStringAsync(webClient, uri, username, password);
             var workflow = JsonConvert.DeserializeObject<WorkflowInfo>(response);
             return workflow;
         }
 
-        public User GetUser(string qusername, string qpassword, string username)
+        public async Task<User> GetUser(string qusername, string qpassword, string username)
         {
-            string uri = Uri + "/user?username=" + username;
-            var webClient = new WebClient();
-            webClient.Headers.Add("Authorization", Base64Encode(qusername + ":" + GetMd5(qpassword)));
-            var response = webClient.DownloadString(uri);
+            var uri = $"{Uri}/user?username={System.Uri.EscapeDataString(username)}";
+            using HttpClient webClient = new();
+            var response = await DownloadStringAsync(webClient, uri, qusername, qpassword);
             var user = JsonConvert.DeserializeObject<User>(response);
             return user;
         }
-
     }
 }

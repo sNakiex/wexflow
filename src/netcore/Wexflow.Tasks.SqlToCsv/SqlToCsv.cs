@@ -4,6 +4,7 @@ using Oracle.ManagedDataAccess.Client;
 using System;
 using System.Collections.Generic;
 using System.Data.Common;
+using System.Data.Odbc;
 using System.Data.OleDb;
 using System.Data.SqlClient;
 using System.Data.SQLite;
@@ -12,7 +13,6 @@ using System.Threading;
 using System.Xml.Linq;
 using Teradata.Client.Provider;
 using Wexflow.Core;
-using System.Data.Odbc;
 
 namespace Wexflow.Tasks.SqlToCsv
 {
@@ -37,7 +37,7 @@ namespace Wexflow.Tasks.SqlToCsv
         public string QuoteString { get; }
         public string EndOfLine { get; }
         public bool Headers { get; }
-        public bool SingleRecordHeaders{ get; }
+        public bool SingleRecordHeaders { get; }
         public bool DoNotGenerateFilesIfEmpty { get; }
 
         public SqlToCsv(XElement xe, Workflow wf)
@@ -49,8 +49,16 @@ namespace Wexflow.Tasks.SqlToCsv
             QuoteString = GetSetting("quote", string.Empty);
             EndOfLine = GetSetting("endline", "\r\n");
             Separator = QuoteString + GetSetting("separator", ";") + QuoteString;
-            if (bool.TryParse(GetSetting("headers", bool.TrueString), out var result1)) Headers = result1;
-            if (bool.TryParse(GetSetting("singlerecordheaders", bool.TrueString), out var result2)) SingleRecordHeaders = result2;
+            if (bool.TryParse(GetSetting("headers", bool.TrueString), out var result1))
+            {
+                Headers = result1;
+            }
+
+            if (bool.TryParse(GetSetting("singlerecordheaders", bool.TrueString), out var result2))
+            {
+                SingleRecordHeaders = result2;
+            }
+
             DoNotGenerateFilesIfEmpty = bool.Parse(GetSetting("doNotGenerateFilesIfEmpty", "false"));
         }
 
@@ -58,8 +66,8 @@ namespace Wexflow.Tasks.SqlToCsv
         {
             Info("Executing SQL scripts...");
 
-            bool success = true;
-            bool atLeastOneSucceed = false;
+            var success = true;
+            var atLeastOneSucceed = false;
 
             // Execute SqlScript if necessary
             try
@@ -81,7 +89,7 @@ namespace Wexflow.Tasks.SqlToCsv
             }
 
             // Execute SQL files scripts
-            foreach (FileInf file in SelectFiles())
+            foreach (var file in SelectFiles())
             {
                 try
                 {
@@ -89,7 +97,10 @@ namespace Wexflow.Tasks.SqlToCsv
                     ExecuteSql(sql);
                     InfoFormat("The script {0} has been executed.", file.Path);
 
-                    if (!atLeastOneSucceed) atLeastOneSucceed = true;
+                    if (!atLeastOneSucceed)
+                    {
+                        atLeastOneSucceed = true;
+                    }
                 }
                 catch (ThreadAbortException)
                 {
@@ -122,57 +133,61 @@ namespace Wexflow.Tasks.SqlToCsv
             switch (DbType)
             {
                 case Type.SqlServer:
-                    using (var connection = new SqlConnection(ConnectionString))
-                    using (var command = new SqlCommand(sql, connection))
+                    using (SqlConnection connection = new(ConnectionString))
+                    using (SqlCommand command = new(sql, connection))
                     {
                         ConvertToCsv(connection, command);
                     }
                     break;
                 case Type.Access:
-                    using (var connection = new OleDbConnection(ConnectionString))
-                    using (var command = new OleDbCommand(sql, connection))
+
+#pragma warning disable CA1416 // Valider la compatibilité de la plateforme
+                    using (OleDbConnection connection = new(ConnectionString))
+                    using (OleDbCommand command = new(sql, connection))
                     {
                         ConvertToCsv(connection, command);
                     }
+#pragma warning restore CA1416 // Valider la compatibilité de la plateforme
+
                     break;
                 case Type.Oracle:
-                    using (var connection = new OracleConnection(ConnectionString))
-                    using (var command = new OracleCommand(sql, connection))
+                    using (OracleConnection connection = new(ConnectionString))
+                    using (OracleCommand command = new(sql, connection))
                     {
                         ConvertToCsv(connection, command);
                     }
                     break;
                 case Type.MySql:
-                    using (var connection = new MySqlConnection(ConnectionString))
-                    using (var command = new MySqlCommand(sql, connection))
+                    using (MySqlConnection connection = new(ConnectionString))
+                    using (MySqlCommand command = new(sql, connection))
                     {
                         ConvertToCsv(connection, command);
                     }
                     break;
                 case Type.Sqlite:
-                    using (var connection = new SQLiteConnection(ConnectionString))
-                    using (var command = new SQLiteCommand(sql, connection))
+                    using (SQLiteConnection connection = new(ConnectionString))
+                    using (SQLiteCommand command = new(sql, connection))
                     {
                         ConvertToCsv(connection, command);
                     }
                     break;
                 case Type.PostGreSql:
-                    using (var connection = new NpgsqlConnection(ConnectionString))
-                    using (var command = new NpgsqlCommand(sql, connection))
+                    using (NpgsqlConnection connection = new(ConnectionString))
+                    using (NpgsqlCommand command = new(sql, connection))
                     {
                         ConvertToCsv(connection, command);
                     }
                     break;
                 case Type.Teradata:
-                    using (var connection = new TdConnection(ConnectionString))
-                    using (var command = new TdCommand(sql, connection))
+                    using (TdConnection connection = new(ConnectionString))
+                    using (TdCommand command = new(sql, connection))
                     {
                         ConvertToCsv(connection, command);
                     }
                     break;
                 case Type.Odbc:
-                    using (var connection = new OdbcConnection(ConnectionString))
-                    using (var command = new OdbcCommand(sql, connection))
+                    using (OdbcConnection connection = new(ConnectionString))
+                    using (OdbcCommand command = new(sql, connection))
                     {
                         ConvertToCsv(connection, command);
                     }
@@ -184,19 +199,19 @@ namespace Wexflow.Tasks.SqlToCsv
         {
             conn.Open();
             var reader = comm.ExecuteReader();
-            string destPath = Path.Combine(Workflow.WorkflowTempFolder, string.Format("SqlToCsv_{0:yyyy-MM-dd-HH-mm-ss-fff}.csv", DateTime.Now));
+            var destPath = Path.Combine(Workflow.WorkflowTempFolder, string.Format("SqlToCsv_{0:yyyy-MM-dd-HH-mm-ss-fff}.csv", DateTime.Now));
 
-            using (var sw = new StreamWriter(destPath))
+            using (StreamWriter sw = new(destPath))
             {
-                bool hasRows = reader.HasRows;
+                var hasRows = reader.HasRows;
 
                 while (hasRows)
                 {
-                    List<string> columns = new List<string>();
-                    List<string> values = new List<string>();
-                    bool readColumns = false;
-                    bool headerDone = false;
-                    bool readRecord = false;
+                    List<string> columns = new();
+                    List<string> values = new();
+                    var readColumns = false;
+                    var headerDone = false;
+                    var readRecord = false;
                     while (reader.Read())
                     {
                         if (readRecord)
@@ -254,7 +269,6 @@ namespace Wexflow.Tasks.SqlToCsv
                 Files.Add(new FileInf(destPath, Id));
                 InfoFormat("CSV file generated: {0}", destPath);
             }
-
         }
     }
 }

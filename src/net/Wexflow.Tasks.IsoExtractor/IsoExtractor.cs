@@ -78,13 +78,13 @@ namespace Wexflow.Tasks.IsoExtractor
 
             if (isos.Length > 0)
             {
-                foreach (FileInf iso in isos)
+                foreach (var iso in isos)
                 {
                     try
                     {
-                        string destFolder = Path.Combine(DestDir
-                            , Path.GetFileNameWithoutExtension(iso.Path) + "_" + string.Format("{0:yyyy-MM-dd-HH-mm-ss-fff}", DateTime.Now));
-                        Directory.CreateDirectory(destFolder);
+                        var destFolder = Path.Combine(DestDir
+                            , $"{Path.GetFileNameWithoutExtension(iso.Path)}_{string.Format("{0:yyyy-MM-dd-HH-mm-ss-fff}", DateTime.Now)}");
+                        _ = Directory.CreateDirectory(destFolder);
 
                         ExtractIso(iso.Path, destFolder);
 
@@ -95,7 +95,10 @@ namespace Wexflow.Tasks.IsoExtractor
 
                         InfoFormat("ISO {0} extracted to {1}", iso.Path, destFolder);
 
-                        if (!atLeastOneSuccess) atLeastOneSuccess = true;
+                        if (!atLeastOneSuccess)
+                        {
+                            atLeastOneSuccess = true;
+                        }
                     }
                     catch (ThreadAbortException)
                     {
@@ -113,16 +116,16 @@ namespace Wexflow.Tasks.IsoExtractor
 
         private void ExtractIso(string isoPath, string destDir)
         {
-            using (FileStream isoStream = File.Open(isoPath, FileMode.Open))
+            using (var isoStream = File.Open(isoPath, FileMode.Open))
             {
-                CDReader cd = new CDReader(isoStream, true);
+                var cd = new CDReader(isoStream, true);
                 var files = cd.GetFiles("\\", "*.*", SearchOption.AllDirectories);
 
                 foreach (var file in files)
                 {
                     using (var stream = cd.OpenFile(file, FileMode.Open))
                     {
-                        var destFile = destDir.TrimEnd('\\') + "\\" + Regex.Replace(file.Replace("/", "\\"), @";\d*$", "").TrimStart('\\');
+                        var destFile = $"{destDir.TrimEnd('\\')}\\{Regex.Replace(file.Replace("/", "\\"), @";\d*$", "").TrimStart('\\')}";
 
                         // Create directories
                         var destFolder = Path.GetDirectoryName(destFile);
@@ -136,13 +139,13 @@ namespace Wexflow.Tasks.IsoExtractor
 
                         if (!Directory.Exists(finalDestFolder))
                         {
-                            Directory.CreateDirectory(finalDestFolder);
+                            _ = Directory.CreateDirectory(finalDestFolder);
                         }
 
                         // Create the file
-                        using (FileStream sw = new FileStream(destFile, FileMode.CreateNew))
+                        using (var sw = new FileStream(destFile, FileMode.CreateNew))
                         {
-                            byte[] buffer = new byte[2048];
+                            var buffer = new byte[2048];
                             int bytesRead;
                             while ((bytesRead = stream.Read(buffer, 0, buffer.Length)) > 0)
                             {
@@ -150,11 +153,8 @@ namespace Wexflow.Tasks.IsoExtractor
                             }
                         }
                     }
-
                 }
-
             }
         }
-
     }
 }

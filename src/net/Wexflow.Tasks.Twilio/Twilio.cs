@@ -29,7 +29,7 @@ namespace Wexflow.Tasks.Twilio
         {
             Info("Sending SMS...");
 
-            bool success = true;
+            var success = true;
 
             try
             {

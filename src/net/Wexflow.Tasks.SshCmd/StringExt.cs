@@ -12,6 +12,9 @@ namespace Wexflow.Tasks.SshCmd
             return index >= 0 ? str.Substring(index + substring.Length) : string.Empty;
         }
 
-        public static string[] GetLines(this string str) => Regex.Split(str, "\r\n|\r|\n");
+        public static string[] GetLines(this string str)
+        {
+            return Regex.Split(str, "\r\n|\r|\n");
+        }
     }
 }

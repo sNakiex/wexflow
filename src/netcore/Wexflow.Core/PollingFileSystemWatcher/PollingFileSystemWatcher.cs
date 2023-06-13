@@ -2,12 +2,14 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+using System;
+using System.IO;
 using System.IO.Enumeration;
 using System.Runtime.InteropServices;
 using System.Runtime.Serialization;
 using System.Threading;
 
-namespace System.IO
+namespace Wexflow.Core.PollingFileSystemWatcher
 {
     /// <summary>
     /// PollingFileSystemWatcher can be used to monitor changes to a file system directory
@@ -26,7 +28,7 @@ namespace System.IO
     public class PollingFileSystemWatcher : IDisposable, ISerializable
     {
         private Timer _timer;
-        private PathToFileStateHashtable _state; // stores state of the directory
+        private readonly PathToFileStateHashtable _state; // stores state of the directory
         private long _version; // this is used to keep track of removals. // TODO: describe the algorithm
         private bool _started = false;
         private bool _disposed = false;
@@ -40,10 +42,14 @@ namespace System.IO
         public PollingFileSystemWatcher(string path, string filter = "*", EnumerationOptions options = null)
         {
             if (path == null)
+            {
                 throw new ArgumentNullException(nameof(path));
+            }
 
             if (!Directory.Exists(path))
+            {
                 throw new ArgumentException("Path not found.", nameof(path));
+            }
 
             _state = new PathToFileStateHashtable();
             Path = path;
@@ -55,9 +61,12 @@ namespace System.IO
         private void Initialize()
         {
             _timer = new Timer(new TimerCallback(TimerHandler));
-            if (!_started) return;
+            if (!_started)
+            {
+                return;
+            }
 
-            _timer.Change(PollingInterval, Timeout.Infinite);
+            _ = _timer.Change(PollingInterval, Timeout.Infinite);
         }
 
         public EnumerationOptions EnumerationOptions { get; set; } = new EnumerationOptions();
@@ -69,22 +78,32 @@ namespace System.IO
         /// </summary>
         public long PollingInterval
         {
-            get { return _pollingInterval; }
+            get => _pollingInterval;
             set
             {
                 _pollingInterval = value;
-                if (_started) _timer.Change(PollingInterval, Timeout.Infinite);
+                if (_started)
+                {
+                    _ = _timer.Change(PollingInterval, Timeout.Infinite);
+                }
             }
         }
 
         public void Start()
         {
-            if (_disposed) throw new ObjectDisposedException(nameof(PollingFileSystemWatcher));
-            if (_started) return;
+            if (_disposed)
+            {
+                throw new ObjectDisposedException(nameof(PollingFileSystemWatcher));
+            }
+
+            if (_started)
+            {
+                return;
+            }
 
             _started = true;
-            ComputeChangesAndUpdateState(); // captures the initial state
-            _timer.Change(PollingInterval, Timeout.Infinite);
+            _ = ComputeChangesAndUpdateState(); // captures the initial state
+            _ = _timer.Change(PollingInterval, Timeout.Infinite);
         }
 
         // This function walks all watched files, collects changes, and updates state
@@ -92,14 +111,14 @@ namespace System.IO
         {
             _version++;
 
-            var enumerator = new FileSystemChangeEnumerator(this, Path, EnumerationOptions);
+            FileSystemChangeEnumerator enumerator = new(this, Path, EnumerationOptions);
             while (enumerator.MoveNext())
             {
                 // Ignore `.Current`
             }
-            FileChangeList changes = enumerator.Changes;
+            var changes = enumerator.Changes;
 
-            foreach (FileState value in _state)
+            foreach (var value in _state)
             {
                 if (value._version != _version)
                 {
@@ -113,38 +132,47 @@ namespace System.IO
 
         protected internal virtual bool ShouldIncludeEntry(ref FileSystemEntry entry)
         {
-            if (entry.IsDirectory) return false;
-            if (Filter == null) return true;
+            if (entry.IsDirectory)
+            {
+                return false;
+            }
 
-            bool ignoreCase = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) || RuntimeInformation.IsOSPlatform(OSPlatform.OSX);
-            if (FileSystemName.MatchesSimpleExpression(Filter, entry.FileName, ignoreCase: ignoreCase))
+            if (Filter == null)
+            {
                 return true;
+            }
 
-            return false;
+            var ignoreCase = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) || RuntimeInformation.IsOSPlatform(OSPlatform.OSX);
+            return FileSystemName.MatchesSimpleExpression(Filter, entry.FileName, ignoreCase: ignoreCase);
         }
 
-        protected internal virtual bool ShouldRecurseIntoEntry(ref FileSystemEntry entry) => true;
+        protected internal virtual bool ShouldRecurseIntoEntry(ref FileSystemEntry entry)
+        {
+            return true;
+        }
 
         internal void UpdateState(string directory, ref FileChangeList changes, ref FileSystemEntry file)
         {
-            int index = _state.IndexOf(directory, file.FileName);
+            var index = _state.IndexOf(directory, file.FileName);
             if (index == -1) // file added
             {
-                string path = file.FileName.ToString();
+                var path = file.FileName.ToString();
 
                 changes.AddAdded(directory, path.ToString());
 
-                var newFileState = new FileState(directory, path);
-                newFileState.LastWriteTimeUtc = file.LastWriteTimeUtc;
-                newFileState.Length = file.Length;
-                newFileState._version = _version;
+                FileState newFileState = new(directory, path)
+                {
+                    LastWriteTimeUtc = file.LastWriteTimeUtc,
+                    Length = file.Length,
+                    _version = _version
+                };
                 _state.Add(directory, path, newFileState);
                 return;
             }
 
             _state.Values[index]._version = _version;
 
-            FileState previousState = _state.Values[index];
+            var previousState = _state.Values[index];
             if (file.LastWriteTimeUtc != previousState.LastWriteTimeUtc || file.Length != previousState.Length)
             {
                 changes.AddChanged(directory, previousState.Path);
@@ -176,9 +204,11 @@ namespace System.IO
         public bool Dispose(WaitHandle notifyObject)
         {
             _disposed = true;
-            bool isSuccess = _timer.Dispose(notifyObject);
+            var isSuccess = _timer.Dispose(notifyObject);
             Dispose(true);
+#pragma warning disable CA1816 // Les méthodes Dispose doivent appeler SuppressFinalize
             GC.SuppressFinalize(this);
+#pragma warning restore CA1816 // Les méthodes Dispose doivent appeler SuppressFinalize
 
             return isSuccess;
         }
@@ -191,7 +221,7 @@ namespace System.IO
         {
             try
             {
-                FileChangeList changes = ComputeChangesAndUpdateState();
+                var changes = ComputeChangesAndUpdateState();
 
                 if (!changes.IsEmpty)
                 {
@@ -205,7 +235,9 @@ namespace System.IO
             }
 
             if (!_disposed)
-                _timer.Change(PollingInterval, Timeout.Infinite);
+            {
+                _ = _timer.Change(PollingInterval, Timeout.Infinite);
+            }
         }
 
         #region Serializable

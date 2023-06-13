@@ -3,11 +3,11 @@
 // See the LICENSE file in the project root for more information.
 
 using System.Diagnostics;
+using System.IO;
 
-namespace System.IO
+namespace Wexflow.Core.PollingFileSystemWatcher
 {
-
-    public struct FileChange
+    public readonly struct FileChange
     {
         internal FileChange(string directory, string path, WatcherChangeTypes type)
         {

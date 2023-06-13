@@ -10,7 +10,7 @@ namespace Wexflow.Tasks.ApprovalWorkflowsCreator
 {
     public class ApprovalWorkflowsCreator : Task
     {
-        private static string smKey = "ApprovalRecordsCreator.RecordIds";
+        private static readonly string smKey = "ApprovalRecordsCreator.RecordIds";
 
         public string AssignedTo { get; private set; }
         public string Approver { get; private set; }
@@ -32,7 +32,6 @@ namespace Wexflow.Tasks.ApprovalWorkflowsCreator
 
             try
             {
-
                 if (!SharedMemory.ContainsKey(smKey))
                 {
                     Error($"Shared memory key {smKey} not found.");
@@ -83,7 +82,7 @@ namespace Wexflow.Tasks.ApprovalWorkflowsCreator
                                     workflow = Workflow.WexflowEngine.GetWorkflow(workflowId); // Reload the workflow
                                 }
 
-                                workflow.StartAsync(Approver);
+                                _ = workflow.StartAsync(Approver);
                                 Info($"Approval Workflow of the record {recordId} - {record.Name} created and started successfully.");
                                 if (!atLeastOneSuccess)
                                 {

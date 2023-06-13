@@ -1,8 +1,8 @@
 ﻿using System;
-using Wexflow.Core;
-using System.Xml.Linq;
 using System.IO;
 using System.Threading;
+using System.Xml.Linq;
+using Wexflow.Core;
 
 namespace Wexflow.Tasks.Touch
 {
@@ -72,7 +72,7 @@ namespace Wexflow.Tasks.Touch
         private bool TouchFiles(ref bool atLeastOneSucceed)
         {
             var success = true;
-            foreach (string file in Tfiles)
+            foreach (var file in Tfiles)
             {
                 try
                 {
@@ -80,7 +80,10 @@ namespace Wexflow.Tasks.Touch
                     InfoFormat("File {0} created.", file);
                     Files.Add(new FileInf(file, Id));
 
-                    if (!atLeastOneSucceed) atLeastOneSucceed = true;
+                    if (!atLeastOneSucceed)
+                    {
+                        atLeastOneSucceed = true;
+                    }
                 }
                 catch (ThreadAbortException)
                 {

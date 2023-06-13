@@ -4,18 +4,18 @@ using Oracle.ManagedDataAccess.Client;
 using System;
 using System.Collections.Generic;
 using System.Data.Common;
+using System.Data.Odbc;
 using System.Data.OleDb;
 using System.Data.SqlClient;
 using System.Data.SQLite;
+using System.Data.SqlTypes;
 using System.IO;
 using System.Security;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Xml.Linq;
 using Teradata.Client.Provider;
 using Wexflow.Core;
-using System.Data.Odbc;
-using System.Text.RegularExpressions;
-using System.Data.SqlTypes;
 
 namespace Wexflow.Tasks.SqlToXml
 {
@@ -58,8 +58,8 @@ namespace Wexflow.Tasks.SqlToXml
         {
             Info("Executing SQL scripts...");
 
-            bool success = true;
-            bool atLeastOneSuccess = false;
+            var success = true;
+            var atLeastOneSuccess = false;
 
             try
             {
@@ -123,7 +123,7 @@ namespace Wexflow.Tasks.SqlToXml
             }
 
             // Execute SQL files scripts
-            foreach (FileInf file in SelectFiles())
+            foreach (var file in SelectFiles())
             {
                 try
                 {
@@ -131,7 +131,10 @@ namespace Wexflow.Tasks.SqlToXml
                     ExecuteSql(sql);
                     InfoFormat("The script {0} has been executed.", file.Path);
 
-                    if (!atLeastOneSuccess) atLeastOneSuccess = true;
+                    if (!atLeastOneSuccess)
+                    {
+                        atLeastOneSuccess = true;
+                    }
                 }
                 catch (ThreadAbortException)
                 {
@@ -218,12 +221,12 @@ namespace Wexflow.Tasks.SqlToXml
             {
                 var columns = new List<string>();
 
-                for (int i = 0; i < reader.FieldCount; i++)
+                for (var i = 0; i < reader.FieldCount; i++)
                 {
                     columns.Add(reader.GetName(i));
                 }
 
-                string destPath = Path.Combine(Workflow.WorkflowTempFolder,
+                var destPath = Path.Combine(Workflow.WorkflowTempFolder,
                                                string.Format("SqlToXml_{0:yyyy-MM-dd-HH-mm-ss-fff}.xml",
                                                DateTime.Now));
                 var xdoc = new XDocument();
@@ -235,13 +238,11 @@ namespace Wexflow.Tasks.SqlToXml
 
                     foreach (var column in columns)
                     {
-                        string xmlvalue = CleanInvalidXmlChars(reader[column].ToString());
+                        var xmlvalue = CleanInvalidXmlChars(reader[column].ToString());
                         var columntype = reader[column].GetType();
-                        int number;
-                        decimal decnumber;
                         if (
-                            (columntype == typeof(Int32) && int.TryParse(xmlvalue, out number) && number == 0) ||
-                            (columntype == typeof(Decimal) && decimal.TryParse(xmlvalue, out decnumber) && decnumber == 0) ||
+                            (columntype == typeof(int) && int.TryParse(xmlvalue, out var number) && number == 0) ||
+                            (columntype == typeof(decimal) && decimal.TryParse(xmlvalue, out var decnumber) && decnumber == 0) ||
                             (columntype == typeof(DateTime) && (Convert.ToDateTime(xmlvalue) == SqlDateTime.MinValue || xmlvalue == "01-01-1900 00:00:00"))
                             )
                         {
@@ -256,7 +257,7 @@ namespace Wexflow.Tasks.SqlToXml
                     }
                     xobjects.Add(xobject);
                 }
-                
+
                 xdoc.Add(xobjects);
                 xdoc.Save(destPath);
                 Files.Add(new FileInf(destPath, Id));
@@ -269,7 +270,7 @@ namespace Wexflow.Tasks.SqlToXml
             // From xml spec valid chars: 
             // #x9 | #xA | #xD | [#x20-#xD7FF] | [#xE000-#xFFFD] | [#x10000-#x10FFFF]     
             // any Unicode character, excluding the surrogate blocks, FFFE, and FFFF. 
-            string re = @"[^\x09\x0A\x0D\x20-\xD7FF\xE000-\xFFFD\x10000-x10FFFF]";
+            var re = @"[^\x09\x0A\x0D\x20-\xD7FF\xE000-\xFFFD\x10000-x10FFFF]";
             return Regex.Replace(text, re, "");
         }
     }

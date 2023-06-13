@@ -1,12 +1,14 @@
 ﻿using System;
 using System.Drawing;
 using System.IO;
+using System.Runtime.Versioning;
 using System.Threading;
 using System.Xml.Linq;
 using Wexflow.Core;
 
 namespace Wexflow.Tasks.ImagesCropper
 {
+    [SupportedOSPlatform("windows")]
     public class ImagesCropper : Task
     {
         public int Width { get; set; }
@@ -26,18 +28,21 @@ namespace Wexflow.Tasks.ImagesCropper
         public override TaskStatus Run()
         {
             Info("Cropping images...");
-            Status status = Status.Success;
-            bool succeeded = true;
-            bool atLeastOneSuccess = false;
+            var status = Status.Success;
+            var succeeded = true;
+            var atLeastOneSuccess = false;
 
             try
             {
                 var images = SelectFiles();
                 foreach (var image in images)
                 {
-                    string destPath = Path.Combine(Workflow.WorkflowTempFolder, image.FileName);
+                    var destPath = Path.Combine(Workflow.WorkflowTempFolder, image.FileName);
                     succeeded &= Crop(image.Path, destPath);
-                    if (!atLeastOneSuccess && succeeded) atLeastOneSuccess = true;
+                    if (!atLeastOneSuccess && succeeded)
+                    {
+                        atLeastOneSuccess = true;
+                    }
                 }
 
                 if (!succeeded && atLeastOneSuccess)
@@ -67,14 +72,12 @@ namespace Wexflow.Tasks.ImagesCropper
         {
             try
             {
-                using (Image src = Image.FromFile(srcPath))
-                using (Image dest = Crop(src, X, Y, Width, Height))
-                {
-                    dest.Save(destPath);
-                    Files.Add(new FileInf(destPath, Id));
-                    InfoFormat("The image {0} was cropped -> {3}", srcPath, Width, Height, destPath);
-                    return true;
-                }
+                using var src = Image.FromFile(srcPath);
+                using var dest = Crop(src, X, Y, Width, Height);
+                dest.Save(destPath);
+                Files.Add(new FileInf(destPath, Id));
+                InfoFormat("The image {0} was cropped -> {3}", srcPath, Width, Height, destPath);
+                return true;
             }
             catch (ThreadAbortException)
             {
@@ -87,12 +90,12 @@ namespace Wexflow.Tasks.ImagesCropper
             }
         }
 
-        private Image Crop(Image src, int x, int y, int width, int height)
+        private static Image Crop(Image src, int x, int y, int width, int height)
         {
-            Rectangle cropRect = new Rectangle(x, y, width, height);
-            Bitmap target = new Bitmap(cropRect.Width, cropRect.Height);
+            Rectangle cropRect = new(x, y, width, height);
+            Bitmap target = new(cropRect.Width, cropRect.Height);
 
-            using (Graphics g = Graphics.FromImage(target))
+            using (var g = Graphics.FromImage(target))
             {
                 g.DrawImage(src, new Rectangle(0, 0, target.Width, target.Height),
                                  cropRect,
@@ -100,6 +103,5 @@ namespace Wexflow.Tasks.ImagesCropper
             }
             return target;
         }
-
     }
 }

@@ -68,7 +68,7 @@ namespace Wexflow.Core.Db.Oracle
                     + statusCount.RejectedCount + ")"
                     , conn))
                 {
-                    command.ExecuteNonQuery();
+                    _ = command.ExecuteNonQuery();
                 }
             }
 
@@ -109,7 +109,6 @@ namespace Wexflow.Core.Db.Oracle
 
                         return count > 0;
                     }
-
                 }
             }
         }
@@ -124,7 +123,7 @@ namespace Wexflow.Core.Db.Oracle
 
                     using (var command = new OracleCommand("DELETE FROM " + Core.Db.Entry.DocumentName, conn))
                     {
-                        command.ExecuteNonQuery();
+                        _ = command.ExecuteNonQuery();
                     }
                 }
             }
@@ -140,7 +139,7 @@ namespace Wexflow.Core.Db.Oracle
 
                     using (var command = new OracleCommand("DELETE FROM " + Core.Db.StatusCount.DocumentName, conn))
                     {
-                        command.ExecuteNonQuery();
+                        _ = command.ExecuteNonQuery();
                     }
                 }
             }
@@ -159,7 +158,7 @@ namespace Wexflow.Core.Db.Oracle
                         + " AND " + User.ColumnName_Password + " = '" + password + "'"
                         , conn))
                     {
-                        command.ExecuteNonQuery();
+                        _ = command.ExecuteNonQuery();
                     }
                 }
             }
@@ -176,7 +175,7 @@ namespace Wexflow.Core.Db.Oracle
                     using (var command = new OracleCommand("DELETE FROM " + Core.Db.UserWorkflow.DocumentName
                         + " WHERE " + UserWorkflow.ColumnName_UserId + " = " + int.Parse(userId), conn))
                     {
-                        command.ExecuteNonQuery();
+                        _ = command.ExecuteNonQuery();
                     }
                 }
             }
@@ -193,7 +192,7 @@ namespace Wexflow.Core.Db.Oracle
                     using (var command = new OracleCommand("DELETE FROM " + Core.Db.UserWorkflow.DocumentName
                         + " WHERE " + UserWorkflow.ColumnName_WorkflowId + " = " + int.Parse(workflowDbId), conn))
                     {
-                        command.ExecuteNonQuery();
+                        _ = command.ExecuteNonQuery();
                     }
                 }
             }
@@ -210,7 +209,7 @@ namespace Wexflow.Core.Db.Oracle
                     using (var command = new OracleCommand("DELETE FROM " + Core.Db.Workflow.DocumentName
                         + " WHERE " + Workflow.ColumnName_Id + " = " + int.Parse(id), conn))
                     {
-                        command.ExecuteNonQuery();
+                        _ = command.ExecuteNonQuery();
                     }
                 }
             }
@@ -226,24 +225,17 @@ namespace Wexflow.Core.Db.Oracle
 
                     var builder = new StringBuilder("(");
 
-                    for (int i = 0; i < ids.Length; i++)
+                    for (var i = 0; i < ids.Length; i++)
                     {
                         var id = ids[i];
-                        builder.Append(id);
-                        if (i < ids.Length - 1)
-                        {
-                            builder.Append(", ");
-                        }
-                        else
-                        {
-                            builder.Append(")");
-                        }
+                        _ = builder.Append(id);
+                        _ = i < ids.Length - 1 ? builder.Append(", ") : builder.Append(')');
                     }
 
                     using (var command = new OracleCommand("DELETE FROM " + Core.Db.Workflow.DocumentName
                         + " WHERE " + Workflow.ColumnName_Id + " IN " + builder.ToString(), conn))
                     {
-                        command.ExecuteNonQuery();
+                        _ = command.ExecuteNonQuery();
                     }
                 }
             }
@@ -253,7 +245,7 @@ namespace Wexflow.Core.Db.Oracle
         {
             lock (padlock)
             {
-                List<User> admins = new List<User>();
+                var admins = new List<User>();
 
                 using (var conn = new OracleConnection(connectionString))
                 {
@@ -282,7 +274,7 @@ namespace Wexflow.Core.Db.Oracle
                                     Username = (string)reader[User.ColumnName_Username],
                                     Password = (string)reader[User.ColumnName_Password],
                                     Email = reader[User.ColumnName_Email] == DBNull.Value ? string.Empty : (string)reader[User.ColumnName_Email],
-                                    UserProfile = (UserProfile)(Convert.ToInt32((decimal)reader[User.ColumnName_UserProfile])),
+                                    UserProfile = (UserProfile)Convert.ToInt32((decimal)reader[User.ColumnName_UserProfile]),
                                     CreatedOn = (DateTime)reader[User.ColumnName_CreatedOn],
                                     ModifiedOn = reader[User.ColumnName_ModifiedOn] == DBNull.Value ? DateTime.MinValue : (DateTime)reader[User.ColumnName_ModifiedOn]
                                 };
@@ -301,7 +293,7 @@ namespace Wexflow.Core.Db.Oracle
         {
             lock (padlock)
             {
-                List<Entry> entries = new List<Entry>();
+                var entries = new List<Entry>();
 
                 using (var conn = new OracleConnection(connectionString))
                 {
@@ -320,7 +312,6 @@ namespace Wexflow.Core.Db.Oracle
                     {
                         using (var reader = command.ExecuteReader())
                         {
-
                             while (reader.Read())
                             {
                                 var entry = new Entry
@@ -328,10 +319,10 @@ namespace Wexflow.Core.Db.Oracle
                                     Id = Convert.ToInt64((decimal)reader[Entry.ColumnName_Id]),
                                     Name = reader[Entry.ColumnName_Name] == DBNull.Value ? string.Empty : (string)reader[Entry.ColumnName_Name],
                                     Description = reader[Entry.ColumnName_Description] == DBNull.Value ? string.Empty : (string)reader[Entry.ColumnName_Description],
-                                    LaunchType = (LaunchType)(Convert.ToInt32((decimal)reader[Entry.ColumnName_LaunchType])),
-                                    Status = (Status)(Convert.ToInt32((decimal)reader[Entry.ColumnName_Status])),
+                                    LaunchType = (LaunchType)Convert.ToInt32((decimal)reader[Entry.ColumnName_LaunchType]),
+                                    Status = (Status)Convert.ToInt32((decimal)reader[Entry.ColumnName_Status]),
                                     StatusDate = (DateTime)reader[Entry.ColumnName_StatusDate],
-                                    WorkflowId = (Convert.ToInt32((decimal)reader[Entry.ColumnName_WorkflowId])),
+                                    WorkflowId = Convert.ToInt32((decimal)reader[Entry.ColumnName_WorkflowId]),
                                     JobId = reader[Entry.ColumnName_JobId] == DBNull.Value ? string.Empty : (string)reader[Entry.ColumnName_JobId]
                                 };
 
@@ -349,7 +340,7 @@ namespace Wexflow.Core.Db.Oracle
         {
             lock (padlock)
             {
-                List<Entry> entries = new List<Entry>();
+                var entries = new List<Entry>();
 
                 using (var conn = new OracleConnection(connectionString))
                 {
@@ -374,90 +365,86 @@ namespace Wexflow.Core.Db.Oracle
                     {
                         case EntryOrderBy.StatusDateAscending:
 
-                            sqlBuilder.Append(Entry.ColumnName_StatusDate).Append(" ASC");
+                            _ = sqlBuilder.Append(Entry.ColumnName_StatusDate).Append(" ASC");
                             break;
 
                         case EntryOrderBy.StatusDateDescending:
 
-                            sqlBuilder.Append(Entry.ColumnName_StatusDate).Append(" DESC");
+                            _ = sqlBuilder.Append(Entry.ColumnName_StatusDate).Append(" DESC");
                             break;
 
                         case EntryOrderBy.WorkflowIdAscending:
 
-                            sqlBuilder.Append(Entry.ColumnName_WorkflowId).Append(" ASC");
+                            _ = sqlBuilder.Append(Entry.ColumnName_WorkflowId).Append(" ASC");
                             break;
 
                         case EntryOrderBy.WorkflowIdDescending:
 
-                            sqlBuilder.Append(Entry.ColumnName_WorkflowId).Append(" DESC");
+                            _ = sqlBuilder.Append(Entry.ColumnName_WorkflowId).Append(" DESC");
                             break;
 
                         case EntryOrderBy.NameAscending:
 
-                            sqlBuilder.Append(Entry.ColumnName_Name).Append(" ASC");
+                            _ = sqlBuilder.Append(Entry.ColumnName_Name).Append(" ASC");
                             break;
 
                         case EntryOrderBy.NameDescending:
 
-                            sqlBuilder.Append(Entry.ColumnName_Name).Append(" DESC");
+                            _ = sqlBuilder.Append(Entry.ColumnName_Name).Append(" DESC");
                             break;
 
                         case EntryOrderBy.LaunchTypeAscending:
 
-                            sqlBuilder.Append(Entry.ColumnName_LaunchType).Append(" ASC");
+                            _ = sqlBuilder.Append(Entry.ColumnName_LaunchType).Append(" ASC");
                             break;
 
                         case EntryOrderBy.LaunchTypeDescending:
 
-                            sqlBuilder.Append(Entry.ColumnName_LaunchType).Append(" DESC");
+                            _ = sqlBuilder.Append(Entry.ColumnName_LaunchType).Append(" DESC");
                             break;
 
                         case EntryOrderBy.DescriptionAscending:
 
-                            sqlBuilder.Append(Entry.ColumnName_Description).Append(" ASC");
+                            _ = sqlBuilder.Append(Entry.ColumnName_Description).Append(" ASC");
                             break;
 
                         case EntryOrderBy.DescriptionDescending:
 
-                            sqlBuilder.Append(Entry.ColumnName_Description).Append(" DESC");
+                            _ = sqlBuilder.Append(Entry.ColumnName_Description).Append(" DESC");
                             break;
 
                         case EntryOrderBy.StatusAscending:
 
-                            sqlBuilder.Append(Entry.ColumnName_Status).Append(" ASC");
+                            _ = sqlBuilder.Append(Entry.ColumnName_Status).Append(" ASC");
                             break;
 
                         case EntryOrderBy.StatusDescending:
 
-                            sqlBuilder.Append(Entry.ColumnName_Status).Append(" DESC");
+                            _ = sqlBuilder.Append(Entry.ColumnName_Status).Append(" DESC");
                             break;
                     }
 
-                    sqlBuilder.Append(" OFFSET ").Append((page - 1) * entriesCount).Append(" ROWS FETCH NEXT ").Append(entriesCount).Append(" ROWS ONLY");
+                    _ = sqlBuilder.Append(" OFFSET ").Append((page - 1) * entriesCount).Append(" ROWS FETCH NEXT ").Append(entriesCount).Append(" ROWS ONLY");
 
                     using (var command = new OracleCommand(sqlBuilder.ToString(), conn))
+                    using (var reader = command.ExecuteReader())
                     {
-
-                        using (var reader = command.ExecuteReader())
+                        while (reader.Read())
                         {
-                            while (reader.Read())
+                            var entry = new Entry
                             {
-                                var entry = new Entry
-                                {
-                                    Id = Convert.ToInt64((decimal)reader[Entry.ColumnName_Id]),
-                                    Name = reader[Entry.ColumnName_Name] == DBNull.Value ? string.Empty : (string)reader[Entry.ColumnName_Name],
-                                    Description = reader[Entry.ColumnName_Description] == DBNull.Value ? string.Empty : (string)reader[Entry.ColumnName_Description],
-                                    LaunchType = (LaunchType)(Convert.ToInt32((decimal)reader[Entry.ColumnName_LaunchType])),
-                                    Status = (Status)(Convert.ToInt32((decimal)reader[Entry.ColumnName_Status])),
-                                    StatusDate = (DateTime)reader[Entry.ColumnName_StatusDate],
-                                    WorkflowId = (Convert.ToInt32((decimal)reader[Entry.ColumnName_WorkflowId])),
-                                    JobId = reader[Entry.ColumnName_JobId] == DBNull.Value ? string.Empty : (string)reader[Entry.ColumnName_JobId]
-                                };
+                                Id = Convert.ToInt64((decimal)reader[Entry.ColumnName_Id]),
+                                Name = reader[Entry.ColumnName_Name] == DBNull.Value ? string.Empty : (string)reader[Entry.ColumnName_Name],
+                                Description = reader[Entry.ColumnName_Description] == DBNull.Value ? string.Empty : (string)reader[Entry.ColumnName_Description],
+                                LaunchType = (LaunchType)Convert.ToInt32((decimal)reader[Entry.ColumnName_LaunchType]),
+                                Status = (Status)Convert.ToInt32((decimal)reader[Entry.ColumnName_Status]),
+                                StatusDate = (DateTime)reader[Entry.ColumnName_StatusDate],
+                                WorkflowId = Convert.ToInt32((decimal)reader[Entry.ColumnName_WorkflowId]),
+                                JobId = reader[Entry.ColumnName_JobId] == DBNull.Value ? string.Empty : (string)reader[Entry.ColumnName_JobId]
+                            };
 
-                                entries.Add(entry);
-                            }
+                            entries.Add(entry);
                         }
-
                     }
                 }
 
@@ -506,29 +493,25 @@ namespace Wexflow.Core.Db.Oracle
                         + Entry.ColumnName_JobId
                         + " FROM " + Core.Db.Entry.DocumentName
                         + " WHERE " + Entry.ColumnName_WorkflowId + " = " + workflowId, conn))
+                    using (var reader = command.ExecuteReader())
                     {
-
-                        using (var reader = command.ExecuteReader())
+                        if (reader.Read())
                         {
-                            if (reader.Read())
+                            var entry = new Entry
                             {
-                                var entry = new Entry
-                                {
-                                    Id = Convert.ToInt64((decimal)reader[Entry.ColumnName_Id]),
-                                    Name = reader[Entry.ColumnName_Name] == DBNull.Value ? string.Empty : (string)reader[Entry.ColumnName_Name],
-                                    Description = reader[Entry.ColumnName_Description] == DBNull.Value ? string.Empty : (string)reader[Entry.ColumnName_Description],
-                                    LaunchType = (LaunchType)(Convert.ToInt32((decimal)reader[Entry.ColumnName_LaunchType])),
-                                    Status = (Status)(Convert.ToInt32((decimal)reader[Entry.ColumnName_Status])),
-                                    StatusDate = (DateTime)reader[Entry.ColumnName_StatusDate],
-                                    WorkflowId = (Convert.ToInt32((decimal)reader[Entry.ColumnName_WorkflowId])),
-                                    JobId = reader[Entry.ColumnName_JobId] == DBNull.Value ? string.Empty : (string)reader[Entry.ColumnName_JobId]
-                                };
+                                Id = Convert.ToInt64((decimal)reader[Entry.ColumnName_Id]),
+                                Name = reader[Entry.ColumnName_Name] == DBNull.Value ? string.Empty : (string)reader[Entry.ColumnName_Name],
+                                Description = reader[Entry.ColumnName_Description] == DBNull.Value ? string.Empty : (string)reader[Entry.ColumnName_Description],
+                                LaunchType = (LaunchType)Convert.ToInt32((decimal)reader[Entry.ColumnName_LaunchType]),
+                                Status = (Status)Convert.ToInt32((decimal)reader[Entry.ColumnName_Status]),
+                                StatusDate = (DateTime)reader[Entry.ColumnName_StatusDate],
+                                WorkflowId = Convert.ToInt32((decimal)reader[Entry.ColumnName_WorkflowId]),
+                                JobId = reader[Entry.ColumnName_JobId] == DBNull.Value ? string.Empty : (string)reader[Entry.ColumnName_JobId]
+                            };
 
-                                return entry;
-                            }
+                            return entry;
                         }
                     }
-
                 }
 
                 return null;
@@ -555,29 +538,25 @@ namespace Wexflow.Core.Db.Oracle
                         + " FROM " + Core.Db.Entry.DocumentName
                         + " WHERE (" + Entry.ColumnName_WorkflowId + " = " + workflowId
                         + " AND " + Entry.ColumnName_JobId + " = '" + jobId.ToString() + "')", conn))
+                    using (var reader = command.ExecuteReader())
                     {
-
-                        using (var reader = command.ExecuteReader())
+                        if (reader.Read())
                         {
-                            if (reader.Read())
+                            var entry = new Entry
                             {
-                                var entry = new Entry
-                                {
-                                    Id = Convert.ToInt64((decimal)reader[Entry.ColumnName_Id]),
-                                    Name = reader[Entry.ColumnName_Name] == DBNull.Value ? string.Empty : (string)reader[Entry.ColumnName_Name],
-                                    Description = reader[Entry.ColumnName_Description] == DBNull.Value ? string.Empty : (string)reader[Entry.ColumnName_Description],
-                                    LaunchType = (LaunchType)(Convert.ToInt32((decimal)reader[Entry.ColumnName_LaunchType])),
-                                    Status = (Status)(Convert.ToInt32((decimal)reader[Entry.ColumnName_Status])),
-                                    StatusDate = (DateTime)reader[Entry.ColumnName_StatusDate],
-                                    WorkflowId = (Convert.ToInt32((decimal)reader[Entry.ColumnName_WorkflowId])),
-                                    JobId = reader[Entry.ColumnName_JobId] == DBNull.Value ? string.Empty : (string)reader[Entry.ColumnName_JobId]
-                                };
+                                Id = Convert.ToInt64((decimal)reader[Entry.ColumnName_Id]),
+                                Name = reader[Entry.ColumnName_Name] == DBNull.Value ? string.Empty : (string)reader[Entry.ColumnName_Name],
+                                Description = reader[Entry.ColumnName_Description] == DBNull.Value ? string.Empty : (string)reader[Entry.ColumnName_Description],
+                                LaunchType = (LaunchType)Convert.ToInt32((decimal)reader[Entry.ColumnName_LaunchType]),
+                                Status = (Status)Convert.ToInt32((decimal)reader[Entry.ColumnName_Status]),
+                                StatusDate = (DateTime)reader[Entry.ColumnName_StatusDate],
+                                WorkflowId = Convert.ToInt32((decimal)reader[Entry.ColumnName_WorkflowId]),
+                                JobId = reader[Entry.ColumnName_JobId] == DBNull.Value ? string.Empty : (string)reader[Entry.ColumnName_JobId]
+                            };
 
-                                return entry;
-                            }
+                            return entry;
                         }
                     }
-
                 }
 
                 return null;
@@ -646,7 +625,7 @@ namespace Wexflow.Core.Db.Oracle
         {
             lock (padlock)
             {
-                List<HistoryEntry> entries = new List<HistoryEntry>();
+                var entries = new List<HistoryEntry>();
 
                 using (var conn = new OracleConnection(connectionString))
                 {
@@ -661,27 +640,23 @@ namespace Wexflow.Core.Db.Oracle
                         + HistoryEntry.ColumnName_StatusDate + ", "
                         + HistoryEntry.ColumnName_WorkflowId
                         + " FROM " + Core.Db.HistoryEntry.DocumentName, conn))
+                    using (var reader = command.ExecuteReader())
                     {
-
-                        using (var reader = command.ExecuteReader())
+                        while (reader.Read())
                         {
-                            while (reader.Read())
+                            var entry = new HistoryEntry
                             {
-                                var entry = new HistoryEntry
-                                {
-                                    Id = Convert.ToInt64((decimal)reader[HistoryEntry.ColumnName_Id]),
-                                    Name = reader[HistoryEntry.ColumnName_Name] == DBNull.Value ? string.Empty : (string)reader[HistoryEntry.ColumnName_Name],
-                                    Description = reader[HistoryEntry.ColumnName_Description] == DBNull.Value ? string.Empty : (string)reader[HistoryEntry.ColumnName_Description],
-                                    LaunchType = (LaunchType)(Convert.ToInt32((decimal)reader[HistoryEntry.ColumnName_LaunchType])),
-                                    Status = (Status)(Convert.ToInt32((decimal)reader[HistoryEntry.ColumnName_Status])),
-                                    StatusDate = (DateTime)reader[HistoryEntry.ColumnName_StatusDate],
-                                    WorkflowId = (Convert.ToInt32((decimal)reader[HistoryEntry.ColumnName_WorkflowId])),
-                                };
+                                Id = Convert.ToInt64((decimal)reader[HistoryEntry.ColumnName_Id]),
+                                Name = reader[HistoryEntry.ColumnName_Name] == DBNull.Value ? string.Empty : (string)reader[HistoryEntry.ColumnName_Name],
+                                Description = reader[HistoryEntry.ColumnName_Description] == DBNull.Value ? string.Empty : (string)reader[HistoryEntry.ColumnName_Description],
+                                LaunchType = (LaunchType)Convert.ToInt32((decimal)reader[HistoryEntry.ColumnName_LaunchType]),
+                                Status = (Status)Convert.ToInt32((decimal)reader[HistoryEntry.ColumnName_Status]),
+                                StatusDate = (DateTime)reader[HistoryEntry.ColumnName_StatusDate],
+                                WorkflowId = Convert.ToInt32((decimal)reader[HistoryEntry.ColumnName_WorkflowId]),
+                            };
 
-                                entries.Add(entry);
-                            }
+                            entries.Add(entry);
                         }
-
                     }
                 }
 
@@ -693,7 +668,7 @@ namespace Wexflow.Core.Db.Oracle
         {
             lock (padlock)
             {
-                List<HistoryEntry> entries = new List<HistoryEntry>();
+                var entries = new List<HistoryEntry>();
 
                 using (var conn = new OracleConnection(connectionString))
                 {
@@ -710,30 +685,24 @@ namespace Wexflow.Core.Db.Oracle
                         + " FROM " + Core.Db.HistoryEntry.DocumentName
                         + " WHERE " + "LOWER(" + HistoryEntry.ColumnName_Name + ") LIKE '%" + (keyword ?? "").Replace("'", "''").ToLower() + "%'"
                         + " OR " + "LOWER(" + HistoryEntry.ColumnName_Description + ") LIKE '%" + (keyword ?? "").Replace("'", "''").ToLower() + "%'", conn))
+                    using (var reader = command.ExecuteReader())
                     {
-
-                        using (var reader = command.ExecuteReader())
+                        while (reader.Read())
                         {
-
-                            while (reader.Read())
+                            var entry = new HistoryEntry
                             {
-                                var entry = new HistoryEntry
-                                {
-                                    Id = Convert.ToInt64((decimal)reader[HistoryEntry.ColumnName_Id]),
-                                    Name = reader[HistoryEntry.ColumnName_Name] == DBNull.Value ? string.Empty : (string)reader[HistoryEntry.ColumnName_Name],
-                                    Description = reader[HistoryEntry.ColumnName_Description] == DBNull.Value ? string.Empty : (string)reader[HistoryEntry.ColumnName_Description],
-                                    LaunchType = (LaunchType)(Convert.ToInt32((decimal)reader[HistoryEntry.ColumnName_LaunchType])),
-                                    Status = (Status)(Convert.ToInt32((decimal)reader[HistoryEntry.ColumnName_Status])),
-                                    StatusDate = (DateTime)reader[HistoryEntry.ColumnName_StatusDate],
-                                    WorkflowId = (Convert.ToInt32((decimal)reader[HistoryEntry.ColumnName_WorkflowId])),
-                                };
+                                Id = Convert.ToInt64((decimal)reader[HistoryEntry.ColumnName_Id]),
+                                Name = reader[HistoryEntry.ColumnName_Name] == DBNull.Value ? string.Empty : (string)reader[HistoryEntry.ColumnName_Name],
+                                Description = reader[HistoryEntry.ColumnName_Description] == DBNull.Value ? string.Empty : (string)reader[HistoryEntry.ColumnName_Description],
+                                LaunchType = (LaunchType)Convert.ToInt32((decimal)reader[HistoryEntry.ColumnName_LaunchType]),
+                                Status = (Status)Convert.ToInt32((decimal)reader[HistoryEntry.ColumnName_Status]),
+                                StatusDate = (DateTime)reader[HistoryEntry.ColumnName_StatusDate],
+                                WorkflowId = Convert.ToInt32((decimal)reader[HistoryEntry.ColumnName_WorkflowId]),
+                            };
 
-                                entries.Add(entry);
-                            }
+                            entries.Add(entry);
                         }
-
                     }
-
                 }
 
                 return entries;
@@ -744,7 +713,7 @@ namespace Wexflow.Core.Db.Oracle
         {
             lock (padlock)
             {
-                List<HistoryEntry> entries = new List<HistoryEntry>();
+                var entries = new List<HistoryEntry>();
 
                 using (var conn = new OracleConnection(connectionString))
                 {
@@ -761,29 +730,25 @@ namespace Wexflow.Core.Db.Oracle
                         + " FROM " + Core.Db.HistoryEntry.DocumentName
                         + " WHERE " + "LOWER(" + HistoryEntry.ColumnName_Name + ") LIKE '%" + (keyword ?? "").Replace("'", "''").ToLower() + "%'"
                         + " OR " + "LOWER(" + HistoryEntry.ColumnName_Description + ") LIKE '%" + (keyword ?? "").Replace("'", "''").ToLower() + "%'"
-                        + " OFFSET " + (page - 1) * entriesCount + " ROWS FETCH NEXT " + entriesCount + " ROWS ONLY"
+                        + " OFFSET " + ((page - 1) * entriesCount) + " ROWS FETCH NEXT " + entriesCount + " ROWS ONLY"
                         , conn))
+                    using (var reader = command.ExecuteReader())
                     {
-
-                        using (var reader = command.ExecuteReader())
+                        while (reader.Read())
                         {
-                            while (reader.Read())
+                            var entry = new HistoryEntry
                             {
-                                var entry = new HistoryEntry
-                                {
-                                    Id = Convert.ToInt64((decimal)reader[HistoryEntry.ColumnName_Id]),
-                                    Name = reader[HistoryEntry.ColumnName_Name] == DBNull.Value ? string.Empty : (string)reader[HistoryEntry.ColumnName_Name],
-                                    Description = reader[HistoryEntry.ColumnName_Description] == DBNull.Value ? string.Empty : (string)reader[HistoryEntry.ColumnName_Description],
-                                    LaunchType = (LaunchType)(Convert.ToInt32((decimal)reader[HistoryEntry.ColumnName_LaunchType])),
-                                    Status = (Status)(Convert.ToInt32((decimal)reader[HistoryEntry.ColumnName_Status])),
-                                    StatusDate = (DateTime)reader[HistoryEntry.ColumnName_StatusDate],
-                                    WorkflowId = (Convert.ToInt32((decimal)reader[HistoryEntry.ColumnName_WorkflowId])),
-                                };
+                                Id = Convert.ToInt64((decimal)reader[HistoryEntry.ColumnName_Id]),
+                                Name = reader[HistoryEntry.ColumnName_Name] == DBNull.Value ? string.Empty : (string)reader[HistoryEntry.ColumnName_Name],
+                                Description = reader[HistoryEntry.ColumnName_Description] == DBNull.Value ? string.Empty : (string)reader[HistoryEntry.ColumnName_Description],
+                                LaunchType = (LaunchType)Convert.ToInt32((decimal)reader[HistoryEntry.ColumnName_LaunchType]),
+                                Status = (Status)Convert.ToInt32((decimal)reader[HistoryEntry.ColumnName_Status]),
+                                StatusDate = (DateTime)reader[HistoryEntry.ColumnName_StatusDate],
+                                WorkflowId = Convert.ToInt32((decimal)reader[HistoryEntry.ColumnName_WorkflowId]),
+                            };
 
-                                entries.Add(entry);
-                            }
+                            entries.Add(entry);
                         }
-
                     }
                 }
                 return entries;
@@ -794,7 +759,7 @@ namespace Wexflow.Core.Db.Oracle
         {
             lock (padlock)
             {
-                List<HistoryEntry> entries = new List<HistoryEntry>();
+                var entries = new List<HistoryEntry>();
 
                 using (var conn = new OracleConnection(connectionString))
                 {
@@ -818,88 +783,84 @@ namespace Wexflow.Core.Db.Oracle
                     {
                         case EntryOrderBy.StatusDateAscending:
 
-                            sqlBuilder.Append(HistoryEntry.ColumnName_StatusDate).Append(" ASC");
+                            _ = sqlBuilder.Append(HistoryEntry.ColumnName_StatusDate).Append(" ASC");
                             break;
 
                         case EntryOrderBy.StatusDateDescending:
 
-                            sqlBuilder.Append(HistoryEntry.ColumnName_StatusDate).Append(" DESC");
+                            _ = sqlBuilder.Append(HistoryEntry.ColumnName_StatusDate).Append(" DESC");
                             break;
 
                         case EntryOrderBy.WorkflowIdAscending:
 
-                            sqlBuilder.Append(HistoryEntry.ColumnName_WorkflowId).Append(" ASC");
+                            _ = sqlBuilder.Append(HistoryEntry.ColumnName_WorkflowId).Append(" ASC");
                             break;
 
                         case EntryOrderBy.WorkflowIdDescending:
 
-                            sqlBuilder.Append(HistoryEntry.ColumnName_WorkflowId).Append(" DESC");
+                            _ = sqlBuilder.Append(HistoryEntry.ColumnName_WorkflowId).Append(" DESC");
                             break;
 
                         case EntryOrderBy.NameAscending:
 
-                            sqlBuilder.Append(HistoryEntry.ColumnName_Name).Append(" ASC");
+                            _ = sqlBuilder.Append(HistoryEntry.ColumnName_Name).Append(" ASC");
                             break;
 
                         case EntryOrderBy.NameDescending:
 
-                            sqlBuilder.Append(HistoryEntry.ColumnName_Name).Append(" DESC");
+                            _ = sqlBuilder.Append(HistoryEntry.ColumnName_Name).Append(" DESC");
                             break;
 
                         case EntryOrderBy.LaunchTypeAscending:
 
-                            sqlBuilder.Append(HistoryEntry.ColumnName_LaunchType).Append(" ASC");
+                            _ = sqlBuilder.Append(HistoryEntry.ColumnName_LaunchType).Append(" ASC");
                             break;
 
                         case EntryOrderBy.LaunchTypeDescending:
 
-                            sqlBuilder.Append(HistoryEntry.ColumnName_LaunchType).Append(" DESC");
+                            _ = sqlBuilder.Append(HistoryEntry.ColumnName_LaunchType).Append(" DESC");
                             break;
 
                         case EntryOrderBy.DescriptionAscending:
 
-                            sqlBuilder.Append(HistoryEntry.ColumnName_Description).Append(" ASC");
+                            _ = sqlBuilder.Append(HistoryEntry.ColumnName_Description).Append(" ASC");
                             break;
 
                         case EntryOrderBy.DescriptionDescending:
 
-                            sqlBuilder.Append(HistoryEntry.ColumnName_Description).Append(" DESC");
+                            _ = sqlBuilder.Append(HistoryEntry.ColumnName_Description).Append(" DESC");
                             break;
 
                         case EntryOrderBy.StatusAscending:
 
-                            sqlBuilder.Append(HistoryEntry.ColumnName_Status).Append(" ASC");
+                            _ = sqlBuilder.Append(HistoryEntry.ColumnName_Status).Append(" ASC");
                             break;
 
                         case EntryOrderBy.StatusDescending:
 
-                            sqlBuilder.Append(HistoryEntry.ColumnName_Status).Append(" DESC");
+                            _ = sqlBuilder.Append(HistoryEntry.ColumnName_Status).Append(" DESC");
                             break;
                     }
 
-                    sqlBuilder.Append(" OFFSET ").Append((page - 1) * entriesCount).Append(" ROWS FETCH NEXT ").Append(entriesCount).Append(" ROWS ONLY");
+                    _ = sqlBuilder.Append(" OFFSET ").Append((page - 1) * entriesCount).Append(" ROWS FETCH NEXT ").Append(entriesCount).Append(" ROWS ONLY");
 
                     using (var command = new OracleCommand(sqlBuilder.ToString(), conn))
+                    using (var reader = command.ExecuteReader())
                     {
-
-                        using (var reader = command.ExecuteReader())
+                        while (reader.Read())
                         {
-
-                            while (reader.Read())
+                            var entry = new HistoryEntry
                             {
-                                var entry = new HistoryEntry
-                                {
-                                    Id = Convert.ToInt64((decimal)reader[HistoryEntry.ColumnName_Id]),
-                                    Name = reader[HistoryEntry.ColumnName_Name] == DBNull.Value ? string.Empty : (string)reader[HistoryEntry.ColumnName_Name],
-                                    Description = reader[HistoryEntry.ColumnName_Description] == DBNull.Value ? string.Empty : (string)reader[HistoryEntry.ColumnName_Description],
-                                    LaunchType = (LaunchType)(Convert.ToInt32((decimal)reader[HistoryEntry.ColumnName_LaunchType])),
-                                    Status = (Status)(Convert.ToInt32((decimal)reader[HistoryEntry.ColumnName_Status])),
-                                    StatusDate = (DateTime)reader[HistoryEntry.ColumnName_StatusDate],
-                                    WorkflowId = (Convert.ToInt32((decimal)reader[HistoryEntry.ColumnName_WorkflowId])),
-                                };
+                                Id = Convert.ToInt64((decimal)reader[HistoryEntry.ColumnName_Id]),
+                                Name = reader[HistoryEntry.ColumnName_Name] == DBNull.Value ? string.Empty : (string)reader[HistoryEntry.ColumnName_Name],
+                                Description = reader[HistoryEntry.ColumnName_Description] == DBNull.Value ? string.Empty : (string)reader[HistoryEntry.ColumnName_Description],
+                                LaunchType = (LaunchType)Convert.ToInt32((decimal)reader[HistoryEntry.ColumnName_LaunchType]),
+                                Status = (Status)Convert.ToInt32((decimal)reader[HistoryEntry.ColumnName_Status]),
+                                StatusDate = (DateTime)reader[HistoryEntry.ColumnName_StatusDate],
+                                WorkflowId = Convert.ToInt32((decimal)reader[HistoryEntry.ColumnName_WorkflowId]),
+                            };
 
-                                entries.Add(entry);
-                            }
+                            entries.Add(entry);
                         }
                     }
                 }
@@ -964,10 +925,8 @@ namespace Wexflow.Core.Db.Oracle
                         + " WHERE rownum = 1"
                         + " ORDER BY " + HistoryEntry.ColumnName_StatusDate + " DESC", conn))
                     {
-
                         using (var reader = command.ExecuteReader())
                         {
-
                             if (reader.Read())
                             {
                                 var statusDate = (DateTime)reader[HistoryEntry.ColumnName_StatusDate];
@@ -994,17 +953,13 @@ namespace Wexflow.Core.Db.Oracle
                         + " FROM " + Core.Db.HistoryEntry.DocumentName
                         + " WHERE rownum = 1"
                         + " ORDER BY " + HistoryEntry.ColumnName_StatusDate + " ASC", conn))
+                    using (var reader = command.ExecuteReader())
                     {
-
-                        using (var reader = command.ExecuteReader())
+                        if (reader.Read())
                         {
+                            var statusDate = (DateTime)reader[HistoryEntry.ColumnName_StatusDate];
 
-                            if (reader.Read())
-                            {
-                                var statusDate = (DateTime)reader[HistoryEntry.ColumnName_StatusDate];
-
-                                return statusDate;
-                            }
+                            return statusDate;
                         }
                     }
                 }
@@ -1025,15 +980,13 @@ namespace Wexflow.Core.Db.Oracle
                         + " FROM " + Core.Db.User.DocumentName
                         + " WHERE " + User.ColumnName_Username + " = '" + (username ?? "").Replace("'", "''") + "'"
                         , conn))
+                    using (var reader = command.ExecuteReader())
                     {
-                        using (var reader = command.ExecuteReader())
+                        if (reader.Read())
                         {
-                            if (reader.Read())
-                            {
-                                var password = (string)reader[User.ColumnName_Password];
+                            var password = (string)reader[User.ColumnName_Password];
 
-                                return password;
-                            }
+                            return password;
                         }
                     }
                 }
@@ -1118,7 +1071,7 @@ namespace Wexflow.Core.Db.Oracle
                                     Username = (string)reader[User.ColumnName_Username],
                                     Password = (string)reader[User.ColumnName_Password],
                                     Email = reader[User.ColumnName_Email] == DBNull.Value ? string.Empty : (string)reader[User.ColumnName_Email],
-                                    UserProfile = (UserProfile)(Convert.ToInt32((decimal)reader[User.ColumnName_UserProfile])),
+                                    UserProfile = (UserProfile)Convert.ToInt32((decimal)reader[User.ColumnName_UserProfile]),
                                     CreatedOn = (DateTime)reader[User.ColumnName_CreatedOn],
                                     ModifiedOn = reader[User.ColumnName_ModifiedOn] == DBNull.Value ? DateTime.MinValue : (DateTime)reader[User.ColumnName_ModifiedOn]
                                 };
@@ -1154,7 +1107,6 @@ namespace Wexflow.Core.Db.Oracle
                     {
                         using (var reader = command.ExecuteReader())
                         {
-
                             if (reader.Read())
                             {
                                 var user = new User
@@ -1163,7 +1115,7 @@ namespace Wexflow.Core.Db.Oracle
                                     Username = (string)reader[User.ColumnName_Username],
                                     Password = (string)reader[User.ColumnName_Password],
                                     Email = reader[User.ColumnName_Email] == DBNull.Value ? string.Empty : (string)reader[User.ColumnName_Email],
-                                    UserProfile = (UserProfile)(Convert.ToInt32((decimal)reader[User.ColumnName_UserProfile])),
+                                    UserProfile = (UserProfile)Convert.ToInt32((decimal)reader[User.ColumnName_UserProfile]),
                                     CreatedOn = (DateTime)reader[User.ColumnName_CreatedOn],
                                     ModifiedOn = reader[User.ColumnName_ModifiedOn] == DBNull.Value ? DateTime.MinValue : (DateTime)reader[User.ColumnName_ModifiedOn]
                                 };
@@ -1182,7 +1134,7 @@ namespace Wexflow.Core.Db.Oracle
         {
             lock (padlock)
             {
-                List<User> users = new List<User>();
+                var users = new List<User>();
 
                 using (var conn = new OracleConnection(connectionString))
                 {
@@ -1197,25 +1149,22 @@ namespace Wexflow.Core.Db.Oracle
                         + User.ColumnName_ModifiedOn
                         + " FROM " + Core.Db.User.DocumentName
                         , conn))
+                    using (var reader = command.ExecuteReader())
                     {
-                        using (var reader = command.ExecuteReader())
+                        while (reader.Read())
                         {
-
-                            while (reader.Read())
+                            var user = new User
                             {
-                                var user = new User
-                                {
-                                    Id = Convert.ToInt64((decimal)reader[User.ColumnName_Id]),
-                                    Username = (string)reader[User.ColumnName_Username],
-                                    Password = (string)reader[User.ColumnName_Password],
-                                    Email = reader[User.ColumnName_Email] == DBNull.Value ? string.Empty : (string)reader[User.ColumnName_Email],
-                                    UserProfile = (UserProfile)(Convert.ToInt32((decimal)reader[User.ColumnName_UserProfile])),
-                                    CreatedOn = (DateTime)reader[User.ColumnName_CreatedOn],
-                                    ModifiedOn = reader[User.ColumnName_ModifiedOn] == DBNull.Value ? DateTime.MinValue : (DateTime)reader[User.ColumnName_ModifiedOn]
-                                };
+                                Id = Convert.ToInt64((decimal)reader[User.ColumnName_Id]),
+                                Username = (string)reader[User.ColumnName_Username],
+                                Password = (string)reader[User.ColumnName_Password],
+                                Email = reader[User.ColumnName_Email] == DBNull.Value ? string.Empty : (string)reader[User.ColumnName_Email],
+                                UserProfile = (UserProfile)Convert.ToInt32((decimal)reader[User.ColumnName_UserProfile]),
+                                CreatedOn = (DateTime)reader[User.ColumnName_CreatedOn],
+                                ModifiedOn = reader[User.ColumnName_ModifiedOn] == DBNull.Value ? DateTime.MinValue : (DateTime)reader[User.ColumnName_ModifiedOn]
+                            };
 
-                                users.Add(user);
-                            }
+                            users.Add(user);
                         }
                     }
                 }
@@ -1228,7 +1177,7 @@ namespace Wexflow.Core.Db.Oracle
         {
             lock (padlock)
             {
-                List<User> users = new List<User>();
+                var users = new List<User>();
 
                 using (var conn = new OracleConnection(connectionString))
                 {
@@ -1245,25 +1194,22 @@ namespace Wexflow.Core.Db.Oracle
                         + " WHERE " + "LOWER(" + User.ColumnName_Username + ")" + " LIKE '%" + (keyword ?? "").Replace("'", "''").ToLower() + "%'"
                         + " ORDER BY " + User.ColumnName_Username + (uo == UserOrderBy.UsernameAscending ? " ASC" : " DESC")
                         , conn))
+                    using (var reader = command.ExecuteReader())
                     {
-                        using (var reader = command.ExecuteReader())
+                        while (reader.Read())
                         {
-
-                            while (reader.Read())
+                            var user = new User
                             {
-                                var user = new User
-                                {
-                                    Id = Convert.ToInt64((decimal)reader[User.ColumnName_Id]),
-                                    Username = (string)reader[User.ColumnName_Username],
-                                    Password = (string)reader[User.ColumnName_Password],
-                                    Email = reader[User.ColumnName_Email] == DBNull.Value ? string.Empty : (string)reader[User.ColumnName_Email],
-                                    UserProfile = (UserProfile)(Convert.ToInt32((decimal)reader[User.ColumnName_UserProfile])),
-                                    CreatedOn = (DateTime)reader[User.ColumnName_CreatedOn],
-                                    ModifiedOn = reader[User.ColumnName_ModifiedOn] == DBNull.Value ? DateTime.MinValue : (DateTime)reader[User.ColumnName_ModifiedOn]
-                                };
+                                Id = Convert.ToInt64((decimal)reader[User.ColumnName_Id]),
+                                Username = (string)reader[User.ColumnName_Username],
+                                Password = (string)reader[User.ColumnName_Password],
+                                Email = reader[User.ColumnName_Email] == DBNull.Value ? string.Empty : (string)reader[User.ColumnName_Email],
+                                UserProfile = (UserProfile)Convert.ToInt32((decimal)reader[User.ColumnName_UserProfile]),
+                                CreatedOn = (DateTime)reader[User.ColumnName_CreatedOn],
+                                ModifiedOn = reader[User.ColumnName_ModifiedOn] == DBNull.Value ? DateTime.MinValue : (DateTime)reader[User.ColumnName_ModifiedOn]
+                            };
 
-                                users.Add(user);
-                            }
+                            users.Add(user);
                         }
                     }
                 }
@@ -1276,7 +1222,7 @@ namespace Wexflow.Core.Db.Oracle
         {
             lock (padlock)
             {
-                List<string> workflowIds = new List<string>();
+                var workflowIds = new List<string>();
 
                 using (var conn = new OracleConnection(connectionString))
                 {
@@ -1288,15 +1234,13 @@ namespace Wexflow.Core.Db.Oracle
                         + " FROM " + Core.Db.UserWorkflow.DocumentName
                         + " WHERE " + UserWorkflow.ColumnName_UserId + " = " + int.Parse(userId)
                         , conn))
+                    using (var reader = command.ExecuteReader())
                     {
-                        using (var reader = command.ExecuteReader())
+                        while (reader.Read())
                         {
-                            while (reader.Read())
-                            {
-                                var workflowId = Convert.ToInt64((decimal)reader[UserWorkflow.ColumnName_WorkflowId]);
+                            var workflowId = Convert.ToInt64((decimal)reader[UserWorkflow.ColumnName_WorkflowId]);
 
-                                workflowIds.Add(workflowId.ToString());
-                            }
+                            workflowIds.Add(workflowId.ToString());
                         }
                     }
                 }
@@ -1320,7 +1264,6 @@ namespace Wexflow.Core.Db.Oracle
                     {
                         using (var reader = command.ExecuteReader())
                         {
-
                             if (reader.Read())
                             {
                                 var workflow = new Workflow
@@ -1343,7 +1286,7 @@ namespace Wexflow.Core.Db.Oracle
         {
             lock (padlock)
             {
-                List<Core.Db.Workflow> workflows = new List<Core.Db.Workflow>();
+                var workflows = new List<Core.Db.Workflow>();
 
                 using (var conn = new OracleConnection(connectionString))
                 {
@@ -1355,7 +1298,6 @@ namespace Wexflow.Core.Db.Oracle
                     {
                         using (var reader = command.ExecuteReader())
                         {
-
                             while (reader.Read())
                             {
                                 var workflow = new Workflow
@@ -1374,7 +1316,7 @@ namespace Wexflow.Core.Db.Oracle
             }
         }
 
-        private void IncrementStatusCountColumn(string statusCountColumnName)
+        private static void IncrementStatusCountColumn(string statusCountColumnName)
         {
             lock (padlock)
             {
@@ -1384,7 +1326,7 @@ namespace Wexflow.Core.Db.Oracle
 
                     using (var command = new OracleCommand("UPDATE " + Core.Db.StatusCount.DocumentName + " SET " + statusCountColumnName + " = " + statusCountColumnName + " + 1", conn))
                     {
-                        command.ExecuteNonQuery();
+                        _ = command.ExecuteNonQuery();
                     }
                 }
             }
@@ -1430,7 +1372,7 @@ namespace Wexflow.Core.Db.Oracle
             IncrementStatusCountColumn(StatusCount.ColumnName_WarningCount);
         }
 
-        private void DecrementStatusCountColumn(string statusCountColumnName)
+        private static void DecrementStatusCountColumn(string statusCountColumnName)
         {
             lock (padlock)
             {
@@ -1440,7 +1382,7 @@ namespace Wexflow.Core.Db.Oracle
 
                     using (var command = new OracleCommand("UPDATE " + Core.Db.StatusCount.DocumentName + " SET " + statusCountColumnName + " = " + statusCountColumnName + " - 1", conn))
                     {
-                        command.ExecuteNonQuery();
+                        _ = command.ExecuteNonQuery();
                     }
                 }
             }
@@ -1483,8 +1425,7 @@ namespace Wexflow.Core.Db.Oracle
                         + "'" + (entry.Logs ?? "").Replace("'", "''") + "'" + ")"
                         , conn))
                     {
-
-                        command.ExecuteNonQuery();
+                        _ = command.ExecuteNonQuery();
                     }
                 }
             }
@@ -1515,8 +1456,7 @@ namespace Wexflow.Core.Db.Oracle
                         + "'" + (entry.Logs ?? "").Replace("'", "''") + "'" + ")"
                         , conn))
                     {
-
-                        command.ExecuteNonQuery();
+                        _ = command.ExecuteNonQuery();
                     }
                 }
             }
@@ -1545,7 +1485,7 @@ namespace Wexflow.Core.Db.Oracle
                         + (user.ModifiedOn == DateTime.MinValue ? "NULL" : ("TO_TIMESTAMP(" + "'" + user.ModifiedOn.ToString(dateTimeFormat) + "'" + ", 'YYYY-MM-DD HH24:MI:SS.FF')")) + ")"
                         , conn))
                     {
-                        command.ExecuteNonQuery();
+                        _ = command.ExecuteNonQuery();
                     }
                 }
             }
@@ -1566,7 +1506,7 @@ namespace Wexflow.Core.Db.Oracle
                         + int.Parse(userWorkflow.WorkflowId) + ")"
                         , conn))
                     {
-                        command.ExecuteNonQuery();
+                        _ = command.ExecuteNonQuery();
                     }
                 }
             }
@@ -1576,7 +1516,7 @@ namespace Wexflow.Core.Db.Oracle
         {
             lock (padlock)
             {
-                for (int i = 0; i < str.Length; i += maxChunkSize)
+                for (var i = 0; i < str.Length; i += maxChunkSize)
                 {
                     yield return str.Substring(i, Math.Min(maxChunkSize, str.Length - i));
                 }
@@ -1595,10 +1535,10 @@ namespace Wexflow.Core.Db.Oracle
                 for (var i = 0; i < chunks.Length; i++)
                 {
                     var chunk = chunks[i];
-                    builder.Append("TO_CLOB(").Append("'").Append(chunk).Append("')");
+                    _ = builder.Append("TO_CLOB(").Append('\'').Append(chunk).Append("')");
                     if (i < chunks.Length - 1)
                     {
-                        builder.Append(" || ");
+                        _ = builder.Append(" || ");
                     }
                 }
 
@@ -1622,14 +1562,14 @@ namespace Wexflow.Core.Db.Oracle
                         + xml + ") RETURNING " + Workflow.ColumnName_Id + " INTO :id"
                         , conn))
                     {
-                        command.Parameters.Add(new OracleParameter
+                        _ = command.Parameters.Add(new OracleParameter
                         {
                             ParameterName = ":id",
                             DbType = System.Data.DbType.Decimal,
                             Direction = System.Data.ParameterDirection.Output
                         });
 
-                        command.ExecuteNonQuery();
+                        _ = command.ExecuteNonQuery();
 
                         var id = Convert.ToInt64(command.Parameters[":id"].Value).ToString();
 
@@ -1660,8 +1600,7 @@ namespace Wexflow.Core.Db.Oracle
                         + Entry.ColumnName_Id + " = " + int.Parse(id)
                         , conn))
                     {
-
-                        command.ExecuteNonQuery();
+                        _ = command.ExecuteNonQuery();
                     }
                 }
             }
@@ -1681,7 +1620,7 @@ namespace Wexflow.Core.Db.Oracle
                         + User.ColumnName_Username + " = '" + (username ?? "").Replace("'", "''") + "'"
                         , conn))
                     {
-                        command.ExecuteNonQuery();
+                        _ = command.ExecuteNonQuery();
                     }
                 }
             }
@@ -1706,7 +1645,7 @@ namespace Wexflow.Core.Db.Oracle
                         + User.ColumnName_Id + " = " + int.Parse(id)
                         , conn))
                     {
-                        command.ExecuteNonQuery();
+                        _ = command.ExecuteNonQuery();
                     }
                 }
             }
@@ -1727,7 +1666,7 @@ namespace Wexflow.Core.Db.Oracle
                     + User.ColumnName_Id + " = " + int.Parse(userId)
                     , conn))
                 {
-                    command.ExecuteNonQuery();
+                    _ = command.ExecuteNonQuery();
                 }
             }
         }
@@ -1748,7 +1687,7 @@ namespace Wexflow.Core.Db.Oracle
                         + User.ColumnName_Id + " = " + int.Parse(dbId)
                         , conn))
                     {
-                        command.ExecuteNonQuery();
+                        _ = command.ExecuteNonQuery();
                     }
                 }
             }
@@ -1777,7 +1716,6 @@ namespace Wexflow.Core.Db.Oracle
                             }
                         }
                     }
-
                 }
 
                 return null;
@@ -1807,7 +1745,6 @@ namespace Wexflow.Core.Db.Oracle
                             }
                         }
                     }
-
                 }
 
                 return null;
@@ -1818,7 +1755,7 @@ namespace Wexflow.Core.Db.Oracle
         {
             lock (padlock)
             {
-                List<User> users = new List<User>();
+                var users = new List<User>();
 
                 using (var conn = new OracleConnection(connectionString))
                 {
@@ -1838,10 +1775,8 @@ namespace Wexflow.Core.Db.Oracle
                         + " ORDER BY " + User.ColumnName_Username
                         , conn))
                     {
-
                         using (var reader = command.ExecuteReader())
                         {
-
                             while (reader.Read())
                             {
                                 var admin = new User
@@ -1850,7 +1785,7 @@ namespace Wexflow.Core.Db.Oracle
                                     Username = (string)reader[User.ColumnName_Username],
                                     Password = (string)reader[User.ColumnName_Password],
                                     Email = reader[User.ColumnName_Email] == DBNull.Value ? string.Empty : (string)reader[User.ColumnName_Email],
-                                    UserProfile = (UserProfile)(Convert.ToInt32((decimal)reader[User.ColumnName_UserProfile])),
+                                    UserProfile = (UserProfile)Convert.ToInt32((decimal)reader[User.ColumnName_UserProfile]),
                                     CreatedOn = (DateTime)reader[User.ColumnName_CreatedOn],
                                     ModifiedOn = reader[User.ColumnName_ModifiedOn] == DBNull.Value ? DateTime.MinValue : (DateTime)reader[User.ColumnName_ModifiedOn]
                                 };
@@ -1904,14 +1839,14 @@ namespace Wexflow.Core.Db.Oracle
                         + " RETURNING " + Record.ColumnName_Id + " INTO :id"
                         , conn))
                     {
-                        command.Parameters.Add(new OracleParameter
+                        _ = command.Parameters.Add(new OracleParameter
                         {
                             ParameterName = ":id",
                             DbType = System.Data.DbType.Decimal,
                             Direction = System.Data.ParameterDirection.Output
                         });
 
-                        command.ExecuteNonQuery();
+                        _ = command.ExecuteNonQuery();
 
                         var id = Convert.ToInt64(command.Parameters[":id"].Value).ToString();
 
@@ -1946,7 +1881,7 @@ namespace Wexflow.Core.Db.Oracle
                         + Record.ColumnName_Id + " = " + int.Parse(recordId)
                         , conn))
                     {
-                        command.ExecuteNonQuery();
+                        _ = command.ExecuteNonQuery();
                     }
                 }
             }
@@ -1964,24 +1899,17 @@ namespace Wexflow.Core.Db.Oracle
 
                         var builder = new StringBuilder("(");
 
-                        for (int i = 0; i < recordIds.Length; i++)
+                        for (var i = 0; i < recordIds.Length; i++)
                         {
                             var id = recordIds[i];
-                            builder.Append(id);
-                            if (i < recordIds.Length - 1)
-                            {
-                                builder.Append(", ");
-                            }
-                            else
-                            {
-                                builder.Append(")");
-                            }
+                            _ = builder.Append(id);
+                            _ = i < recordIds.Length - 1 ? builder.Append(", ") : builder.Append(')');
                         }
 
                         using (var command = new OracleCommand("DELETE FROM " + Core.Db.Record.DocumentName
                             + " WHERE " + Record.ColumnName_Id + " IN " + builder.ToString(), conn))
                         {
-                            command.ExecuteNonQuery();
+                            _ = command.ExecuteNonQuery();
                         }
                     }
                 }
@@ -2024,7 +1952,7 @@ namespace Wexflow.Core.Db.Oracle
                                     Id = Convert.ToInt64((decimal)reader[Record.ColumnName_Id]),
                                     Name = reader[Record.ColumnName_Name] == DBNull.Value ? null : (string)reader[Record.ColumnName_Name],
                                     Description = reader[Record.ColumnName_Description] == DBNull.Value ? null : (string)reader[Record.ColumnName_Description],
-                                    Approved = ((short)reader[Record.ColumnName_Approved]) == 1 ? true : false,
+                                    Approved = ((short)reader[Record.ColumnName_Approved]) == 1,
                                     StartDate = reader[Record.ColumnName_StartDate] == DBNull.Value ? null : (DateTime?)reader[Record.ColumnName_StartDate],
                                     EndDate = reader[Record.ColumnName_EndDate] == DBNull.Value ? null : (DateTime?)reader[Record.ColumnName_EndDate],
                                     Comments = reader[Record.ColumnName_Comments] == DBNull.Value ? null : (string)reader[Record.ColumnName_Comments],
@@ -2051,7 +1979,7 @@ namespace Wexflow.Core.Db.Oracle
         {
             lock (padlock)
             {
-                List<Record> records = new List<Record>();
+                var records = new List<Record>();
 
                 using (var conn = new OracleConnection(connectionString))
                 {
@@ -2087,7 +2015,7 @@ namespace Wexflow.Core.Db.Oracle
                                     Id = Convert.ToInt64((decimal)reader[Record.ColumnName_Id]),
                                     Name = reader[Record.ColumnName_Name] == DBNull.Value ? null : (string)reader[Record.ColumnName_Name],
                                     Description = reader[Record.ColumnName_Description] == DBNull.Value ? null : (string)reader[Record.ColumnName_Description],
-                                    Approved = ((short)reader[Record.ColumnName_Approved]) == 1 ? true : false,
+                                    Approved = ((short)reader[Record.ColumnName_Approved]) == 1,
                                     StartDate = reader[Record.ColumnName_StartDate] == DBNull.Value ? null : (DateTime?)reader[Record.ColumnName_StartDate],
                                     EndDate = reader[Record.ColumnName_EndDate] == DBNull.Value ? null : (DateTime?)reader[Record.ColumnName_EndDate],
                                     Comments = reader[Record.ColumnName_Comments] == DBNull.Value ? null : (string)reader[Record.ColumnName_Comments],
@@ -2114,7 +2042,7 @@ namespace Wexflow.Core.Db.Oracle
         {
             lock (padlock)
             {
-                List<Record> records = new List<Record>();
+                var records = new List<Record>();
 
                 using (var conn = new OracleConnection(connectionString))
                 {
@@ -2149,7 +2077,7 @@ namespace Wexflow.Core.Db.Oracle
                                     Id = Convert.ToInt64((decimal)reader[Record.ColumnName_Id]),
                                     Name = reader[Record.ColumnName_Name] == DBNull.Value ? null : (string)reader[Record.ColumnName_Name],
                                     Description = reader[Record.ColumnName_Description] == DBNull.Value ? null : (string)reader[Record.ColumnName_Description],
-                                    Approved = ((short)reader[Record.ColumnName_Approved]) == 1 ? true : false,
+                                    Approved = ((short)reader[Record.ColumnName_Approved]) == 1,
                                     StartDate = reader[Record.ColumnName_StartDate] == DBNull.Value ? null : (DateTime?)reader[Record.ColumnName_StartDate],
                                     EndDate = reader[Record.ColumnName_EndDate] == DBNull.Value ? null : (DateTime?)reader[Record.ColumnName_EndDate],
                                     Comments = reader[Record.ColumnName_Comments] == DBNull.Value ? null : (string)reader[Record.ColumnName_Comments],
@@ -2176,7 +2104,7 @@ namespace Wexflow.Core.Db.Oracle
         {
             lock (padlock)
             {
-                List<Record> records = new List<Record>();
+                var records = new List<Record>();
 
                 using (var conn = new OracleConnection(connectionString))
                 {
@@ -2213,7 +2141,7 @@ namespace Wexflow.Core.Db.Oracle
                                     Id = Convert.ToInt64((decimal)reader[Record.ColumnName_Id]),
                                     Name = reader[Record.ColumnName_Name] == DBNull.Value ? null : (string)reader[Record.ColumnName_Name],
                                     Description = reader[Record.ColumnName_Description] == DBNull.Value ? null : (string)reader[Record.ColumnName_Description],
-                                    Approved = ((short)reader[Record.ColumnName_Approved]) == 1 ? true : false,
+                                    Approved = ((short)reader[Record.ColumnName_Approved]) == 1,
                                     StartDate = reader[Record.ColumnName_StartDate] == DBNull.Value ? null : (DateTime?)reader[Record.ColumnName_StartDate],
                                     EndDate = reader[Record.ColumnName_EndDate] == DBNull.Value ? null : (DateTime?)reader[Record.ColumnName_EndDate],
                                     Comments = reader[Record.ColumnName_Comments] == DBNull.Value ? null : (string)reader[Record.ColumnName_Comments],
@@ -2255,14 +2183,14 @@ namespace Wexflow.Core.Db.Oracle
                         + " RETURNING " + Version.ColumnName_Id + " INTO :id"
                         , conn))
                     {
-                        command.Parameters.Add(new OracleParameter
+                        _ = command.Parameters.Add(new OracleParameter
                         {
                             ParameterName = ":id",
                             DbType = System.Data.DbType.Decimal,
                             Direction = System.Data.ParameterDirection.Output
                         });
 
-                        command.ExecuteNonQuery();
+                        _ = command.ExecuteNonQuery();
 
                         var id = Convert.ToInt64(command.Parameters[":id"].Value).ToString();
 
@@ -2287,7 +2215,7 @@ namespace Wexflow.Core.Db.Oracle
                         + Version.ColumnName_Id + " = " + int.Parse(versionId)
                         , conn))
                     {
-                        command.ExecuteNonQuery();
+                        _ = command.ExecuteNonQuery();
                     }
                 }
             }
@@ -2305,24 +2233,17 @@ namespace Wexflow.Core.Db.Oracle
 
                         var builder = new StringBuilder("(");
 
-                        for (int i = 0; i < versionIds.Length; i++)
+                        for (var i = 0; i < versionIds.Length; i++)
                         {
                             var id = versionIds[i];
-                            builder.Append(id);
-                            if (i < versionIds.Length - 1)
-                            {
-                                builder.Append(", ");
-                            }
-                            else
-                            {
-                                builder.Append(")");
-                            }
+                            _ = builder.Append(id);
+                            _ = i < versionIds.Length - 1 ? builder.Append(", ") : builder.Append(')');
                         }
 
                         using (var command = new OracleCommand("DELETE FROM " + Core.Db.Version.DocumentName
                             + " WHERE " + Version.ColumnName_Id + " IN " + builder.ToString(), conn))
                         {
-                            command.ExecuteNonQuery();
+                            _ = command.ExecuteNonQuery();
                         }
                     }
                 }
@@ -2333,7 +2254,7 @@ namespace Wexflow.Core.Db.Oracle
         {
             lock (padlock)
             {
-                List<Version> versions = new List<Version>();
+                var versions = new List<Version>();
 
                 using (var conn = new OracleConnection(connectionString))
                 {
@@ -2433,14 +2354,14 @@ namespace Wexflow.Core.Db.Oracle
                         + " RETURNING " + Notification.ColumnName_Id + " INTO :id"
                         , conn))
                     {
-                        command.Parameters.Add(new OracleParameter
+                        _ = command.Parameters.Add(new OracleParameter
                         {
                             ParameterName = ":id",
                             DbType = System.Data.DbType.Decimal,
                             Direction = System.Data.ParameterDirection.Output
                         });
 
-                        command.ExecuteNonQuery();
+                        _ = command.ExecuteNonQuery();
 
                         var id = Convert.ToInt64(command.Parameters[":id"].Value).ToString();
 
@@ -2460,25 +2381,18 @@ namespace Wexflow.Core.Db.Oracle
 
                     var builder = new StringBuilder("(");
 
-                    for (int i = 0; i < notificationIds.Length; i++)
+                    for (var i = 0; i < notificationIds.Length; i++)
                     {
                         var id = notificationIds[i];
-                        builder.Append(id);
-                        if (i < notificationIds.Length - 1)
-                        {
-                            builder.Append(", ");
-                        }
-                        else
-                        {
-                            builder.Append(")");
-                        }
+                        _ = builder.Append(id);
+                        _ = i < notificationIds.Length - 1 ? builder.Append(", ") : builder.Append(')');
                     }
 
                     using (var command = new OracleCommand("UPDATE " + Core.Db.Notification.DocumentName
                         + " SET " + Notification.ColumnName_IsRead + " = " + "1"
                         + " WHERE " + Notification.ColumnName_Id + " IN " + builder.ToString(), conn))
                     {
-                        command.ExecuteNonQuery();
+                        _ = command.ExecuteNonQuery();
                     }
                 }
             }
@@ -2494,25 +2408,18 @@ namespace Wexflow.Core.Db.Oracle
 
                     var builder = new StringBuilder("(");
 
-                    for (int i = 0; i < notificationIds.Length; i++)
+                    for (var i = 0; i < notificationIds.Length; i++)
                     {
                         var id = notificationIds[i];
-                        builder.Append(id);
-                        if (i < notificationIds.Length - 1)
-                        {
-                            builder.Append(", ");
-                        }
-                        else
-                        {
-                            builder.Append(")");
-                        }
+                        _ = builder.Append(id);
+                        _ = i < notificationIds.Length - 1 ? builder.Append(", ") : builder.Append(')');
                     }
 
                     using (var command = new OracleCommand("UPDATE " + Core.Db.Notification.DocumentName
                         + " SET " + Notification.ColumnName_IsRead + " = " + "0"
                         + " WHERE " + Notification.ColumnName_Id + " IN " + builder.ToString(), conn))
                     {
-                        command.ExecuteNonQuery();
+                        _ = command.ExecuteNonQuery();
                     }
                 }
             }
@@ -2530,24 +2437,17 @@ namespace Wexflow.Core.Db.Oracle
 
                         var builder = new StringBuilder("(");
 
-                        for (int i = 0; i < notificationIds.Length; i++)
+                        for (var i = 0; i < notificationIds.Length; i++)
                         {
                             var id = notificationIds[i];
-                            builder.Append(id);
-                            if (i < notificationIds.Length - 1)
-                            {
-                                builder.Append(", ");
-                            }
-                            else
-                            {
-                                builder.Append(")");
-                            }
+                            _ = builder.Append(id);
+                            _ = i < notificationIds.Length - 1 ? builder.Append(", ") : builder.Append(')');
                         }
 
                         using (var command = new OracleCommand("DELETE FROM " + Core.Db.Notification.DocumentName
                             + " WHERE " + Notification.ColumnName_Id + " IN " + builder.ToString(), conn))
                         {
-                            command.ExecuteNonQuery();
+                            _ = command.ExecuteNonQuery();
                         }
                     }
                 }
@@ -2558,7 +2458,7 @@ namespace Wexflow.Core.Db.Oracle
         {
             lock (padlock)
             {
-                List<Notification> notifications = new List<Notification>();
+                var notifications = new List<Notification>();
 
                 using (var conn = new OracleConnection(connectionString))
                 {
@@ -2588,7 +2488,7 @@ namespace Wexflow.Core.Db.Oracle
                                     AssignedOn = (DateTime)reader[Notification.ColumnName_AssignedOn],
                                     AssignedTo = Convert.ToInt64((decimal)reader[Notification.ColumnName_AssignedTo]).ToString(),
                                     Message = reader[Notification.ColumnName_Message] == DBNull.Value ? null : (string)reader[Notification.ColumnName_Message],
-                                    IsRead = ((short)reader[Notification.ColumnName_IsRead]) == 1 ? true : false
+                                    IsRead = ((short)reader[Notification.ColumnName_IsRead]) == 1
                                 };
 
                                 notifications.Add(notification);
@@ -2643,14 +2543,14 @@ namespace Wexflow.Core.Db.Oracle
                         + "RETURNING " + Approver.ColumnName_Id + " INTO :id"
                         , conn))
                     {
-                        command.Parameters.Add(new OracleParameter
+                        _ = command.Parameters.Add(new OracleParameter
                         {
                             ParameterName = ":id",
                             DbType = System.Data.DbType.Decimal,
                             Direction = System.Data.ParameterDirection.Output
                         });
 
-                        command.ExecuteNonQuery();
+                        _ = command.ExecuteNonQuery();
 
                         var id = Convert.ToInt64(command.Parameters[":id"].Value).ToString();
 
@@ -2677,7 +2577,7 @@ namespace Wexflow.Core.Db.Oracle
                         + Approver.ColumnName_Id + " = " + int.Parse(approverId)
                         , conn))
                     {
-                        command.ExecuteNonQuery();
+                        _ = command.ExecuteNonQuery();
                     }
                 }
             }
@@ -2694,7 +2594,7 @@ namespace Wexflow.Core.Db.Oracle
                     using (var command = new OracleCommand("DELETE FROM " + Core.Db.Approver.DocumentName
                         + " WHERE " + Approver.ColumnName_RecordId + " = " + int.Parse(recordId), conn))
                     {
-                        command.ExecuteNonQuery();
+                        _ = command.ExecuteNonQuery();
                     }
                 }
             }
@@ -2713,7 +2613,7 @@ namespace Wexflow.Core.Db.Oracle
                         + " AND " + Approver.ColumnName_Approved + " = " + "1"
                         , conn))
                     {
-                        command.ExecuteNonQuery();
+                        _ = command.ExecuteNonQuery();
                     }
                 }
             }
@@ -2730,7 +2630,7 @@ namespace Wexflow.Core.Db.Oracle
                     using (var command = new OracleCommand("DELETE FROM " + Core.Db.Approver.DocumentName
                         + " WHERE " + Approver.ColumnName_UserId + " = " + int.Parse(userId), conn))
                     {
-                        command.ExecuteNonQuery();
+                        _ = command.ExecuteNonQuery();
                     }
                 }
             }
@@ -2740,7 +2640,7 @@ namespace Wexflow.Core.Db.Oracle
         {
             lock (padlock)
             {
-                List<Approver> approvers = new List<Approver>();
+                var approvers = new List<Approver>();
 
                 using (var conn = new OracleConnection(connectionString))
                 {
@@ -2765,7 +2665,7 @@ namespace Wexflow.Core.Db.Oracle
                                     Id = Convert.ToInt64((decimal)reader[Approver.ColumnName_Id]),
                                     UserId = Convert.ToInt64((decimal)reader[Approver.ColumnName_UserId]).ToString(),
                                     RecordId = Convert.ToInt64((decimal)reader[Approver.ColumnName_RecordId]).ToString(),
-                                    Approved = (short)reader[Approver.ColumnName_Approved] == 1 ? true : false,
+                                    Approved = (short)reader[Approver.ColumnName_Approved] == 1,
                                     ApprovedOn = reader[Approver.ColumnName_ApprovedOn] == DBNull.Value ? null : (DateTime?)reader[Approver.ColumnName_ApprovedOn]
                                 };
 

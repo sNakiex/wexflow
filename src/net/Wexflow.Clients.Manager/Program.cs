@@ -1,7 +1,7 @@
 ﻿using System;
-using System.Windows.Forms;
-using System.ServiceProcess;
 using System.Configuration;
+using System.ServiceProcess;
+using System.Windows.Forms;
 
 namespace Wexflow.Clients.Manager
 {
@@ -11,7 +11,7 @@ namespace Wexflow.Clients.Manager
         public static bool DebugMode = false;
 
         [STAThread]
-        private static void Main(string[] args)
+        private static void Main()
         {
             if (Environment.UserInteractive && System.Diagnostics.Debugger.IsAttached)
             {

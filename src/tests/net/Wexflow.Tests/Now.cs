@@ -1,7 +1,7 @@
-﻿using System;
+﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System;
 using System.Diagnostics;
 using System.Globalization;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Wexflow.Tests
 {
@@ -21,11 +21,11 @@ namespace Wexflow.Tests
         [TestMethod]
         public void NowTest()
         {
-            Stopwatch stopwatch = Stopwatch.StartNew();
-            Helper.StartWorkflow(51);
+            var stopwatch = Stopwatch.StartNew();
+            _ = Helper.StartWorkflow(51);
             stopwatch.Stop();
 
-            string day = string.Format(new CultureInfo("en-US"), "{0:dddd}", DateTime.Now);
+            var day = string.Format(new CultureInfo("en-US"), "{0:dddd}", DateTime.Now);
             switch (day)
             {
                 case "Monday":

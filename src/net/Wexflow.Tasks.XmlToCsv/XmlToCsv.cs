@@ -1,9 +1,9 @@
 ﻿using System;
-using Wexflow.Core;
-using System.Xml.Linq;
-using System.Xml.XPath;
 using System.IO;
 using System.Threading;
+using System.Xml.Linq;
+using System.Xml.XPath;
+using Wexflow.Core;
 
 namespace Wexflow.Tasks.XmlToCsv
 {
@@ -57,7 +57,6 @@ namespace Wexflow.Tasks.XmlToCsv
                 success = false;
             }
 
-
             var status = Status.Success;
 
             if (!success && atLeastOneSuccess)
@@ -77,7 +76,7 @@ namespace Wexflow.Tasks.XmlToCsv
         {
             var success = true;
 
-            foreach (FileInf file in SelectFiles())
+            foreach (var file in SelectFiles())
             {
                 try
                 {
@@ -87,7 +86,10 @@ namespace Wexflow.Tasks.XmlToCsv
                     InfoFormat("Csv file {0} created from {1}", csvPath, file.Path);
                     Files.Add(new FileInf(csvPath, Id));
 
-                    if (!atLeastOneSuccess) atLeastOneSuccess = true;
+                    if (!atLeastOneSuccess)
+                    {
+                        atLeastOneSuccess = true;
+                    }
                 }
                 catch (ThreadAbortException)
                 {
@@ -107,11 +109,11 @@ namespace Wexflow.Tasks.XmlToCsv
         {
             var xdoc = XDocument.Load(xmlPath);
 
-            using (StreamWriter sw = new StreamWriter(csvPath))
+            using (var sw = new StreamWriter(csvPath))
             {
-                foreach (XElement xLine in xdoc.XPathSelectElements("Lines/Line"))
+                foreach (var xLine in xdoc.XPathSelectElements("Lines/Line"))
                 {
-                    foreach (XElement xColumn in xLine.XPathSelectElements("Column"))
+                    foreach (var xColumn in xLine.XPathSelectElements("Column"))
                     {
                         sw.Write(string.Concat(Quote, xColumn.Value, Quote, Separator));
                     }

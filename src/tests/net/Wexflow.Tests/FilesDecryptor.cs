@@ -30,8 +30,8 @@ namespace Wexflow.Tests
         {
             var files = GetFiles(FilesDecryptorDestFolder);
             Assert.AreEqual(0, files.Length);
-            Helper.StartWorkflow(81);
-            Helper.StartWorkflow(82);
+            _ = Helper.StartWorkflow(81);
+            _ = Helper.StartWorkflow(82);
             files = GetFiles(FilesDecryptorDestFolder);
             Assert.AreEqual(3, files.Length);
         }
@@ -40,6 +40,5 @@ namespace Wexflow.Tests
         {
             return Directory.GetFiles(dir);
         }
-
     }
 }

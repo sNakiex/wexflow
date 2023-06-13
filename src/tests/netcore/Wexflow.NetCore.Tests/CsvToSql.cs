@@ -14,7 +14,6 @@ namespace Wexflow.NetCore.Tests
           + "INSERT INTO HelloWorld(Id,Title,Description) VALUES (4, 'Hello World 4!', 'Hello World Description 4!');\r\n"
           + "INSERT INTO HelloWorld(Id,Title,Description) VALUES (5, 'Hello World 5!', 'Hello World Description 5!');\r\n";
 
-
         [TestInitialize]
         public void TestInitialize()
         {
@@ -30,26 +29,26 @@ namespace Wexflow.NetCore.Tests
         [TestMethod]
         public void CsvToSqlTest()
         {
-            string[] files = GetSqlScripts();
+            var files = GetSqlScripts();
             Assert.AreEqual(0, files.Length);
-            Helper.StartWorkflow(76);
+            _ = Helper.StartWorkflow(76);
             files = GetSqlScripts();
             Assert.AreEqual(2, files.Length);
             foreach (var file in files)
             {
-                string content = File.ReadAllText(file);
+                var content = File.ReadAllText(file);
                 Assert.AreEqual(ExpectedResult, content);
             }
         }
 
-        private string[] GetSqlScripts()
+        private static string[] GetSqlScripts()
         {
             return Directory.GetFiles(Dest, "csv*.sql");
         }
 
-        private void DeleteSqlScripts()
+        private static void DeleteSqlScripts()
         {
-            string[] files = GetSqlScripts();
+            var files = GetSqlScripts();
             foreach (var file in files)
             {
                 File.Delete(file);

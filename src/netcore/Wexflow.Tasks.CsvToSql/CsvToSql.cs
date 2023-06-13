@@ -23,8 +23,8 @@ namespace Wexflow.Tasks.CsvToSql
         {
             Info("Converting CSV to SQL...");
 
-            bool succeeded = true;
-            bool atLeastOneSucceed = false;
+            var succeeded = true;
+            var atLeastOneSucceed = false;
 
             try
             {
@@ -32,12 +32,14 @@ namespace Wexflow.Tasks.CsvToSql
 
                 foreach (var csvFile in csvFiles)
                 {
-                    string sqlPath = Path.Combine(Workflow.WorkflowTempFolder,
+                    var sqlPath = Path.Combine(Workflow.WorkflowTempFolder,
                         string.Format("{0}_{1:yyyy-MM-dd-HH-mm-ss-fff}.sql", Path.GetFileNameWithoutExtension(csvFile.FileName), DateTime.Now));
                     succeeded &= ConvertCsvToSql(csvFile.Path, sqlPath, TableName, Separator);
-                    if (succeeded && !atLeastOneSucceed) atLeastOneSucceed = true;
+                    if (succeeded && !atLeastOneSucceed)
+                    {
+                        atLeastOneSucceed = true;
+                    }
                 }
-
             }
             catch (ThreadAbortException)
             {
@@ -68,51 +70,46 @@ namespace Wexflow.Tasks.CsvToSql
         {
             try
             {
-                using (StreamReader sr = new StreamReader(csvPath))
-                using (StreamWriter sw = new StreamWriter(sqlPath))
+                using StreamReader sr = new(csvPath);
+                using StreamWriter sw = new(sqlPath);
+                var columnsLine = sr.ReadLine(); // First line contains columns
+                string line;
+                while (!string.IsNullOrEmpty(line = sr.ReadLine()))
                 {
-                    string columnsLine = sr.ReadLine(); // First line contains columns
-                    string line;
-                    while (!string.IsNullOrEmpty(line = sr.ReadLine()))
+                    sw.Write($"INSERT INTO {tableName}({columnsLine.Replace(separator, ",").TrimEnd(',')}) VALUES ");
+                    sw.Write("(");
+                    var values = line.Split(new string[] { separator }, StringSplitOptions.RemoveEmptyEntries);
+                    foreach (var value in values)
                     {
-                        sw.Write("INSERT INTO " + tableName + "(" + columnsLine.Replace(separator, ",").TrimEnd(',') + ")" + " VALUES ");
-                        sw.Write("(");
-                        var values = line.Split(new string[] { separator }, StringSplitOptions.RemoveEmptyEntries);
-                        foreach (var value in values)
+                        if (int.TryParse(value, out var i))
                         {
-                            int i;
-                            double d;
-                            float f;
-                            if (int.TryParse(value, out i))
-                            {
-                                sw.Write(i);
-                            }
-                            else if (double.TryParse(value, out d))
-                            {
-                                sw.Write(d);
-                            }
-                            else if (float.TryParse(value, out f))
-                            {
-                                sw.Write(f);
-                            }
-                            else
-                            {
-                                sw.Write("'" + value + "'");
-                            }
-
-                            if (!values.Last().Equals(value))
-                            {
-                                sw.Write(", ");
-                            }
+                            sw.Write(i);
                         }
-                        sw.Write(");\r\n");
+                        else if (double.TryParse(value, out var d))
+                        {
+                            sw.Write(d);
+                        }
+                        else if (float.TryParse(value, out var f))
+                        {
+                            sw.Write(f);
+                        }
+                        else
+                        {
+                            sw.Write($"'{value}'");
+                        }
+
+                        if (!values.Last().Equals(value))
+                        {
+                            sw.Write(", ");
+                        }
                     }
-
-                    Files.Add(new FileInf(sqlPath, Id));
-                    InfoFormat("SQL script {0} created from {1} with success.", sqlPath, csvPath);
-
-                    return true;
+                    sw.Write(");\r\n");
                 }
+
+                Files.Add(new FileInf(sqlPath, Id));
+                InfoFormat("SQL script {0} created from {1} with success.", sqlPath, csvPath);
+
+                return true;
             }
             catch (Exception e)
             {
@@ -120,6 +117,5 @@ namespace Wexflow.Tasks.CsvToSql
                 return false;
             }
         }
-
     }
 }

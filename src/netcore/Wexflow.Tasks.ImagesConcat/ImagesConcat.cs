@@ -2,12 +2,14 @@
 using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
+using System.Runtime.Versioning;
 using System.Threading;
 using System.Xml.Linq;
 using Wexflow.Core;
 
 namespace Wexflow.Tasks.ImagesConcat
 {
+    [SupportedOSPlatform("windows")]
     public class ImagesConcat : Task
     {
         public ImagesConcat(XElement xe, Workflow wf)
@@ -18,7 +20,7 @@ namespace Wexflow.Tasks.ImagesConcat
         public override TaskStatus Run()
         {
             Info("Concatenating images...");
-            Status status = Status.Success;
+            var status = Status.Success;
 
             try
             {
@@ -56,45 +58,40 @@ namespace Wexflow.Tasks.ImagesConcat
             return new TaskStatus(status);
         }
 
-
         private bool ConcatImages(FileInf[] imageFiles, string destPath)
         {
             try
             {
-                List<int> imageHeights = new List<int>();
-                int nIndex = 0;
-                int width = 0;
-                foreach (FileInf imageFile in imageFiles)
+                List<int> imageHeights = new();
+                var nIndex = 0;
+                var width = 0;
+                foreach (var imageFile in imageFiles)
                 {
-                    using (Image img = Image.FromFile(imageFile.Path))
-                    {
-                        imageHeights.Add(img.Height);
-                        width += img.Width;
-                    }
+                    using var img = Image.FromFile(imageFile.Path);
+                    imageHeights.Add(img.Height);
+                    width += img.Width;
                 }
                 imageHeights.Sort();
 
-                int height = imageHeights[imageHeights.Count - 1];
+                var height = imageHeights[^1];
 
-                using (Bitmap finalImage = new Bitmap(width, height))
-                using (Graphics graphics = Graphics.FromImage(finalImage))
+                using (Bitmap finalImage = new(width, height))
+                using (var graphics = Graphics.FromImage(finalImage))
                 {
                     graphics.Clear(SystemColors.AppWorkspace);
-                    foreach (FileInf imageFile in imageFiles)
+                    foreach (var imageFile in imageFiles)
                     {
-                        using (Image img = Image.FromFile(imageFile.Path))
+                        using var img = Image.FromFile(imageFile.Path);
+                        if (nIndex == 0)
                         {
-                            if (nIndex == 0)
-                            {
-                                graphics.DrawImage(img, new Point(0, 0));
-                                nIndex++;
-                                width = img.Width;
-                            }
-                            else
-                            {
-                                graphics.DrawImage(img, new Point(width, 0));
-                                width += img.Width;
-                            }
+                            graphics.DrawImage(img, new Point(0, 0));
+                            nIndex++;
+                            width = img.Width;
+                        }
+                        else
+                        {
+                            graphics.DrawImage(img, new Point(width, 0));
+                            width += img.Width;
                         }
                     }
 
@@ -116,6 +113,5 @@ namespace Wexflow.Tasks.ImagesConcat
                 return false;
             }
         }
-
     }
 }

@@ -26,15 +26,15 @@ namespace Wexflow.Tasks.ProcessInfo
 
                 var destPath = Path.Combine(Workflow.WorkflowTempFolder,
                     string.Format("ProcessInfo_{0:yyyy-MM-dd-HH-mm-ss-fff}.xml", DateTime.Now));
-                
+
                 var xprocesses = new XElement("Processes");
                 foreach (var process in processes)
                 {
-                    XElement xprocess = new XElement("Process"
+                    var xprocess = new XElement("Process"
                         , new XAttribute("id", process.Id)
                         , new XAttribute("processName", process.ProcessName)
                         , new XAttribute("fileName", process.MainModule.FileName)
-                        , new XAttribute("startTime", string.Format("{0:yyyy-MM-dd HH:mm:ss.fff}",process.StartTime))
+                        , new XAttribute("startTime", string.Format("{0:yyyy-MM-dd HH:mm:ss.fff}", process.StartTime))
                         , new XAttribute("machineName", process.MachineName)
                         , new XAttribute("sessionId", process.SessionId)
                         , new XAttribute("mainWindowTitle", process.MainWindowTitle)

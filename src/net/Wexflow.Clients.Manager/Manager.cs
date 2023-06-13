@@ -26,7 +26,7 @@ namespace Wexflow.Clients.Manager
         private WexflowServiceClient _wexflowServiceClient;
         private WorkflowInfo[] _workflows;
         private Dictionary<int, WorkflowInfo> _workflowsPerId;
-        private Dictionary<int, Guid> _jobs;
+        private readonly Dictionary<int, Guid> _jobs;
         private bool _windowsServiceWasStopped;
         private Timer _timer;
         private Exception _exception;
@@ -44,12 +44,12 @@ namespace Wexflow.Clients.Manager
 
             if (File.Exists(WexflowServerPath))
             {
-                XmlDocument doc = new XmlDocument();
+                var doc = new XmlDocument();
                 doc.Load(WexflowServerPath);
-                XmlElement root = doc.DocumentElement;
+                var root = doc.DocumentElement;
                 if (root != null)
                 {
-                    XmlNodeList nodeList = root.SelectNodes("/configuration/log4net/appender/file/@value");
+                    var nodeList = root.SelectNodes("/configuration/log4net/appender/file/@value");
                     if (nodeList != null && nodeList.Count > 0)
                     {
                         _logfile = nodeList[0].Value;
@@ -116,7 +116,7 @@ namespace Wexflow.Clients.Manager
                 }
                 else
                 {
-                    _workflows = new WorkflowInfo[] { };
+                    _workflows = Array.Empty<WorkflowInfo>();
                     textBoxInfo.Text = "";
                 }
             }
@@ -128,7 +128,7 @@ namespace Wexflow.Clients.Manager
 
         private void ShowError()
         {
-            MessageBox.Show(@"An error occured while retrieving workflows.", "Wexflow", MessageBoxButtons.OK);
+            _ = MessageBox.Show(@"An error occured while retrieving workflows.", "Wexflow", MessageBoxButtons.OK);
         }
 
         private void BackgroundWorker1_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
@@ -155,7 +155,7 @@ namespace Wexflow.Clients.Manager
 
             var sworkflows = new SortableBindingList<WorkflowDataInfo>();
             _workflowsPerId = new Dictionary<int, WorkflowInfo>();
-            foreach (WorkflowInfo workflow in _workflows)
+            foreach (var workflow in _workflows)
             {
                 sworkflows.Add(new WorkflowDataInfo(workflow.Id, workflow.Name, workflow.LaunchType, workflow.IsEnabled, workflow.IsApproval, workflow.Description));
 
@@ -252,7 +252,7 @@ namespace Wexflow.Clients.Manager
                 }
                 else
                 {
-                    MessageBox.Show("Job id not found.");
+                    _ = MessageBox.Show("Job id not found.");
                 }
             }
         }
@@ -268,7 +268,7 @@ namespace Wexflow.Clients.Manager
                 }
                 else
                 {
-                    MessageBox.Show("Job id not found.");
+                    _ = MessageBox.Show("Job id not found.");
                 }
             }
         }
@@ -285,7 +285,7 @@ namespace Wexflow.Clients.Manager
                 }
                 else
                 {
-                    MessageBox.Show("Job id not found.");
+                    _ = MessageBox.Show("Job id not found.");
                 }
             }
         }
@@ -319,7 +319,7 @@ namespace Wexflow.Clients.Manager
 
                 if (workflow.IsRunning)
                 {
-                    if(!_jobs.ContainsKey(wfId))
+                    if (!_jobs.ContainsKey(wfId))
                     {
                         _jobs.Add(wfId, workflow.InstanceId);
                     }
@@ -360,7 +360,10 @@ namespace Wexflow.Clients.Manager
                     }
                     else
                     {
-                        if (!force && !WorkflowStatusChanged(workflow)) return;
+                        if (!force && !WorkflowStatusChanged(workflow))
+                        {
+                            return;
+                        }
 
                         buttonStart.Enabled = !workflow.IsRunning;
                         buttonStop.Enabled = workflow.IsRunning && !workflow.IsPaused;
@@ -369,26 +372,11 @@ namespace Wexflow.Clients.Manager
                         buttonApprove.Enabled = workflow.IsApproval && workflow.IsWaitingForApproval;
                         buttonReject.Enabled = workflow.IsApproval && workflow.IsWaitingForApproval;
 
-                        if (workflow.IsApproval && workflow.IsWaitingForApproval && !workflow.IsPaused)
-                        {
-                            textBoxInfo.Text = "This workflow is waiting for approval...";
-                        }
-                        else
-                        {
-                            if (workflow.IsRunning && !workflow.IsPaused)
-                            {
-                                textBoxInfo.Text = @"This workflow is running...";
-                            }
-                            else if (workflow.IsPaused)
-                            {
-                                textBoxInfo.Text = @"This workflow is suspended.";
-                            }
-                            else
-                            {
-                                textBoxInfo.Text = "";
-                            }
-                        }
-
+                        textBoxInfo.Text = workflow.IsApproval && workflow.IsWaitingForApproval && !workflow.IsPaused
+                            ? "This workflow is waiting for approval..."
+                            : workflow.IsRunning && !workflow.IsPaused
+                                ? @"This workflow is running..."
+                                : workflow.IsPaused ? @"This workflow is suspended." : "";
                     }
                 }
                 else
@@ -441,10 +429,10 @@ namespace Wexflow.Clients.Manager
 
         private void ButtonLog_Click(object sender, EventArgs e)
         {
-            string logFile = @"..\" + _logfile;
+            var logFile = $@"..\{_logfile}";
             if (File.Exists(logFile))
             {
-                Process.Start("notepad.exe", logFile);
+                _ = Process.Start("notepad.exe", logFile);
             }
         }
 
@@ -452,7 +440,7 @@ namespace Wexflow.Clients.Manager
         {
             if (File.Exists(Backend))
             {
-                Process.Start(Backend, "");
+                _ = Process.Start(Backend, "");
             }
         }
 
@@ -466,13 +454,13 @@ namespace Wexflow.Clients.Manager
                 , MessageBoxButtons.YesNo
                 , MessageBoxIcon.Information) == DialogResult.Yes)
             {
-                Process.Start("https://github.com/aelassas/Wexflow/releases/latest");
+                _ = Process.Start("https://github.com/aelassas/Wexflow/releases/latest");
             }
         }
 
         private void HelpToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            Process.Start("https://github.com/aelassas/Wexflow/wiki");
+            _ = Process.Start("https://github.com/aelassas/Wexflow/wiki");
         }
 
         private void ButtonRefresh_Click(object sender, EventArgs e)
@@ -482,25 +470,21 @@ namespace Wexflow.Clients.Manager
 
         private void ButtonRestart_Click(object sender, EventArgs e)
         {
-            if (_timer != null)
-            {
-                _timer.Stop();
-            }
+            _timer?.Stop();
 
             textBoxInfo.Text = "Restarting Wexflow server...";
-            _workflows = new WorkflowInfo[] { };
+            _workflows = Array.Empty<WorkflowInfo>();
             BindDataGridView();
             backgroundWorker2.RunWorkerAsync();
         }
 
         private void BackgroundWorker2_DoWork(object sender, DoWorkEventArgs e)
         {
-            string errorMsg;
-            _serviceRestarted = RestartWindowsService(Program.WexflowServiceName, out errorMsg);
+            _serviceRestarted = RestartWindowsService(Program.WexflowServiceName, out var errorMsg);
 
             if (!_serviceRestarted)
             {
-                MessageBox.Show("An error occurred while restoring Wexflow server: " + errorMsg);
+                _ = MessageBox.Show($"An error occurred while restoring Wexflow server: {errorMsg}");
             }
         }
 
@@ -512,10 +496,10 @@ namespace Wexflow.Clients.Manager
         private bool RestartWindowsService(string serviceName, out string errorMsg)
         {
             errorMsg = string.Empty;
-            ServiceController serviceController = new ServiceController(serviceName);
+            var serviceController = new ServiceController(serviceName);
             try
             {
-                if ((serviceController.Status.Equals(ServiceControllerStatus.Running)) || (serviceController.Status.Equals(ServiceControllerStatus.StartPending)))
+                if (serviceController.Status.Equals(ServiceControllerStatus.Running) || serviceController.Status.Equals(ServiceControllerStatus.StartPending))
                 {
                     serviceController.Stop();
                 }
@@ -531,12 +515,12 @@ namespace Wexflow.Clients.Manager
             }
         }
 
-        private void buttonSearch_Click(object sender, EventArgs e)
+        private void ButtonSearch_Click(object sender, EventArgs e)
         {
             LoadWorkflows();
         }
 
-        private void textBoxSearch_KeyUp(object sender, KeyEventArgs e)
+        private void TextBoxSearch_KeyUp(object sender, KeyEventArgs e)
         {
             if (e.KeyCode == Keys.Enter)
             {
@@ -556,7 +540,7 @@ namespace Wexflow.Clients.Manager
                 }
                 else
                 {
-                    MessageBox.Show("Job id not found.");
+                    _ = MessageBox.Show("Job id not found.");
                 }
             }
         }
@@ -573,7 +557,7 @@ namespace Wexflow.Clients.Manager
                 }
                 else
                 {
-                    MessageBox.Show("Job id not found.");
+                    _ = MessageBox.Show("Job id not found.");
                 }
             }
         }

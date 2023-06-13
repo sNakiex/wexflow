@@ -1,7 +1,7 @@
 ﻿using System;
-using Wexflow.Core;
-using System.Xml.Linq;
 using System.IO;
+using System.Xml.Linq;
+using Wexflow.Core;
 
 namespace Wexflow.Tasks.Guid
 {
@@ -18,13 +18,13 @@ namespace Wexflow.Tasks.Guid
         public override TaskStatus Run()
         {
             Info("Generating Guids...");
-            
+
             var guidPath = Path.Combine(Workflow.WorkflowTempFolder,
                 string.Format("Guid_{0:yyyy-MM-dd-HH-mm-ss-fff}.xml", DateTime.Now));
 
             var xguids = new XElement("Guids");
 
-            for (int i = 0; i < GuidCount; i++)
+            for (var i = 0; i < GuidCount; i++)
             {
                 xguids.Add(new XElement("Guid", System.Guid.NewGuid()));
             }

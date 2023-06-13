@@ -1,8 +1,8 @@
 ﻿using System;
-using Wexflow.Core;
-using System.Xml.Linq;
 using System.IO;
 using System.Threading;
+using System.Xml.Linq;
+using Wexflow.Core;
 
 namespace Wexflow.Tasks.FilesRemover
 {
@@ -71,16 +71,19 @@ namespace Wexflow.Tasks.FilesRemover
         {
             var success = true;
             var files = SelectFiles();
-            for (int i = files.Length - 1; i > -1; i--)
+            for (var i = files.Length - 1; i > -1; i--)
             {
                 var file = files[i];
 
                 try
                 {
                     File.Delete(file.Path);
-                    Workflow.FilesPerTask[file.TaskId].Remove(file);
+                    _ = Workflow.FilesPerTask[file.TaskId].Remove(file);
                     InfoFormat("File removed: {0}", file.Path);
-                    if (!atLeastOneSucceed) atLeastOneSucceed = true;
+                    if (!atLeastOneSucceed)
+                    {
+                        atLeastOneSucceed = true;
+                    }
                 }
                 catch (ThreadAbortException)
                 {
@@ -95,6 +98,5 @@ namespace Wexflow.Tasks.FilesRemover
 
             return success;
         }
-
     }
 }

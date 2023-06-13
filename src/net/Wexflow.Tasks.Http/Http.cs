@@ -1,21 +1,21 @@
 ﻿using System;
-using Wexflow.Core;
-using System.Xml.Linq;
 using System.IO;
 using System.Net;
-using System.Threading;
 using System.Security.Authentication;
+using System.Threading;
+using System.Xml.Linq;
+using Wexflow.Core;
 
 namespace Wexflow.Tasks.Http
 {
-    public class Http:Task
+    public class Http : Task
     {
         private const SslProtocols _Tls12 = (SslProtocols)0x00000C00;
         private const SecurityProtocolType Tls12 = (SecurityProtocolType)_Tls12;
 
         public string[] Urls { get; private set; }
 
-        public Http(XElement xe, Workflow wf): base(xe, wf)
+        public Http(XElement xe, Workflow wf) : base(xe, wf)
         {
             Urls = GetSettings("url");
         }
@@ -24,20 +24,19 @@ namespace Wexflow.Tasks.Http
         {
             Info("Downloading files...");
 
-            bool success = true;
-            bool atLeastOneSucceed = false;
+            var success = true;
+            var atLeastOneSucceed = false;
 
             using (var webClient = new WebClient())
             {
                 ServicePointManager.Expect100Continue = true;
                 ServicePointManager.SecurityProtocol = Tls12;
 
-                foreach (string url in Urls)
+                foreach (var url in Urls)
                 {
                     try
                     {
-                        var fileName = Path.GetFileName(url);
-                        if (fileName == null) throw new Exception("File name is null");
+                        var fileName = Path.GetFileName(url) ?? throw new Exception("File name is null");
                         var destPath = Path.Combine(Workflow.WorkflowTempFolder, fileName);
 
                         webClient.DownloadFile(url, destPath);
@@ -45,7 +44,10 @@ namespace Wexflow.Tasks.Http
                         InfoFormat("File {0} downlaoded as {1}", url, destPath);
                         Files.Add(new FileInf(destPath, Id));
 
-                        if (!atLeastOneSucceed) atLeastOneSucceed = true;
+                        if (!atLeastOneSucceed)
+                        {
+                            atLeastOneSucceed = true;
+                        }
                     }
                     catch (ThreadAbortException)
                     {

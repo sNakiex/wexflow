@@ -33,7 +33,7 @@ namespace Wexflow.Scripts.Core
                         if (workflowIdFromFile == workflowId)
                         {
                             found = true;
-                            Console.WriteLine("Workflow " + workflowIdFromFile + " already in database.");
+                            Console.WriteLine($"Workflow {workflowIdFromFile} already in database.");
                             break;
                         }
                     }
@@ -42,8 +42,8 @@ namespace Wexflow.Scripts.Core
                     {
                         try
                         {
-                            db.InsertWorkflow(new Workflow { Xml = xdoc1.ToString() });
-                            Console.WriteLine("Workflow " + workflowIdFromFile + " inserted.");
+                            _ = db.InsertWorkflow(new Workflow { Xml = xdoc1.ToString() });
+                            Console.WriteLine($"Workflow {workflowIdFromFile} inserted.");
                         }
                         catch (Exception e)
                         {
@@ -195,7 +195,7 @@ namespace Wexflow.Scripts.Core
                     var recordFilePath = Path.Combine(recordFolder, recordFileName);
                     if (!Directory.Exists(recordFolder))
                     {
-                        Directory.CreateDirectory(recordFolder);
+                        _ = Directory.CreateDirectory(recordFolder);
                     }
                     if (File.Exists(recordFilePath))
                     {
@@ -213,6 +213,5 @@ namespace Wexflow.Scripts.Core
                 Console.WriteLine("An error occured while creating the record {0}: {1}", name, e);
             }
         }
-
     }
 }

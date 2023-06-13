@@ -7,7 +7,7 @@ using Wexflow.Core;
 
 namespace Wexflow.Tasks.XmlToCsv
 {
-    public class XmlToCsv:Task
+    public class XmlToCsv : Task
     {
         public string Separator { get; set; }
         public string Quote { get; set; }
@@ -23,10 +23,10 @@ namespace Wexflow.Tasks.XmlToCsv
         {
             Info("Creating csv files...");
 
-            bool success = true;
-            bool atLeastOneSucceed = false;
+            var success = true;
+            var atLeastOneSucceed = false;
 
-            foreach (FileInf file in SelectFiles())
+            foreach (var file in SelectFiles())
             {
                 try
                 {
@@ -35,8 +35,11 @@ namespace Wexflow.Tasks.XmlToCsv
                     CreateCsv(file.Path, csvPath);
                     InfoFormat("Csv file {0} created from {1}", csvPath, file.Path);
                     Files.Add(new FileInf(csvPath, Id));
-                    
-                    if (!atLeastOneSucceed) atLeastOneSucceed = true;
+
+                    if (!atLeastOneSucceed)
+                    {
+                        atLeastOneSucceed = true;
+                    }
                 }
                 catch (ThreadAbortException)
                 {
@@ -68,16 +71,14 @@ namespace Wexflow.Tasks.XmlToCsv
         {
             var xdoc = XDocument.Load(xmlPath);
 
-            using (StreamWriter sw = new StreamWriter(csvPath))
+            using StreamWriter sw = new(csvPath);
+            foreach (var xLine in xdoc.XPathSelectElements("Lines/Line"))
             {
-                foreach (XElement xLine in xdoc.XPathSelectElements("Lines/Line"))
+                foreach (var xColumn in xLine.XPathSelectElements("Column"))
                 {
-                    foreach (XElement xColumn in xLine.XPathSelectElements("Column"))
-                    {
-                        sw.Write(string.Concat(Quote, xColumn.Value, Quote, Separator));
-                    }
-                    sw.Write("\r\n");
+                    sw.Write(string.Concat(Quote, xColumn.Value, Quote, Separator));
                 }
+                sw.Write("\r\n");
             }
         }
     }

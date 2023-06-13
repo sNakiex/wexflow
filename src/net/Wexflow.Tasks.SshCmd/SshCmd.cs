@@ -14,7 +14,7 @@ namespace Wexflow.Tasks.SshCmd
     {
         public static readonly Regex Prompt = new Regex("[a-zA-Z0-9_.-]*\\@[a-zA-Z0-9_.-]*\\:\\~[#$] ", RegexOptions.Compiled);
         public static readonly Regex PwdPrompt = new Regex("password for .*\\:", RegexOptions.Compiled);
-        public static readonly Regex PromptOrPwd = new Regex(Prompt + "|" + PwdPrompt, RegexOptions.Compiled);
+        public static readonly Regex PromptOrPwd = new Regex($"{Prompt}|{PwdPrompt}", RegexOptions.Compiled);
 
         public string Host { get; private set; }
         public int Port { get; private set; }
@@ -45,7 +45,7 @@ namespace Wexflow.Tasks.SshCmd
             try
             {
                 var connectionInfo = new ConnectionInfo(Host, Port, Username, new PasswordAuthenticationMethod(Username, Password));
-                SshClient sshclient = new SshClient(connectionInfo);
+                var sshclient = new SshClient(connectionInfo);
                 sshclient.Connect();
                 var modes = new Dictionary<TerminalModes, uint> { { TerminalModes.ECHO, 53 } };
                 stream = sshclient.CreateShellStream("xterm", 80, 24, 800, 600, 4096, modes);
@@ -75,10 +75,7 @@ namespace Wexflow.Tasks.SshCmd
             }
             finally
             {
-                if (stream != null)
-                {
-                    stream.Close();
-                }
+                stream?.Close();
             }
             var status = Status.Success;
 

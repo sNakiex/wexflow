@@ -60,12 +60,12 @@ namespace Wexflow.Tests
 
         public static void StopWorkflow(int workflowId, System.Guid instanceId)
         {
-            WexflowEngine.StopWorkflow(workflowId, instanceId, WexflowEngine.SuperAdminUsername);
+            _ = WexflowEngine.StopWorkflow(workflowId, instanceId, WexflowEngine.SuperAdminUsername);
         }
 
         public static void SuspendWorkflow(int workflowId, System.Guid instanceId)
         {
-            WexflowEngine.SuspendWorkflow(workflowId, instanceId);
+            _ = WexflowEngine.SuspendWorkflow(workflowId, instanceId);
         }
 
         public static void ResumeWorkflow(int workflowId, System.Guid instanceId)
@@ -75,12 +75,12 @@ namespace Wexflow.Tests
 
         public static void ApproveWorkflow(int workflowId, System.Guid instanceId)
         {
-            WexflowEngine.ApproveWorkflow(workflowId, instanceId, WexflowEngine.SuperAdminUsername);
+            _ = WexflowEngine.ApproveWorkflow(workflowId, instanceId, WexflowEngine.SuperAdminUsername);
         }
 
         public static void RejectWorkflow(int workflowId, System.Guid instanceId)
         {
-            WexflowEngine.RejectWorkflow(workflowId, instanceId, WexflowEngine.SuperAdminUsername);
+            _ = WexflowEngine.RejectWorkflow(workflowId, instanceId, WexflowEngine.SuperAdminUsername);
         }
 
         public static Core.Workflow GetWorkflow(int workflowId)
@@ -90,7 +90,11 @@ namespace Wexflow.Tests
 
         public static void DeleteFilesAndFolders(string folder)
         {
-            if (!Directory.Exists(folder)) return;
+            if (!Directory.Exists(folder))
+            {
+                return;
+            }
+
             DeleteFiles(folder);
 
             foreach (var dir in Directory.GetDirectories(folder))
@@ -101,7 +105,11 @@ namespace Wexflow.Tests
 
         public static void DeleteFiles(string dir)
         {
-            if (!Directory.Exists(dir)) return;
+            if (!Directory.Exists(dir))
+            {
+                return;
+            }
+
             foreach (var file in Directory.GetFiles(dir))
             {
                 File.Delete(file);
@@ -125,17 +133,21 @@ namespace Wexflow.Tests
 
         public static void CopyDirRec(string src, string dest)
         {
-            string dirName = Path.GetFileName(src);
-            string destDir = Path.Combine(dest, dirName);
-            Directory.CreateDirectory(destDir);
+            var dirName = Path.GetFileName(src);
+            var destDir = Path.Combine(dest, dirName);
+            _ = Directory.CreateDirectory(destDir);
 
             //Now Create all of the directories
-            foreach (string dirPath in Directory.GetDirectories(src, "*", SearchOption.AllDirectories))
-                Directory.CreateDirectory(dirPath.Replace(src, destDir));
+            foreach (var dirPath in Directory.GetDirectories(src, "*", SearchOption.AllDirectories))
+            {
+                _ = Directory.CreateDirectory(dirPath.Replace(src, destDir));
+            }
 
             //Copy all the files & Replaces any files with the same name
-            foreach (string newPath in Directory.GetFiles(src, "*.*", SearchOption.AllDirectories))
+            foreach (var newPath in Directory.GetFiles(src, "*.*", SearchOption.AllDirectories))
+            {
                 File.Copy(newPath, newPath.Replace(src, destDir), true);
+            }
         }
 
         public static void StartProcess(string name, string cmd, bool hideGui)
@@ -151,7 +163,7 @@ namespace Wexflow.Tests
             var process = new Process { StartInfo = startInfo };
             process.OutputDataReceived += OutputHandler;
             process.ErrorDataReceived += ErrorHandler;
-            process.Start();
+            _ = process.Start();
             process.BeginOutputReadLine();
             process.BeginErrorReadLine();
         }

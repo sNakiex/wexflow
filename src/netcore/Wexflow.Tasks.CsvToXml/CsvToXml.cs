@@ -1,12 +1,12 @@
 ﻿using System;
-using Wexflow.Core;
-using System.Xml.Linq;
 using System.IO;
 using System.Threading;
+using System.Xml.Linq;
+using Wexflow.Core;
 
 namespace Wexflow.Tasks.CsvToXml
 {
-    public class CsvToXml:Task
+    public class CsvToXml : Task
     {
         public CsvToXml(XElement xe, Workflow wf)
             : base(xe, wf)
@@ -17,10 +17,10 @@ namespace Wexflow.Tasks.CsvToXml
         {
             Info("Creating XML files...");
 
-            bool success = true;
-            bool atLeastOneSucceed = false;
+            var success = true;
+            var atLeastOneSucceed = false;
 
-            foreach (FileInf file in SelectFiles())
+            foreach (var file in SelectFiles())
             {
                 try
                 {
@@ -29,7 +29,10 @@ namespace Wexflow.Tasks.CsvToXml
                     CreateXml(file.Path, xmlPath);
                     Files.Add(new FileInf(xmlPath, Id));
                     InfoFormat("XML file {0} created from {1}", xmlPath, file.Path);
-                    if (!atLeastOneSucceed) atLeastOneSucceed = true;
+                    if (!atLeastOneSucceed)
+                    {
+                        atLeastOneSucceed = true;
+                    }
                 }
                 catch (ThreadAbortException)
                 {
@@ -57,18 +60,25 @@ namespace Wexflow.Tasks.CsvToXml
             return new TaskStatus(status, false);
         }
 
-        private void CreateXml(string csvPath, string xmlPath)
+        private static void CreateXml(string csvPath, string xmlPath)
         {
-            var xdoc = new XDocument(new XElement("Lines"));
+            XDocument xdoc = new(new XElement("Lines"));
 
-            foreach (string line in File.ReadAllLines(csvPath))
+            foreach (var line in File.ReadAllLines(csvPath))
             {
-                var xLine = new XElement("Line");
-                foreach (string col in line.Split(';'))
+                XElement xLine = new("Line");
+                foreach (var col in line.Split(';'))
                 {
-                    if(!string.IsNullOrEmpty(col)) xLine.Add(new XElement("Column", col));
+                    if (!string.IsNullOrEmpty(col))
+                    {
+                        xLine.Add(new XElement("Column", col));
+                    }
                 }
-                if (xdoc.Root == null) throw new Exception("No root node found.");
+                if (xdoc.Root == null)
+                {
+                    throw new Exception("No root node found.");
+                }
+
                 xdoc.Root.Add(xLine);
             }
 

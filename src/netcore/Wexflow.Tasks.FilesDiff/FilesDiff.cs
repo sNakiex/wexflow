@@ -42,21 +42,20 @@ namespace Wexflow.Tasks.FilesDiff
 
             Info("Task finished.");
             return ts;
-
         }
 
         private void CheckFiles()
         {
-            string oldText = File.ReadAllText(OldFile);
-            string newText = File.ReadAllText(NewFile);
+            var oldText = File.ReadAllText(OldFile);
+            var newText = File.ReadAllText(NewFile);
 
-            var diffBuilder = new InlineDiffBuilder(new Differ());
+            InlineDiffBuilder diffBuilder = new(new Differ());
             var diff = diffBuilder.BuildDiffModel(oldText, newText);
 
             var resultPath = Path.Combine(Workflow.WorkflowTempFolder,
                    string.Format("FilesDiff_{0:yyyy-MM-dd-HH-mm-ss-fff}.diff", DateTime.Now));
 
-            using (StreamWriter sw = new StreamWriter(resultPath))
+            using (StreamWriter sw = new(resultPath))
             {
                 foreach (var line in diff.Lines)
                 {
@@ -82,7 +81,6 @@ namespace Wexflow.Tasks.FilesDiff
 
             Files.Add(new FileInf(resultPath, Id));
             InfoFormat("The diff of the old file '{0}' and the new file '{1}' was calculated with success.", Path.GetFileName(OldFile), Path.GetFileName(NewFile));
-
         }
     }
 }

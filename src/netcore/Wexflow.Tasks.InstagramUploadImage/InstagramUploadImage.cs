@@ -1,18 +1,18 @@
-﻿using InstagramApiSharp.API.Builder;
+﻿using InstagramApiSharp.API;
+using InstagramApiSharp.API.Builder;
 using InstagramApiSharp.Classes;
+using InstagramApiSharp.Classes.Models;
 using InstagramApiSharp.Logger;
 using System;
 using System.IO;
 using System.Threading;
 using System.Xml.Linq;
 using System.Xml.XPath;
-using InstagramApiSharp.API;
-using InstagramApiSharp.Classes.Models;
 using Wexflow.Core;
 
 namespace Wexflow.Tasks.InstagramUploadImage
 {
-    public class InstagramUploadImage:Task
+    public class InstagramUploadImage : Task
     {
         public string Username { get; }
         public string Password { get; }
@@ -27,12 +27,11 @@ namespace Wexflow.Tasks.InstagramUploadImage
         {
             Info("Uploading images...");
 
-            bool succeeded = true;
-            bool atLeastOneSucceed = false;
+            var succeeded = true;
+            var atLeastOneSucceed = false;
 
             try
             {
-
                 var authTask = Authenticate();
                 authTask.Wait();
 
@@ -52,18 +51,21 @@ namespace Wexflow.Tasks.InstagramUploadImage
                 {
                     try
                     {
-                        XDocument xdoc = XDocument.Load(file.Path);
+                        var xdoc = XDocument.Load(file.Path);
 
                         foreach (var xvideo in xdoc.XPathSelectElements("/Images/Image"))
                         {
-                            string filePath = xvideo.Element("FilePath").Value;
-                            string caption = xvideo.Element("Caption").Value;
+                            var filePath = xvideo.Element("FilePath").Value;
+                            var caption = xvideo.Element("Caption").Value;
 
                             var uploadImageTask = UploadImage(authTask.Result, filePath, caption);
                             uploadImageTask.Wait();
                             succeeded &= uploadImageTask.Result;
 
-                            if (succeeded && !atLeastOneSucceed) atLeastOneSucceed = true;
+                            if (succeeded && !atLeastOneSucceed)
+                            {
+                                atLeastOneSucceed = true;
+                            }
                         }
                     }
                     catch (ThreadAbortException)
@@ -76,7 +78,6 @@ namespace Wexflow.Tasks.InstagramUploadImage
                         succeeded = false;
                     }
                 }
-
             }
             catch (ThreadAbortException)
             {
@@ -105,7 +106,7 @@ namespace Wexflow.Tasks.InstagramUploadImage
 
         private async System.Threading.Tasks.Task<IInstaApi> Authenticate()
         {
-            var userSession = new UserSessionData
+            UserSessionData userSession = new()
             {
                 UserName = Username,
                 Password = Password
@@ -121,14 +122,12 @@ namespace Wexflow.Tasks.InstagramUploadImage
                 // load session file if exists
                 if (File.Exists(stateFile))
                 {
-                    using (var fs = File.OpenRead(stateFile))
-                    {
-                        instaApi.LoadStateDataFromStream(fs);
-                        // in .net core or uwp apps don't use LoadStateDataFromStream
-                        // use this one:
-                        // _instaApi.LoadStateDataFromString(new StreamReader(fs).ReadToEnd());
-                        // you should pass json string as parameter to this function.
-                    }
+                    using var fs = File.OpenRead(stateFile);
+                    instaApi.LoadStateDataFromStream(fs);
+                    // in .net core or uwp apps don't use LoadStateDataFromStream
+                    // use this one:
+                    // _instaApi.LoadStateDataFromString(new StreamReader(fs).ReadToEnd());
+                    // you should pass json string as parameter to this function.
                 }
             }
             catch (Exception e)
@@ -155,7 +154,7 @@ namespace Wexflow.Tasks.InstagramUploadImage
             // this returns you session as json string.
             using (var fileStream = File.Create(stateFile))
             {
-                state.Seek(0, SeekOrigin.Begin);
+                _ = state.Seek(0, SeekOrigin.Begin);
                 state.CopyTo(fileStream);
             }
 
@@ -166,7 +165,7 @@ namespace Wexflow.Tasks.InstagramUploadImage
         {
             try
             {
-                var mediaImage = new InstaImageUpload
+                InstaImageUpload mediaImage = new()
                 {
                     // leave zero, if you don't know how height and width is it.
                     Height = 0,
@@ -180,7 +179,6 @@ namespace Wexflow.Tasks.InstagramUploadImage
                 {
                     InfoFormat("Unable to upload image: {0}", result.Info.Message);
                     return false;
-                    
                 }
 
                 InfoFormat("Media created: {0}, {1}", result.Value.Pk, result.Value.Caption.Text);
@@ -191,8 +189,6 @@ namespace Wexflow.Tasks.InstagramUploadImage
                 ErrorFormat("An error occured while uploading the image: {0}", e, filePath);
                 return false;
             }
-            
         }
-
     }
 }

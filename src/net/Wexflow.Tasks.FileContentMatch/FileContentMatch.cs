@@ -63,11 +63,7 @@ namespace Wexflow.Tasks.FileContentMatch
 
             Info("Task finished");
 
-            if (status != null)
-            {
-                return status;
-            }
-            return new TaskStatus(Status.Success, success);
+            return status ?? new TaskStatus(Status.Success, success);
         }
 
         private bool CheckFile(ref TaskStatus status)
@@ -94,10 +90,10 @@ namespace Wexflow.Tasks.FileContentMatch
                 // Checking folders
                 foreach (var folder in FoldersToCheck)
                 {
-                    var files = new string[] { };
+                    var files = Array.Empty<string>();
                     if (Recursive)
                     {
-                        files = Directory.GetFiles(folder, "*.*", SearchOption.AllDirectories); ;
+                        files = Directory.GetFiles(folder, "*.*", SearchOption.AllDirectories);
                     }
                     else
                     {
@@ -124,7 +120,6 @@ namespace Wexflow.Tasks.FileContentMatch
                 {
                     success = false;
                 }
-
             }
             catch (ThreadAbortException)
             {

@@ -77,9 +77,12 @@ namespace Wexflow.Tasks.TextsEncryptor
                 var files = SelectFiles();
                 foreach (var file in files)
                 {
-                    string destPath = Path.Combine(Workflow.WorkflowTempFolder, file.FileName);
+                    var destPath = Path.Combine(Workflow.WorkflowTempFolder, file.FileName);
                     success &= Encrypt(file.Path, destPath, Workflow.PassPhrase);
-                    if (!atLeastOneSuccess && success) atLeastOneSuccess = true;
+                    if (!atLeastOneSuccess && success)
+                    {
+                        atLeastOneSuccess = true;
+                    }
                 }
             }
             catch (ThreadAbortException)
@@ -96,10 +99,15 @@ namespace Wexflow.Tasks.TextsEncryptor
 
         private bool Encrypt(string inputFile, string outputFile, string passphrase)
         {
+            if (passphrase is null)
+            {
+                throw new ArgumentNullException(nameof(passphrase));
+            }
+
             try
             {
-                string srcStr = File.ReadAllText(inputFile);
-                string destStr = EncryptString(srcStr, Workflow.PassPhrase, Workflow.KeySize, Workflow.DerivationIterations);
+                var srcStr = File.ReadAllText(inputFile);
+                var destStr = EncryptString(srcStr, Workflow.PassPhrase, Workflow.KeySize, Workflow.DerivationIterations);
                 File.WriteAllText(outputFile, destStr);
                 InfoFormat("The file {0} has been encrypted -> {1}", inputFile, outputFile);
                 Files.Add(new FileInf(outputFile, Id));
@@ -159,6 +167,5 @@ namespace Wexflow.Tasks.TextsEncryptor
             }
             return randomBytes;
         }
-
     }
 }

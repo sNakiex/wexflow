@@ -1,10 +1,10 @@
-﻿using System;
-using Wexflow.Core;
-using System.Xml.Linq;
+﻿using iTextSharp.text;
+using iTextSharp.text.pdf;
+using System;
 using System.IO;
 using System.Threading;
-using iTextSharp.text;
-using iTextSharp.text.pdf;
+using System.Xml.Linq;
+using Wexflow.Core;
 
 namespace Wexflow.Tasks.TextToPdf
 {
@@ -19,31 +19,34 @@ namespace Wexflow.Tasks.TextToPdf
         {
             Info("Generating PDF files from TEXT files...");
 
-            bool success = true;
-            bool atLeastOneSucceed = false;
+            var success = true;
+            var atLeastOneSucceed = false;
 
             var files = SelectFiles();
 
             if (files.Length > 0)
             {
-                foreach (FileInf file in files)
+                foreach (var file in files)
                 {
                     try
                     {
-                        string pdfPath = Path.Combine(Workflow.WorkflowTempFolder,
+                        var pdfPath = Path.Combine(Workflow.WorkflowTempFolder,
                             string.Format("{0}_{1:yyyy-MM-dd-HH-mm-ss-fff}.pdf", Path.GetFileNameWithoutExtension(file.FileName), DateTime.Now));
-                        Document doc = new Document();
-                        PdfWriter.GetInstance(doc, new FileStream(pdfPath, FileMode.Create));
+                        var doc = new Document();
+                        _ = PdfWriter.GetInstance(doc, new FileStream(pdfPath, FileMode.Create));
                         doc.Open();
                         // Add the text file contents
                         var content = File.ReadAllText(file.Path);
-                        doc.Add(new Paragraph(content));
+                        _ = doc.Add(new Paragraph(content));
                         // Close the document
                         doc.Close();
                         Files.Add(new FileInf(pdfPath, Id));
                         InfoFormat("PDF {0} generated from the file {1}", pdfPath, file.Path);
 
-                        if (!atLeastOneSucceed) atLeastOneSucceed = true;
+                        if (!atLeastOneSucceed)
+                        {
+                            atLeastOneSucceed = true;
+                        }
                     }
                     catch (ThreadAbortException)
                     {
@@ -54,7 +57,7 @@ namespace Wexflow.Tasks.TextToPdf
                         ErrorFormat("An error occured while converting the file {0}", e, file.Path);
                         success = false;
                     }
-                }  
+                }
             }
 
             var status = Status.Success;

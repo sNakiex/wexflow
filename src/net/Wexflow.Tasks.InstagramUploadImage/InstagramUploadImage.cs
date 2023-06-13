@@ -1,13 +1,13 @@
-﻿using InstagramApiSharp.API.Builder;
+﻿using InstagramApiSharp.API;
+using InstagramApiSharp.API.Builder;
 using InstagramApiSharp.Classes;
+using InstagramApiSharp.Classes.Models;
 using InstagramApiSharp.Logger;
 using System;
 using System.IO;
 using System.Threading;
 using System.Xml.Linq;
 using System.Xml.XPath;
-using InstagramApiSharp.API;
-using InstagramApiSharp.Classes.Models;
 using Wexflow.Core;
 
 namespace Wexflow.Tasks.InstagramUploadImage
@@ -102,18 +102,21 @@ namespace Wexflow.Tasks.InstagramUploadImage
                 {
                     try
                     {
-                        XDocument xdoc = XDocument.Load(file.Path);
+                        var xdoc = XDocument.Load(file.Path);
 
                         foreach (var xvideo in xdoc.XPathSelectElements("/Images/Image"))
                         {
-                            string filePath = xvideo.Element("FilePath").Value;
-                            string caption = xvideo.Element("Caption").Value;
+                            var filePath = xvideo.Element("FilePath").Value;
+                            var caption = xvideo.Element("Caption").Value;
 
                             var uploadImageTask = UploadImage(authTask.Result, filePath, caption);
                             uploadImageTask.Wait();
                             success &= uploadImageTask.Result;
 
-                            if (success && !atLeastOneSuccess) atLeastOneSuccess = true;
+                            if (success && !atLeastOneSuccess)
+                            {
+                                atLeastOneSuccess = true;
+                            }
                         }
                     }
                     catch (ThreadAbortException)
@@ -126,7 +129,6 @@ namespace Wexflow.Tasks.InstagramUploadImage
                         success = false;
                     }
                 }
-
             }
             catch (ThreadAbortException)
             {
@@ -193,7 +195,7 @@ namespace Wexflow.Tasks.InstagramUploadImage
             // this returns you session as json string.
             using (var fileStream = File.Create(stateFile))
             {
-                state.Seek(0, SeekOrigin.Begin);
+                _ = state.Seek(0, SeekOrigin.Begin);
                 state.CopyTo(fileStream);
             }
 
@@ -218,7 +220,6 @@ namespace Wexflow.Tasks.InstagramUploadImage
                 {
                     InfoFormat("Unable to upload image: {0}", result.Info.Message);
                     return false;
-
                 }
 
                 InfoFormat("Media created: {0}, {1}", result.Value.Pk, result.Value.Caption.Text);
@@ -229,8 +230,6 @@ namespace Wexflow.Tasks.InstagramUploadImage
                 ErrorFormat("An error occured while uploading the image: {0}", e, filePath);
                 return false;
             }
-
         }
-
     }
 }

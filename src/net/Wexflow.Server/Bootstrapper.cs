@@ -22,15 +22,15 @@ namespace Wexflow.Server
         {
             base.ConfigureApplicationContainer(container);
 
-            container.Register(_appConfig);
+            _ = container.Register(_appConfig);
         }
 
         protected override void RequestStartup(TinyIoCContainer container, IPipelines pipelines, NancyContext context)
         {
             pipelines.AfterRequest += (ctx) =>
             {
-                ctx.Response.WithHeader("Access-Control-Allow-Origin", "*")
-                    .WithHeader("Access-Control-Allow-Methods", "POST,GET,PUT,DELETE,OPTIONS")
+                _ = ctx.Response.WithHeader("Access-Control-Allow-Origin", "*")
+                    .WithHeader("Access-Control-Allow-Methods", "POST,GET,PUT,DELETE,OPTIONS,HEAD,PATCH")
                     .WithHeader("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization");
             };
         }
@@ -40,6 +40,5 @@ namespace Wexflow.Server
             base.ConfigureConventions(nancyConventions);
             nancyConventions.StaticContentsConventions.Add(StaticContentConventionBuilder.AddDirectory("swagger-ui"));
         }
-
     }
 }

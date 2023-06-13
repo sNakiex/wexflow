@@ -1,5 +1,5 @@
-﻿using System.Threading;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System.Threading;
 
 namespace Wexflow.Tests
 {
@@ -19,7 +19,7 @@ namespace Wexflow.Tests
         [TestMethod]
         public void SuspendTest()
         {
-            int workflowId = 41;
+            var workflowId = 41;
             var instanceId = Helper.StartWorkflowAsync(workflowId);
 
             try

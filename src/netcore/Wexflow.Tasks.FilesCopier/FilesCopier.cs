@@ -1,8 +1,8 @@
 ﻿using System;
-using Wexflow.Core;
-using System.Xml.Linq;
 using System.IO;
 using System.Threading;
+using System.Xml.Linq;
+using Wexflow.Core;
 
 namespace Wexflow.Tasks.FilesCopier
 {
@@ -26,11 +26,11 @@ namespace Wexflow.Tasks.FilesCopier
         {
             Info("Copying files...");
 
-            bool success = true;
-            bool atLeastOneSucceed = false;
+            var success = true;
+            var atLeastOneSucceed = false;
             var files = SelectFiles();
 
-            foreach (FileInf file in files)
+            foreach (var file in files)
             {
                 string destPath;
                 if (!string.IsNullOrWhiteSpace(PreserveFolderStructFrom) &&
@@ -58,13 +58,16 @@ namespace Wexflow.Tasks.FilesCopier
                     if (AllowCreateDirectory && !Directory.Exists(Path.GetDirectoryName(destPath)))
                     {
                         InfoFormat("Creating directory: {0}", Path.GetDirectoryName(destPath));
-                        Directory.CreateDirectory(Path.GetDirectoryName(destPath));
+                        _ = Directory.CreateDirectory(Path.GetDirectoryName(destPath));
                     }
 
                     File.Copy(file.Path, destPath, Overwrite);
                     Files.Add(new FileInf(destPath, Id));
                     InfoFormat("File copied: {0} -> {1}", file.Path, destPath);
-                    if (!atLeastOneSucceed) atLeastOneSucceed = true;
+                    if (!atLeastOneSucceed)
+                    {
+                        atLeastOneSucceed = true;
+                    }
                 }
                 catch (ThreadAbortException)
                 {

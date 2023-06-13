@@ -3,20 +3,28 @@ package com.wexflow;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.preference.PreferenceManager;
-import android.support.v7.app.AppCompatActivity;
 import android.util.SparseArray;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ListView;
 import android.widget.TextView;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.preference.PreferenceManager;
+
 public class MainActivity extends AppCompatActivity {
 
-    private static final int RESULT_SETTINGS = 1;
+    //private static final int RESULT_SETTINGS = 1;
+
+    private final ActivityResultLauncher<Intent> startActivityIntent = registerForActivityResult(
+            new ActivityResultContracts.StartActivityForResult(),
+            result -> {
+                // Add same code that you want to add in onActivityResult method
+            });
 
     private String uri;
     private ImageButton btnStart;
@@ -25,7 +33,6 @@ public class MainActivity extends AppCompatActivity {
     private ImageButton btnStop;
     private TextView txtInfo;
     private ListView lvWorkflows;
-    private Button btnRefresh;
     private Button btnApprove;
     private Button btnDisapprove;
     private int workflowId;
@@ -44,78 +51,55 @@ public class MainActivity extends AppCompatActivity {
         final MainActivity activity = this;
         this.btnStart = findViewById(R.id.btnStart);
         this.btnStart.setEnabled(false);
-        this.btnStart.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                ActionTask actionTask = new ActionTask(activity);
-                actionTask.execute(ActionType.Start);
-            }
+        this.btnStart.setOnClickListener(v -> {
+            ActionTask actionTask = new ActionTask(activity);
+            actionTask.execute(ActionType.Start);
         });
 
         this.btnSuspend = findViewById(R.id.btnSuspend);
         this.btnSuspend.setEnabled(false);
-        this.btnSuspend.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                ActionTask actionTask = new ActionTask(activity);
-                actionTask.execute(ActionType.Suspend);
-            }
+        this.btnSuspend.setOnClickListener(v -> {
+            ActionTask actionTask = new ActionTask(activity);
+            actionTask.execute(ActionType.Suspend);
         });
 
         this.btnResume = findViewById(R.id.btnResume);
         this.btnResume.setEnabled(false);
-        this.btnResume.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                ActionTask actionTask = new ActionTask(activity);
-                actionTask.execute(ActionType.Resume);
-            }
+        this.btnResume.setOnClickListener(v -> {
+            ActionTask actionTask = new ActionTask(activity);
+            actionTask.execute(ActionType.Resume);
         });
 
         this.btnStop = findViewById(R.id.btnStop);
         this.btnStop.setEnabled(false);
-        this.btnStop.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                ActionTask actionTask = new ActionTask(activity);
-                actionTask.execute(ActionType.Stop);
-            }
+        this.btnStop.setOnClickListener(v -> {
+            ActionTask actionTask = new ActionTask(activity);
+            actionTask.execute(ActionType.Stop);
         });
 
         this.txtInfo = findViewById(R.id.txtInfo);
 
         this.lvWorkflows = findViewById(R.id.lvWorkflows);
 
-        this.btnRefresh = findViewById(R.id.btnRefresh);
-        this.btnRefresh.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                loadWorkflows();
-            }
-        });
+        Button btnRefresh = findViewById(R.id.btnRefresh);
+        btnRefresh.setOnClickListener(view -> loadWorkflows());
 
         this.btnApprove = findViewById(R.id.btnApprove);
-        this.btnApprove.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                ActionTask actionTask = new ActionTask(activity);
-                actionTask.execute(ActionType.Approve);
-            }
+        this.btnApprove.setOnClickListener(v -> {
+            ActionTask actionTask = new ActionTask(activity);
+            actionTask.execute(ActionType.Approve);
         });
 
         this.btnDisapprove = findViewById(R.id.btnDisapprove);
-        this.btnDisapprove.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                ActionTask actionTask = new ActionTask(activity);
-                actionTask.execute(ActionType.Disapprove);
-            }
+        this.btnDisapprove.setOnClickListener(v -> {
+            ActionTask actionTask = new ActionTask(activity);
+            actionTask.execute(ActionType.Disapprove);
         });
 
         loadWorkflows();
     }
 
-    private void loadWorkflows(){
+    private void loadWorkflows() {
         this.txtInfo.setText("");
         WorkflowsTask workflowsTask = new WorkflowsTask(this);
         workflowsTask.execute();
@@ -129,13 +113,10 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
-            case R.id.menu_settings:
-                Intent i = new Intent(this, SettingsActivity.class);
-                startActivityForResult(i, RESULT_SETTINGS);
-                break;
-            default:
-                break;
+        if (item.getItemId() == R.id.menu_settings) {
+            Intent i = new Intent(this, SettingsActivity.class);
+            //startActivityForResult(i, RESULT_SETTINGS);
+            startActivityIntent.launch(i);
         }
 
         return true;

@@ -24,22 +24,14 @@ namespace Wexflow.Tasks.FileMatch
         {
             Info("Checking file...");
 
-            bool success = false;
-            string fileFound = string.Empty;
+            var success = false;
+            var fileFound = string.Empty;
 
             try
             {
-                string[] files;
-
-                if (Recursive)
-                {
-                    files = Directory.GetFiles(Dir, "*.*", SearchOption.AllDirectories);
-                }
-                else
-                {
-                    files = Directory.GetFiles(Dir, "*.*", SearchOption.TopDirectoryOnly);
-                }
-
+                var files = Recursive
+                    ? Directory.GetFiles(Dir, "*.*", SearchOption.AllDirectories)
+                    : Directory.GetFiles(Dir, "*.*", SearchOption.TopDirectoryOnly);
                 foreach (var file in files)
                 {
                     if (Regex.Match(Path.GetFileName(file), Pattern).Success)
@@ -49,7 +41,6 @@ namespace Wexflow.Tasks.FileMatch
                         break;
                     }
                 }
-
 
                 if (success)
                 {

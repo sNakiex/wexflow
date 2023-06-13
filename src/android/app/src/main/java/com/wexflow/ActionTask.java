@@ -1,6 +1,7 @@
 package com.wexflow;
 
 import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -22,7 +23,7 @@ class ActionTask {
             this.actionType = actionType;
             switch (this.actionType) {
                 case Start:
-                   this.client.start(this.activity.getWorkflowId());
+                    this.client.start(this.activity.getWorkflowId());
                     succeeded = true;
                     break;
                 case Suspend:
@@ -51,11 +52,11 @@ class ActionTask {
     private void onPostExecute() {
         if (this.exception != null) {
             Log.e("Wexflow", this.exception.toString());
-            Toast.makeText(this.activity.getBaseContext(), "An error occured: " + this.exception.toString(), Toast.LENGTH_LONG).show();
+            Toast.makeText(this.activity.getBaseContext(), "An error occurred: " + this.exception.toString(), Toast.LENGTH_LONG).show();
         } else {
             if (this.actionType == ActionType.Suspend || this.actionType == ActionType.Stop) {
                 UpdateButtonsTask updateButtonsTask = new UpdateButtonsTask(this.activity);
-                updateButtonsTask.executeAsync(true);
+                updateButtonsTask.executeAsync();
             }
 
             StringBuilder stringBuilder = new StringBuilder();
@@ -84,29 +85,21 @@ class ActionTask {
                     break;
             }
 
-            if(succeeded){
+            if (succeeded) {
                 Toast.makeText(this.activity.getBaseContext(), stringBuilder.toString(), Toast.LENGTH_SHORT).show();
-            }else{
+            } else {
                 Toast.makeText(this.activity.getBaseContext(), "Not supported.", Toast.LENGTH_SHORT).show();
             }
 
         }
     }
 
-    void execute(final ActionType at){
-        final Handler handler = new Handler();
+    void execute(final ActionType at) {
+        final Handler handler = new Handler(Looper.getMainLooper());
 
-        Thread thread = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                doInBackground(at);
-                handler.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        onPostExecute();
-                    }
-                });
-            }
+        Thread thread = new Thread(() -> {
+            doInBackground(at);
+            handler.post(this::onPostExecute);
         });
         thread.start();
     }

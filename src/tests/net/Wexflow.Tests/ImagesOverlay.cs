@@ -26,12 +26,12 @@ namespace Wexflow.Tests
         {
             var images = GetFiles();
             Assert.AreEqual(0, images.Length);
-            Helper.StartWorkflow(78);
+            _ = Helper.StartWorkflow(78);
             images = GetFiles();
             Assert.AreEqual(1, images.Length);
 
             // Checking the image size
-            using (Image image = Image.FromFile(images[0]))
+            using (var image = Image.FromFile(images[0]))
             {
                 Assert.AreEqual(1024, image.Width);
                 Assert.AreEqual(768, image.Height);
@@ -43,14 +43,13 @@ namespace Wexflow.Tests
             return Directory.GetFiles(DestFolder, "*.png");
         }
 
-        private void CheckImageSize(string path)
-        {
-            using (Image image = Image.FromFile(path))
-            {
-                Assert.AreEqual(512, image.Width);
-                Assert.AreEqual(384, image.Height);
-            }
-        }
-
+        //private void CheckImageSize(string path)
+        //{
+        //    using (Image image = Image.FromFile(path))
+        //    {
+        //        Assert.AreEqual(512, image.Width);
+        //        Assert.AreEqual(384, image.Height);
+        //    }
+        //}
     }
 }

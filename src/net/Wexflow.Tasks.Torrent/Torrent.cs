@@ -59,9 +59,11 @@ namespace Wexflow.Tasks.Torrent
                 foreach (var torrent in torrents)
                 {
                     success &= DownloadTorrent(torrent.Path);
-                    if (!atLeastOneSuccess && success) atLeastOneSuccess = true;
+                    if (!atLeastOneSuccess && success)
+                    {
+                        atLeastOneSuccess = true;
+                    }
                 }
-
             }
             catch (ThreadAbortException)
             {
@@ -79,7 +81,7 @@ namespace Wexflow.Tasks.Torrent
         {
             try
             {
-                ClientEngine engine = new ClientEngine(new EngineSettings());
+                var engine = new ClientEngine(new EngineSettings());
 
                 var settingsBuilder = new TorrentSettingsBuilder
                 {
@@ -98,7 +100,7 @@ namespace Wexflow.Tasks.Torrent
                     if (manager.Progress == 100.0)
                     {
                         // If we want to stop a torrent, or the engine for whatever reason, we call engine.StopAll()
-                        engine.StopAllAsync();
+                        _ = engine.StopAllAsync();
                         break;
                     }
                 }
@@ -136,6 +138,5 @@ namespace Wexflow.Tasks.Torrent
                 return false;
             }
         }
-
     }
 }

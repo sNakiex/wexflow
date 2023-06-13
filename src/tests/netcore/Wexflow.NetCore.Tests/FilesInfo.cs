@@ -1,5 +1,5 @@
-﻿using System.IO;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System.IO;
 
 namespace Wexflow.NetCore.Tests
 {
@@ -22,8 +22,8 @@ namespace Wexflow.NetCore.Tests
         {
             const string dateFormat = @"MM\/dd\/yyyy HH:mm.ss";
             Helper.DeleteFiles(FilesInfoFolder);
-            FileInfo info1 = new FileInfo(File1);
-            FileInfo info2 = new FileInfo(File2);
+            FileInfo info1 = new(File1);
+            FileInfo info2 = new(File2);
             _expectedResult = string.Format(_expectedResult
                 , info1.CreationTime.ToString(dateFormat)
                 , info1.LastWriteTime.ToString(dateFormat)
@@ -42,16 +42,16 @@ namespace Wexflow.NetCore.Tests
         [TestMethod]
         public void FilesInfoTest()
         {
-            string[] files = GetFiles();
+            var files = GetFiles();
             Assert.AreEqual(0, files.Length);
-            Helper.StartWorkflow(54);
+            _ = Helper.StartWorkflow(54);
             files = GetFiles();
             Assert.AreEqual(1, files.Length);
-            string content = File.ReadAllText(files[0]);
+            var content = File.ReadAllText(files[0]);
             Assert.AreEqual(_expectedResult, content);
         }
 
-        private string[] GetFiles()
+        private static string[] GetFiles()
         {
             return Directory.GetFiles(FilesInfoFolder, "FilesInfo_*.xml");
         }

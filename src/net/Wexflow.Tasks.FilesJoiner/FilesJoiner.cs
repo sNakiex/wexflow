@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -8,12 +7,6 @@ using Wexflow.Core;
 
 namespace Wexflow.Tasks.FilesJoiner
 {
-    class GroupedFile
-    {
-        public string FileName { get; set; }
-        public List<FileInf> Files { get; set; }
-    }
-
     public class FilesJoiner : Task
     {
         public string DestFolder { get; }
@@ -36,19 +29,27 @@ namespace Wexflow.Tasks.FilesJoiner
         private int GetNumberPartInt(string path)
         {
             var lastUnderscoreIndex = path.LastIndexOf("_", StringComparison.InvariantCulture);
-            if (lastUnderscoreIndex == -1) return (-1);
+            if (lastUnderscoreIndex == -1)
+            {
+                return -1;
+            }
+
             var substring = path.Substring(lastUnderscoreIndex + 1, path.Length - lastUnderscoreIndex - 1);
             var part = int.TryParse(substring, out var result) ? result : -1;
-            return part == -1 ? (-1) : (part);
+            return part == -1 ? (-1) : part;
         }
 
         private string GetNumberPartString(string path)
         {
             var lastUnderscoreIndex = path.LastIndexOf("_", StringComparison.InvariantCulture);
-            if (lastUnderscoreIndex == -1) return (path);
+            if (lastUnderscoreIndex == -1)
+            {
+                return path;
+            }
+
             var substring = path.Substring(lastUnderscoreIndex + 1, path.Length - lastUnderscoreIndex - 1);
             var part = int.TryParse(substring, out var result) ? result : -1;
-            return part == -1 ? (path) : (path.Remove(lastUnderscoreIndex));
+            return part == -1 ? path : path.Remove(lastUnderscoreIndex);
         }
 
         private GroupedFile[] GetFiles()
@@ -80,7 +81,6 @@ namespace Wexflow.Tasks.FilesJoiner
 
             return groupedFiles;
         }
-
 
         public override TaskStatus Run()
         {
@@ -167,13 +167,15 @@ namespace Wexflow.Tasks.FilesJoiner
                 }
 
                 if (File.Exists(tempPath))
+                {
                     File.Delete(tempPath);
+                }
 
                 using (var output = new FileStream(tempPath, FileMode.CreateNew, FileAccess.Write, FileShare.None))
                 {
-                    foreach (FileInf file in files)
+                    foreach (var file in files)
                     {
-                        Info("Joiner " + file.Path);
+                        Info($"Joiner {file.Path}");
                         try
                         {
                             using (var input = File.OpenRead(file.Path))

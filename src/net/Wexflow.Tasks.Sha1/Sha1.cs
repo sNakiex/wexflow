@@ -1,10 +1,10 @@
 ﻿using System;
-using System.Text;
-using Wexflow.Core;
-using System.Xml.Linq;
 using System.IO;
 using System.Security.Cryptography;
+using System.Text;
 using System.Threading;
+using System.Xml.Linq;
+using Wexflow.Core;
 
 namespace Wexflow.Tasks.Sha1
 {
@@ -80,21 +80,21 @@ namespace Wexflow.Tasks.Sha1
                     string.Format("SHA1_{0:yyyy-MM-dd-HH-mm-ss-fff}.xml", DateTime.Now));
 
                 var xdoc = new XDocument(new XElement("Files"));
-                foreach (FileInf file in files)
+                foreach (var file in files)
                 {
                     try
                     {
                         var sha1 = GetSha1(file.Path);
-                        if (xdoc.Root != null)
-                        {
-                            xdoc.Root.Add(new XElement("File",
+                        xdoc.Root?.Add(new XElement("File",
                                 new XAttribute("path", file.Path),
                                 new XAttribute("name", file.FileName),
                                 new XAttribute("sha1", sha1)));
-                        }
                         InfoFormat("SHA-1 hash of the file {0} is {1}", file.Path, sha1);
 
-                        if (!atLeastOneSuccess) atLeastOneSuccess = true;
+                        if (!atLeastOneSuccess)
+                        {
+                            atLeastOneSuccess = true;
+                        }
                     }
                     catch (ThreadAbortException)
                     {
@@ -115,15 +115,15 @@ namespace Wexflow.Tasks.Sha1
         private string GetSha1(string filePath)
         {
             var sb = new StringBuilder();
-            using (SHA1Managed sha1 = new SHA1Managed())
+            using (var sha1 = new SHA1Managed())
             {
-                using (FileStream stream = File.OpenRead(filePath))
+                using (var stream = File.OpenRead(filePath))
                 {
                     var bytes = sha1.ComputeHash(stream);
 
-                    foreach (byte bt in bytes)
+                    foreach (var bt in bytes)
                     {
-                        sb.Append(bt.ToString("x2"));
+                        _ = sb.Append(bt.ToString("x2"));
                     }
                 }
             }

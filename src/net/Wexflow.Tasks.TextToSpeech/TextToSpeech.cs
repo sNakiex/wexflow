@@ -9,7 +9,7 @@ namespace Wexflow.Tasks.TextToSpeech
 {
     public class TextToSpeech : Task
     {
-        public TextToSpeech(XElement xe, Workflow wf): base(xe, wf)
+        public TextToSpeech(XElement xe, Workflow wf) : base(xe, wf)
         {
         }
 
@@ -30,14 +30,17 @@ namespace Wexflow.Tasks.TextToSpeech
                     using (var stream = new MemoryStream())
                     {
                         synth.SetOutputToWaveStream(stream);
-                        string text = File.ReadAllText(file.Path);
+                        var text = File.ReadAllText(file.Path);
                         synth.Speak(text);
-                        byte[] bytes = stream.GetBuffer();
+                        var bytes = stream.GetBuffer();
                         var destFile = Path.Combine(Workflow.WorkflowTempFolder, Path.GetFileNameWithoutExtension(file.FileName) + ".wav");
                         File.WriteAllBytes(destFile, bytes);
                         Files.Add(new FileInf(destFile, Id));
                         InfoFormat("The file {0} was converted to speech with success -> {1}", file.Path, destFile);
-                        if (!atLeastOneSucceed) atLeastOneSucceed = true;
+                        if (!atLeastOneSucceed)
+                        {
+                            atLeastOneSucceed = true;
+                        }
                     }
                 }
                 catch (ThreadAbortException)

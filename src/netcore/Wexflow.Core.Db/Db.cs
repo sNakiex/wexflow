@@ -39,7 +39,7 @@ namespace Wexflow.Core.Db
         protected void InsertDefaultUser()
         {
             var password = GetMd5("wexflow2018");
-            var user = new User { Username = "admin", Password = password, UserProfile = UserProfile.SuperAdministrator };
+            User user = new() { Username = "admin", Password = password, UserProfile = UserProfile.SuperAdministrator };
             InsertUser(user);
         }
 
@@ -136,19 +136,16 @@ namespace Wexflow.Core.Db
         public static string GetMd5(string input)
         {
             // Use input string to calculate MD5 hash
-            using (MD5 md5 = MD5.Create())
-            {
-                byte[] inputBytes = Encoding.ASCII.GetBytes(input);
-                byte[] hashBytes = md5.ComputeHash(inputBytes);
+            var inputBytes = Encoding.ASCII.GetBytes(input);
+            var hashBytes = MD5.HashData(inputBytes);
 
-                // Convert the byte array to hexadecimal string
-                StringBuilder sb = new StringBuilder();
-                for (int i = 0; i < hashBytes.Length; i++)
-                {
-                    sb.Append(hashBytes[i].ToString("x2"));
-                }
-                return sb.ToString();
+            // Convert the byte array to hexadecimal string
+            StringBuilder sb = new();
+            for (var i = 0; i < hashBytes.Length; i++)
+            {
+                _ = sb.Append(hashBytes[i].ToString("x2"));
             }
+            return sb.ToString();
         }
     }
 }

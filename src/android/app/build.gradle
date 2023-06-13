@@ -1,15 +1,14 @@
 apply plugin: 'com.android.application'
 
 android {
-    compileSdkVersion 26
-    buildToolsVersion '29.0.2'
+    compileSdkVersion 33
     defaultConfig {
         applicationId "com.wexflow"
-        minSdkVersion 15
-        targetSdkVersion 26
+        minSdkVersion 23
+        targetSdkVersion 33
         versionCode 1
-        versionName "5.8"
-        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+        versionName "6.7"
+        testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
     }
     buildTypes {
         release {
@@ -23,14 +22,16 @@ android {
         // but continue the build even when errors are found:
         abortOnError false
     }
+    namespace 'com.wexflow'
 }
 
 dependencies {
-    implementation 'com.android.support:design:26.1.0'
+    implementation 'com.google.android.material:material:1.9.0'
     api fileTree(dir: 'libs', include: ['*.jar'])
-    androidTestImplementation('com.android.support.test.espresso:espresso-core:2.2.2', {
+    androidTestImplementation('androidx.test.espresso:espresso-core:3.1.0', {
         exclude group: 'com.android.support', module: 'support-annotations'
     })
-    api 'com.android.support:appcompat-v7:26.1.0'
+    api 'androidx.appcompat:appcompat:1.6.1'
     testImplementation 'junit:junit:4.12'
+    implementation 'androidx.preference:preference:1.2.0'
 }

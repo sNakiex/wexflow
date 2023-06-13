@@ -1,5 +1,5 @@
-﻿using System.Diagnostics;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System.Diagnostics;
 
 namespace Wexflow.NetCore.Tests
 {
@@ -19,8 +19,8 @@ namespace Wexflow.NetCore.Tests
         [TestMethod]
         public void WaitTest()
         {
-            Stopwatch stopwatch = Stopwatch.StartNew();
-            Helper.StartWorkflow(41);
+            var stopwatch = Stopwatch.StartNew();
+            _ = Helper.StartWorkflow(41);
             stopwatch.Stop();
             Assert.IsTrue(stopwatch.ElapsedMilliseconds > 30000);
         }

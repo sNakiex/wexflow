@@ -17,16 +17,14 @@ namespace Wexflow.Core
         /// <summary>
         /// File path.
         /// </summary>
-        public string Path { 
-            get 
-            { 
-                return _path; 
-            } 
-            set 
+        public string Path
+        {
+            get => _path;
+            set
             {
                 _path = value;
                 FileName = System.IO.Path.GetFileName(value);
-            } 
+            }
         }
         /// <summary>
         /// File name.
@@ -39,11 +37,9 @@ namespace Wexflow.Core
         /// <summary>
         /// RenameTo.
         /// </summary>
-        public string RenameTo {
-            get
-            {
-                return _renameTo;
-            }
+        public string RenameTo
+        {
+            get => _renameTo;
             set
             {
                 _renameTo = value;
@@ -66,7 +62,7 @@ namespace Wexflow.Core
         /// <summary>
         /// File system info from <see cref="Path"/>.
         /// </summary>
-        public FileInfo FileInfo => _fileInfo ?? (_fileInfo = new FileInfo(Path));
+        public FileInfo FileInfo => _fileInfo ??= new FileInfo(Path);
 
         /// <summary>
         /// Creates a new instance of FileInf.

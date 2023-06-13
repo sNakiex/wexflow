@@ -27,7 +27,6 @@ namespace Wexflow.Tasks.UglifyHtml
         {
             Info("Uglifying HTML files...");
 
-
             var success = true;
             var atLeastOneSuccess = false;
 
@@ -91,7 +90,10 @@ namespace Wexflow.Tasks.UglifyHtml
                     File.WriteAllText(destPath, result.Code);
                     Files.Add(new FileInf(destPath, Id));
                     InfoFormat("The HTML file {0} has been uglified -> {1}", htmlFile.Path, destPath);
-                    if (!atLeastOneSuccess) atLeastOneSuccess = true;
+                    if (!atLeastOneSuccess)
+                    {
+                        atLeastOneSuccess = true;
+                    }
                 }
                 catch (ThreadAbortException)
                 {

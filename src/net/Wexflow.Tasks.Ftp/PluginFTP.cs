@@ -1,8 +1,8 @@
-﻿using System.Collections.Generic;
-using Wexflow.Core;
-using FluentFTP;
-using System.Net;
+﻿using FluentFTP;
+using System.Collections.Generic;
 using System.IO;
+using System.Net;
+using Wexflow.Core;
 
 namespace Wexflow.Tasks.Ftp
 {
@@ -56,7 +56,9 @@ namespace Wexflow.Tasks.Ftp
             files.AddRange(ftpFiles);
 
             foreach (var file in files)
+            {
                 Task.InfoFormat("[PluginFTP] file {0} found on {1}.", file.Path, Server);
+            }
 
             client.Disconnect();
 
@@ -69,7 +71,7 @@ namespace Wexflow.Tasks.Ftp
 
             var ftpListItems = client.GetListing();
 
-            foreach (FtpListItem item in ftpListItems)
+            foreach (var item in ftpListItems)
             {
                 if (item.Type == FtpObjectType.File)
                 {
@@ -101,7 +103,7 @@ namespace Wexflow.Tasks.Ftp
         public static void UploadFile(FtpClient client, FileInf file)
         {
             using (Stream istream = File.Open(file.Path, FileMode.Open, FileAccess.Read))
-            using (Stream ostream = client.OpenWrite(file.RenameToOrName, FtpDataType.Binary))
+            using (var ostream = client.OpenWrite(file.RenameToOrName, FtpDataType.Binary))
             {
                 var buffer = new byte[BufferSize];
                 int r;
@@ -134,7 +136,7 @@ namespace Wexflow.Tasks.Ftp
         public static void DownloadFile(FtpClient client, FileInf file, Task task)
         {
             var destFileName = System.IO.Path.Combine(task.Workflow.WorkflowTempFolder, file.FileName);
-            using (Stream istream = client.OpenRead(file.Path))
+            using (var istream = client.OpenRead(file.Path))
             using (Stream ostream = File.Create(destFileName))
             {
                 // istream.Position is incremented accordingly to the reads you perform

@@ -80,13 +80,13 @@ namespace Wexflow.Tasks.UnSevenZip
 
             if (rars.Length > 0)
             {
-                foreach (FileInf rar in rars)
+                foreach (var rar in rars)
                 {
                     try
                     {
-                        string destFolder = Path.Combine(DestDir
-                            , Path.GetFileNameWithoutExtension(rar.Path) + "_" + string.Format("{0:yyyy-MM-dd-HH-mm-ss-fff}", DateTime.Now));
-                        Directory.CreateDirectory(destFolder);
+                        var destFolder = Path.Combine(DestDir
+                            , $"{Path.GetFileNameWithoutExtension(rar.Path)}_{string.Format("{0:yyyy-MM-dd-HH-mm-ss-fff}", DateTime.Now)}");
+                        _ = Directory.CreateDirectory(destFolder);
 
                         Extract7Z(rar.Path, destFolder);
 
@@ -97,7 +97,10 @@ namespace Wexflow.Tasks.UnSevenZip
 
                         InfoFormat("7Z {0} extracted to {1}", rar.Path, destFolder);
 
-                        if (!atLeastOneSuccess) atLeastOneSuccess = true;
+                        if (!atLeastOneSuccess)
+                        {
+                            atLeastOneSuccess = true;
+                        }
                     }
                     catch (ThreadAbortException)
                     {

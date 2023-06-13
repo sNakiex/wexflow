@@ -27,17 +27,16 @@ namespace Wexflow.NetCore.Tests
         {
             var files = GetFiles(FilesEncryptorFolder);
             Assert.AreEqual(0, files.Length);
-            Helper.StartWorkflow(81);
+            _ = Helper.StartWorkflow(81);
             files = GetFiles(FilesEncryptorFolder);
             Assert.AreEqual(3, files.Length);
             files = GetFiles(FilesDecryptorSrcFolder);
             Assert.AreEqual(3, files.Length);
         }
 
-        private string[] GetFiles(string dir)
+        private static string[] GetFiles(string dir)
         {
             return Directory.GetFiles(dir);
         }
-
     }
 }

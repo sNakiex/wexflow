@@ -1,16 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
-using Wexflow.Core;
+using System.Text.RegularExpressions;
+using System.Threading;
 using System.Xml.Linq;
 using System.Xml.XPath;
-using System.Threading;
-using System.IO;
-using System.Text.RegularExpressions;
+using Wexflow.Core;
 
 namespace Wexflow.Tasks.MailsSender
 {
-    public class MailsSender:Task
+    public class MailsSender : Task
     {
         public string Host { get; }
         public int Port { get; }
@@ -34,20 +34,20 @@ namespace Wexflow.Tasks.MailsSender
         {
             Info("Sending mails...");
 
-            bool success = true;
-            bool atLeastOneSucceed = false;
+            var success = true;
+            var atLeastOneSucceed = false;
 
             try
             {
-                FileInf[] attachments = SelectAttachments();
+                var attachments = SelectAttachments();
 
-                foreach (FileInf mailFile in SelectFiles())
+                foreach (var mailFile in SelectFiles())
                 {
                     var xdoc = XDocument.Load(mailFile.Path);
                     var xMails = xdoc.XPathSelectElements("Mails/Mail");
 
-                    int count = 1;
-                    foreach (XElement xMail in xMails)
+                    var count = 1;
+                    foreach (var xMail in xMails)
                     {
                         Mail mail;
                         try
@@ -60,7 +60,7 @@ namespace Wexflow.Tasks.MailsSender
                         }
                         catch (Exception e)
                         {
-							ErrorFormat("An error occured while parsing the mail {0}. Please check the XML configuration according to the documentation. Error: {1}", count, e.Message);
+                            ErrorFormat("An error occured while parsing the mail {0}. Please check the XML configuration according to the documentation. Error: {1}", count, e.Message);
                             success = false;
                             count++;
                             continue;
@@ -71,8 +71,11 @@ namespace Wexflow.Tasks.MailsSender
                             mail.Send(Host, Port, EnableSsl, User, Password, IsBodyHtml);
                             InfoFormat("Mail {0} sent.", count);
                             count++;
-                            
-                            if (!atLeastOneSucceed) atLeastOneSucceed = true;
+
+                            if (!atLeastOneSucceed)
+                            {
+                                atLeastOneSucceed = true;
+                            }
                         }
                         catch (ThreadAbortException)
                         {
@@ -117,14 +120,14 @@ namespace Wexflow.Tasks.MailsSender
             // Parse local variables.
             //
             var res = string.Empty;
-            using (StringReader sr = new StringReader(src))
-            using (StringWriter sw = new StringWriter())
+            using (StringReader sr = new(src))
+            using (StringWriter sw = new())
             {
                 string line;
                 while ((line = sr.ReadLine()) != null)
                 {
-                    string pattern = @"{.*?}";
-                    Match m = Regex.Match(line, pattern, RegexOptions.IgnoreCase);
+                    var pattern = @"{.*?}";
+                    var m = Regex.Match(line, pattern, RegexOptions.IgnoreCase);
                     if (m.Success)
                     {
                         if (m.Value.StartsWith("{date:"))
@@ -135,7 +138,7 @@ namespace Wexflow.Tasks.MailsSender
                     }
                     foreach (var variable in Workflow.LocalVariables)
                     {
-                        line = line.Replace("$" + variable.Key, variable.Value);
+                        line = line.Replace($"${variable.Key}", variable.Value);
                     }
                     sw.WriteLine(line);
                 }
@@ -146,8 +149,8 @@ namespace Wexflow.Tasks.MailsSender
             // Parse Rest variables.
             //
             var res2 = string.Empty;
-            using (StringReader sr = new StringReader(res))
-            using (StringWriter sw = new StringWriter())
+            using (StringReader sr = new(res))
+            using (StringWriter sw = new())
             {
                 string line;
                 while ((line = sr.ReadLine()) != null)
@@ -156,7 +159,7 @@ namespace Wexflow.Tasks.MailsSender
                     {
                         if (variable != null)
                         {
-                            line = line.Replace("$" + variable.Key, variable.Value);
+                            line = line.Replace($"${variable.Key}", variable.Value);
                         }
                     }
                     sw.WriteLine(line);
@@ -169,7 +172,7 @@ namespace Wexflow.Tasks.MailsSender
 
         public FileInf[] SelectAttachments()
         {
-            var files = new List<FileInf>();
+            List<FileInf> files = new();
             foreach (var xSelectFile in GetXSettings("selectAttachments"))
             {
                 var xTaskId = xSelectFile.Attribute("value");
@@ -184,8 +187,8 @@ namespace Wexflow.Tasks.MailsSender
                 else
                 {
                     var qf = (from lf in Workflow.FilesPerTask.Values
-                        from f in QueryFiles(lf, xSelectFile)
-                        select f).Distinct().ToArray();
+                              from f in QueryFiles(lf, xSelectFile)
+                              select f).Distinct().ToArray();
 
                     files.AddRange(qf);
                 }

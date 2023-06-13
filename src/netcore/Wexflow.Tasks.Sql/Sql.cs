@@ -1,17 +1,17 @@
-﻿using System;
+﻿using MySqlConnector;
+using Npgsql;
+using Oracle.ManagedDataAccess.Client;
+using System;
 using System.Data.Common;
-using Wexflow.Core;
+using System.Data.Odbc;
+using System.Data.OleDb;
+using System.Data.SqlClient;
+using System.Data.SQLite;
+using System.IO;
 using System.Threading;
 using System.Xml.Linq;
-using System.Data.SqlClient;
-using Oracle.ManagedDataAccess.Client;
-using MySqlConnector;
-using System.Data.SQLite;
-using Npgsql;
-using System.IO;
-using System.Data.OleDb;
 using Teradata.Client.Provider;
-using System.Data.Odbc;
+using Wexflow.Core;
 
 namespace Wexflow.Tasks.Sql
 {
@@ -45,8 +45,8 @@ namespace Wexflow.Tasks.Sql
         {
             Info("Executing SQL scripts...");
 
-            bool success = true;
-            bool atLeastOneSucceed = false;
+            var success = true;
+            var atLeastOneSucceed = false;
 
             // Execute SqlScript if necessary
             try
@@ -68,7 +68,7 @@ namespace Wexflow.Tasks.Sql
             }
 
             // Execute SQL files scripts
-            foreach (FileInf file in SelectFiles())
+            foreach (var file in SelectFiles())
             {
                 try
                 {
@@ -76,7 +76,10 @@ namespace Wexflow.Tasks.Sql
                     ExecuteSql(sql);
                     InfoFormat("The script {0} has been executed.", file.Path);
 
-                    if (!atLeastOneSucceed) atLeastOneSucceed = true;
+                    if (!atLeastOneSucceed)
+                    {
+                        atLeastOneSucceed = true;
+                    }
                 }
                 catch (ThreadAbortException)
                 {
@@ -109,68 +112,70 @@ namespace Wexflow.Tasks.Sql
             switch (DbType)
             {
                 case Type.SqlServer:
-                    using (var conn = new SqlConnection(ConnectionString))
+                    using (SqlConnection conn = new(ConnectionString))
                     {
-                        var comm = new SqlCommand(sql, conn);
+                        SqlCommand comm = new(sql, conn);
                         ExecSql(conn, comm);
                     }
                     break;
                 case Type.Access:
-                    using (var conn = new OleDbConnection(ConnectionString))
+#pragma warning disable CA1416 // Valider la compatibilité de la plateforme
+                    using (OleDbConnection conn = new(ConnectionString))
                     {
-                        var comm = new OleDbCommand(sql, conn);
+                        OleDbCommand comm = new(sql, conn);
                         ExecSql(conn, comm);
                     }
+#pragma warning restore CA1416 // Valider la compatibilité de la plateforme
                     break;
                 case Type.Oracle:
-                    using (var conn = new OracleConnection(ConnectionString))
+                    using (OracleConnection conn = new(ConnectionString))
                     {
-                        var comm = new OracleCommand(sql, conn);
+                        OracleCommand comm = new(sql, conn);
                         ExecSql(conn, comm);
                     }
                     break;
                 case Type.MySql:
-                    using (var conn = new MySqlConnection(ConnectionString))
+                    using (MySqlConnection conn = new(ConnectionString))
                     {
-                        var comm = new MySqlCommand(sql, conn);
+                        MySqlCommand comm = new(sql, conn);
                         ExecSql(conn, comm);
                     }
                     break;
                 case Type.Sqlite:
-                    using (var conn = new SQLiteConnection(ConnectionString))
+                    using (SQLiteConnection conn = new(ConnectionString))
                     {
-                        var comm = new SQLiteCommand(sql, conn);
+                        SQLiteCommand comm = new(sql, conn);
                         ExecSql(conn, comm);
                     }
                     break;
                 case Type.PostGreSql:
-                    using (var conn = new NpgsqlConnection(ConnectionString))
+                    using (NpgsqlConnection conn = new(ConnectionString))
                     {
-                        var comm = new NpgsqlCommand(sql, conn);
+                        NpgsqlCommand comm = new(sql, conn);
                         ExecSql(conn, comm);
                     }
                     break;
                 case Type.Teradata:
-                    using (var conn = new TdConnection(ConnectionString))
+                    using (TdConnection conn = new(ConnectionString))
                     {
-                        var comm = new TdCommand(sql, conn);
+                        TdCommand comm = new(sql, conn);
                         ExecSql(conn, comm);
                     }
                     break;
                 case Type.Odbc:
-                    using (var conn = new OdbcConnection(ConnectionString))
+                    using (OdbcConnection conn = new(ConnectionString))
                     {
-                        var comm = new OdbcCommand(sql, conn);
+                        OdbcCommand comm = new(sql, conn);
                         ExecSql(conn, comm);
                     }
                     break;
             }
         }
 
-        private void ExecSql(DbConnection conn, DbCommand comm)
+        private static void ExecSql(DbConnection conn, DbCommand comm)
         {
             conn.Open();
-            comm.ExecuteNonQuery();
+            _ = comm.ExecuteNonQuery();
         }
     }
 }

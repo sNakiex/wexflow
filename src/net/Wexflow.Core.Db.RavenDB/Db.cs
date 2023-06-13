@@ -27,7 +27,7 @@ namespace Wexflow.Core.Db.RavenDB
             {
                 if (!string.IsNullOrEmpty(part.Trim()))
                 {
-                    string connPart = part.TrimStart(' ').TrimEnd(' ');
+                    var connPart = part.TrimStart(' ').TrimEnd(' ');
                     if (connPart.StartsWith("Database="))
                     {
                         database = connPart.Replace("Database=", string.Empty);
@@ -45,18 +45,18 @@ namespace Wexflow.Core.Db.RavenDB
                 Database = database
             };
 
-            store.Initialize();
+            _ = store.Initialize();
 
             // Create database if it does not exist
             try
             {
-                store.Maintenance.ForDatabase(store.Database).Send(new GetStatisticsOperation());
+                _ = store.Maintenance.ForDatabase(store.Database).Send(new GetStatisticsOperation());
             }
             catch (DatabaseDoesNotExistException)
             {
                 try
                 {
-                    store.Maintenance.Server.Send(new CreateDatabaseOperation(new DatabaseRecord(database)));
+                    _ = store.Maintenance.Server.Send(new CreateDatabaseOperation(new DatabaseRecord(database)));
                 }
                 catch (ConcurrencyException)
                 {
@@ -85,7 +85,6 @@ namespace Wexflow.Core.Db.RavenDB
                 session.Store(statusCount);
                 session.SaveChanges();
 
-
                 // Entries
                 ClearEntries();
 
@@ -103,14 +102,13 @@ namespace Wexflow.Core.Db.RavenDB
                     InsertDefaultUser();
                 }
             }
-
         }
 
         private void DeleteAll(string documentName)
         {
             lock (padlock)
             {
-                store.Operations
+                _ = store.Operations
              .Send(new DeleteByQueryOperation(new IndexQuery
              {
                  Query = "from " + documentName
@@ -320,11 +318,11 @@ namespace Wexflow.Core.Db.RavenDB
                                     .ToArray();
                         }
 
-                        return new User[] { };
+                        return Array.Empty<User>();
                     }
                     catch (Exception)
                     {
-                        return new User[] { };
+                        return Array.Empty<User>();
                     }
                 }
             }
@@ -343,7 +341,7 @@ namespace Wexflow.Core.Db.RavenDB
                     }
                     catch (Exception)
                     {
-                        return new Entry[] { };
+                        return Array.Empty<Entry>();
                     }
                 }
             }
@@ -359,7 +357,7 @@ namespace Wexflow.Core.Db.RavenDB
                     {
                         var col = session.Query<Entry>();
                         var keywordToLower = string.IsNullOrEmpty(keyword) ? "*" : "*" + keyword.ToLower() + "*";
-                        int skip = (page - 1) * entriesCount;
+                        var skip = (page - 1) * entriesCount;
 
                         switch (eo)
                         {
@@ -495,11 +493,11 @@ namespace Wexflow.Core.Db.RavenDB
                                     .ToArray();
                         }
 
-                        return new Entry[] { };
+                        return Array.Empty<Entry>();
                     }
                     catch (Exception)
                     {
-                        return new Entry[] { };
+                        return Array.Empty<Entry>();
                     }
                 }
             }
@@ -548,7 +546,6 @@ namespace Wexflow.Core.Db.RavenDB
             }
         }
 
-
         public override Core.Db.Entry GetEntry(int workflowId, Guid jobId)
         {
             lock (padlock)
@@ -578,12 +575,7 @@ namespace Wexflow.Core.Db.RavenDB
                     {
                         var col = session.Query<Entry>();
                         var q = col.OrderByDescending(e => e.StatusDate);
-                        if (q.Any())
-                        {
-                            return q.Select(e => e.StatusDate).First();
-                        }
-
-                        return DateTime.Now;
+                        return q.Any() ? q.Select(e => e.StatusDate).First() : DateTime.Now;
                     }
                     catch (Exception)
                     {
@@ -603,12 +595,7 @@ namespace Wexflow.Core.Db.RavenDB
                     {
                         var col = session.Query<Entry>();
                         var q = col.OrderBy(e => e.StatusDate);
-                        if (q.Any())
-                        {
-                            return q.Select(e => e.StatusDate).First();
-                        }
-
-                        return DateTime.Now;
+                        return q.Any() ? q.Select(e => e.StatusDate).First() : DateTime.Now;
                     }
                     catch (Exception)
                     {
@@ -631,7 +618,7 @@ namespace Wexflow.Core.Db.RavenDB
                     }
                     catch (Exception)
                     {
-                        return new HistoryEntry[] { };
+                        return Array.Empty<HistoryEntry>();
                     }
                 }
             }
@@ -654,7 +641,7 @@ namespace Wexflow.Core.Db.RavenDB
                     }
                     catch (Exception)
                     {
-                        return new HistoryEntry[] { };
+                        return Array.Empty<HistoryEntry>();
                     }
                 }
             }
@@ -677,7 +664,7 @@ namespace Wexflow.Core.Db.RavenDB
                     }
                     catch (Exception)
                     {
-                        return new HistoryEntry[] { };
+                        return Array.Empty<HistoryEntry>();
                     }
                 }
             }
@@ -693,7 +680,7 @@ namespace Wexflow.Core.Db.RavenDB
                     {
                         var col = session.Query<HistoryEntry>();
                         var keywordToLower = string.IsNullOrEmpty(keyword) ? "*" : "*" + keyword.ToLower() + "*";
-                        int skip = (page - 1) * entriesCount;
+                        var skip = (page - 1) * entriesCount;
 
                         switch (heo)
                         {
@@ -829,11 +816,11 @@ namespace Wexflow.Core.Db.RavenDB
                                     .ToArray();
                         }
 
-                        return new HistoryEntry[] { };
+                        return Array.Empty<HistoryEntry>();
                     }
                     catch (Exception)
                     {
-                        return new HistoryEntry[] { };
+                        return Array.Empty<HistoryEntry>();
                     }
                 }
             }
@@ -896,12 +883,7 @@ namespace Wexflow.Core.Db.RavenDB
                     {
                         var col = session.Query<HistoryEntry>();
                         var q = col.OrderByDescending(e => e.StatusDate);
-                        if (q.Any())
-                        {
-                            return q.Select(e => e.StatusDate).First();
-                        }
-
-                        return DateTime.Now;
+                        return q.Any() ? q.Select(e => e.StatusDate).First() : DateTime.Now;
                     }
                     catch (Exception)
                     {
@@ -921,12 +903,7 @@ namespace Wexflow.Core.Db.RavenDB
                     {
                         var col = session.Query<HistoryEntry>();
                         var q = col.OrderBy(e => e.StatusDate);
-                        if (q.Any())
-                        {
-                            return q.Select(e => e.StatusDate).First();
-                        }
-
-                        return DateTime.Now;
+                        return q.Any() ? q.Select(e => e.StatusDate).First() : DateTime.Now;
                     }
                     catch (Exception)
                     {
@@ -945,7 +922,7 @@ namespace Wexflow.Core.Db.RavenDB
                     try
                     {
                         var col = session.Query<User>();
-                        User user = col.First(u => u.Username == username);
+                        var user = col.First(u => u.Username == username);
                         return user.Password;
                     }
                     catch (Exception)
@@ -1029,7 +1006,7 @@ namespace Wexflow.Core.Db.RavenDB
                     }
                     catch (Exception)
                     {
-                        return new User[] { };
+                        return Array.Empty<User>();
                     }
                 }
             }
@@ -1054,11 +1031,11 @@ namespace Wexflow.Core.Db.RavenDB
                                 return col.Search(u => u.Username, keywordToLower).OrderByDescending(u => u.Username).ToArray();
                         }
 
-                        return new User[] { };
+                        return Array.Empty<User>();
                     }
                     catch (Exception)
                     {
-                        return new User[] { };
+                        return Array.Empty<User>();
                     }
                 }
             }
@@ -1077,7 +1054,7 @@ namespace Wexflow.Core.Db.RavenDB
                     }
                     catch (Exception)
                     {
-                        return new string[] { };
+                        return Array.Empty<string>();
                     }
                 }
             }
@@ -1115,7 +1092,7 @@ namespace Wexflow.Core.Db.RavenDB
                     }
                     catch (Exception)
                     {
-                        return new Workflow[] { };
+                        return Array.Empty<Workflow>();
                     }
                 }
             }
@@ -1494,7 +1471,6 @@ namespace Wexflow.Core.Db.RavenDB
             {
                 using (var session = store.OpenSession())
                 {
-
                     var col = session.Query<User>();
                     var users = col.Where(u => u.UserProfile == UserProfile.SuperAdministrator || u.UserProfile == UserProfile.Administrator).OrderBy(u => u.Username).ToList();
                     return users;

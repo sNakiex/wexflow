@@ -7,7 +7,7 @@ namespace Wexflow.Core.Db.MySQL
 {
     public sealed class Db : Core.Db.Db
     {
-        private static readonly object padlock = new object();
+        private static readonly object padlock = new();
         private static readonly string dateTimeFormat = "yyyy-MM-dd HH:mm:ss.fff";
 
         private static string connectionString;
@@ -20,6 +20,7 @@ namespace Wexflow.Core.Db.MySQL
             var uid = string.Empty;
             var pwd = string.Empty;
             var database = string.Empty;
+            var port = 3306;
 
             var connectionStringParts = ConnectionString.Split(';');
 
@@ -27,7 +28,7 @@ namespace Wexflow.Core.Db.MySQL
             {
                 if (!string.IsNullOrEmpty(part.Trim()))
                 {
-                    string connPart = part.TrimStart(' ').TrimEnd(' ');
+                    var connPart = part.TrimStart(' ').TrimEnd(' ');
                     if (connPart.StartsWith("Server="))
                     {
                         server = connPart.Replace("Server=", string.Empty);
@@ -44,11 +45,15 @@ namespace Wexflow.Core.Db.MySQL
                     {
                         database = connPart.Replace("Database=", string.Empty);
                     }
+                    else if (connPart.StartsWith("Port="))
+                    {
+                        port = int.Parse(connPart.Replace("Port=", string.Empty));
+                    }
                 }
             }
 
-            var helper = new Helper(connectionString);
-            helper.CreateDatabaseIfNotExists(server, uid, pwd, database);
+            Helper helper = new(connectionString);
+            Helper.CreateDatabaseIfNotExists(server, uid, pwd, database, port);
             helper.CreateTableIfNotExists(Core.Db.Entry.DocumentName, Entry.TableStruct);
             helper.CreateTableIfNotExists(Core.Db.HistoryEntry.DocumentName, HistoryEntry.TableStruct);
             helper.CreateTableIfNotExists(Core.Db.StatusCount.DocumentName, StatusCount.TableStruct);
@@ -66,7 +71,7 @@ namespace Wexflow.Core.Db.MySQL
             // StatusCount
             ClearStatusCount();
 
-            var statusCount = new StatusCount
+            StatusCount statusCount = new()
             {
                 PendingCount = 0,
                 RunningCount = 0,
@@ -77,11 +82,11 @@ namespace Wexflow.Core.Db.MySQL
                 StoppedCount = 0
             };
 
-            using (var conn = new MySqlConnection(connectionString))
+            using (MySqlConnection conn = new(connectionString))
             {
                 conn.Open();
 
-                using (var command = new MySqlCommand("INSERT INTO " + Core.Db.StatusCount.DocumentName + "("
+                using MySqlCommand command = new("INSERT INTO " + Core.Db.StatusCount.DocumentName + "("
                     + StatusCount.ColumnName_PendingCount + ", "
                     + StatusCount.ColumnName_RunningCount + ", "
                     + StatusCount.ColumnName_DoneCount + ", "
@@ -98,28 +103,24 @@ namespace Wexflow.Core.Db.MySQL
                     + statusCount.DisabledCount + ", "
                     + statusCount.StoppedCount + ", "
                     + statusCount.RejectedCount + ");"
-                    , conn))
-                {
-                    command.ExecuteNonQuery();
-                }
+                    , conn);
+                _ = command.ExecuteNonQuery();
             }
 
             // Entries
             ClearEntries();
 
             // Insert default user if necessary
-            using (var conn = new MySqlConnection(connectionString))
+            using (MySqlConnection conn = new(connectionString))
             {
                 conn.Open();
 
-                using (var command = new MySqlCommand("SELECT COUNT(*) FROM " + Core.Db.User.DocumentName + ";", conn))
-                {
-                    var usersCount = (long)command.ExecuteScalar();
+                using MySqlCommand command = new("SELECT COUNT(*) FROM " + Core.Db.User.DocumentName + ";", conn);
+                var usersCount = (long)command.ExecuteScalar();
 
-                    if (usersCount == 0)
-                    {
-                        InsertDefaultUser();
-                    }
+                if (usersCount == 0)
+                {
+                    InsertDefaultUser();
                 }
             }
         }
@@ -128,20 +129,16 @@ namespace Wexflow.Core.Db.MySQL
         {
             lock (padlock)
             {
-                using (var conn = new MySqlConnection(connectionString))
-                {
-                    conn.Open();
+                using MySqlConnection conn = new(connectionString);
+                conn.Open();
 
-                    using (var command = new MySqlCommand("SELECT COUNT(*) FROM " + Core.Db.UserWorkflow.DocumentName
-                        + " WHERE " + UserWorkflow.ColumnName_UserId + "=" + int.Parse(userId)
-                        + " AND " + UserWorkflow.ColumnName_WorkflowId + "=" + int.Parse(workflowId)
-                        + ";", conn))
-                    {
-                        var count = (long)command.ExecuteScalar();
+                using MySqlCommand command = new("SELECT COUNT(*) FROM " + Core.Db.UserWorkflow.DocumentName
+                    + " WHERE " + UserWorkflow.ColumnName_UserId + "=" + int.Parse(userId)
+                    + " AND " + UserWorkflow.ColumnName_WorkflowId + "=" + int.Parse(workflowId)
+                    + ";", conn);
+                var count = (long)command.ExecuteScalar();
 
-                        return count > 0;
-                    }
-                }
+                return count > 0;
             }
         }
 
@@ -149,15 +146,11 @@ namespace Wexflow.Core.Db.MySQL
         {
             lock (padlock)
             {
-                using (var conn = new MySqlConnection(connectionString))
-                {
-                    conn.Open();
+                using MySqlConnection conn = new(connectionString);
+                conn.Open();
 
-                    using (var command = new MySqlCommand("DELETE FROM " + Core.Db.Entry.DocumentName + ";", conn))
-                    {
-                        command.ExecuteNonQuery();
-                    }
-                }
+                using MySqlCommand command = new("DELETE FROM " + Core.Db.Entry.DocumentName + ";", conn);
+                _ = command.ExecuteNonQuery();
             }
         }
 
@@ -165,15 +158,11 @@ namespace Wexflow.Core.Db.MySQL
         {
             lock (padlock)
             {
-                using (var conn = new MySqlConnection(connectionString))
-                {
-                    conn.Open();
+                using MySqlConnection conn = new(connectionString);
+                conn.Open();
 
-                    using (var command = new MySqlCommand("DELETE FROM " + Core.Db.StatusCount.DocumentName + ";", conn))
-                    {
-                        command.ExecuteNonQuery();
-                    }
-                }
+                using MySqlCommand command = new("DELETE FROM " + Core.Db.StatusCount.DocumentName + ";", conn);
+                _ = command.ExecuteNonQuery();
             }
         }
 
@@ -181,18 +170,14 @@ namespace Wexflow.Core.Db.MySQL
         {
             lock (padlock)
             {
-                using (var conn = new MySqlConnection(connectionString))
-                {
-                    conn.Open();
+                using MySqlConnection conn = new(connectionString);
+                conn.Open();
 
-                    using (var command = new MySqlCommand("DELETE FROM " + Core.Db.User.DocumentName
-                        + " WHERE " + User.ColumnName_Username + " = '" + username + "'"
-                        + " AND " + User.ColumnName_Password + " = '" + password + "'"
-                        + ";", conn))
-                    {
-                        command.ExecuteNonQuery();
-                    }
-                }
+                using MySqlCommand command = new("DELETE FROM " + Core.Db.User.DocumentName
+                    + " WHERE " + User.ColumnName_Username + " = '" + username + "'"
+                    + " AND " + User.ColumnName_Password + " = '" + password + "'"
+                    + ";", conn);
+                _ = command.ExecuteNonQuery();
             }
         }
 
@@ -200,16 +185,12 @@ namespace Wexflow.Core.Db.MySQL
         {
             lock (padlock)
             {
-                using (var conn = new MySqlConnection(connectionString))
-                {
-                    conn.Open();
+                using MySqlConnection conn = new(connectionString);
+                conn.Open();
 
-                    using (var command = new MySqlCommand("DELETE FROM " + Core.Db.UserWorkflow.DocumentName
-                        + " WHERE " + UserWorkflow.ColumnName_UserId + " = " + int.Parse(userId) + ";", conn))
-                    {
-                        command.ExecuteNonQuery();
-                    }
-                }
+                using MySqlCommand command = new("DELETE FROM " + Core.Db.UserWorkflow.DocumentName
+                    + " WHERE " + UserWorkflow.ColumnName_UserId + " = " + int.Parse(userId) + ";", conn);
+                _ = command.ExecuteNonQuery();
             }
         }
 
@@ -217,16 +198,12 @@ namespace Wexflow.Core.Db.MySQL
         {
             lock (padlock)
             {
-                using (var conn = new MySqlConnection(connectionString))
-                {
-                    conn.Open();
+                using MySqlConnection conn = new(connectionString);
+                conn.Open();
 
-                    using (var command = new MySqlCommand("DELETE FROM " + Core.Db.UserWorkflow.DocumentName
-                        + " WHERE " + UserWorkflow.ColumnName_WorkflowId + " = " + int.Parse(workflowDbId) + ";", conn))
-                    {
-                        command.ExecuteNonQuery();
-                    }
-                }
+                using MySqlCommand command = new("DELETE FROM " + Core.Db.UserWorkflow.DocumentName
+                    + " WHERE " + UserWorkflow.ColumnName_WorkflowId + " = " + int.Parse(workflowDbId) + ";", conn);
+                _ = command.ExecuteNonQuery();
             }
         }
 
@@ -234,16 +211,12 @@ namespace Wexflow.Core.Db.MySQL
         {
             lock (padlock)
             {
-                using (var conn = new MySqlConnection(connectionString))
-                {
-                    conn.Open();
+                using MySqlConnection conn = new(connectionString);
+                conn.Open();
 
-                    using (var command = new MySqlCommand("DELETE FROM " + Core.Db.Workflow.DocumentName
-                        + " WHERE " + Workflow.ColumnName_Id + " = " + int.Parse(id) + ";", conn))
-                    {
-                        command.ExecuteNonQuery();
-                    }
-                }
+                using MySqlCommand command = new("DELETE FROM " + Core.Db.Workflow.DocumentName
+                    + " WHERE " + Workflow.ColumnName_Id + " = " + int.Parse(id) + ";", conn);
+                _ = command.ExecuteNonQuery();
             }
         }
 
@@ -251,32 +224,21 @@ namespace Wexflow.Core.Db.MySQL
         {
             lock (padlock)
             {
-                using (var conn = new MySqlConnection(connectionString))
+                using MySqlConnection conn = new(connectionString);
+                conn.Open();
+
+                StringBuilder builder = new("(");
+
+                for (var i = 0; i < ids.Length; i++)
                 {
-                    conn.Open();
-
-                    var builder = new StringBuilder("(");
-
-                    for (int i = 0; i < ids.Length; i++)
-                    {
-                        var id = ids[i];
-                        builder.Append(id);
-                        if (i < ids.Length - 1)
-                        {
-                            builder.Append(", ");
-                        }
-                        else
-                        {
-                            builder.Append(")");
-                        }
-                    }
-
-                    using (var command = new MySqlCommand("DELETE FROM " + Core.Db.Workflow.DocumentName
-                        + " WHERE " + Workflow.ColumnName_Id + " IN " + builder.ToString() + ";", conn))
-                    {
-                        command.ExecuteNonQuery();
-                    }
+                    var id = ids[i];
+                    _ = builder.Append(id);
+                    _ = i < ids.Length - 1 ? builder.Append(", ") : builder.Append(')');
                 }
+
+                using MySqlCommand command = new("DELETE FROM " + Core.Db.Workflow.DocumentName
+                    + " WHERE " + Workflow.ColumnName_Id + " IN " + builder.ToString() + ";", conn);
+                _ = command.ExecuteNonQuery();
             }
         }
 
@@ -284,48 +246,43 @@ namespace Wexflow.Core.Db.MySQL
         {
             lock (padlock)
             {
-                List<User> admins = new List<User>();
+                List<User> admins = new();
 
-                using (var conn = new MySqlConnection(connectionString))
+                using MySqlConnection conn = new(connectionString);
+                conn.Open();
+
+                using (MySqlCommand command = new("SELECT " + User.ColumnName_Id + ", "
+                    + User.ColumnName_Username + ", "
+                    + User.ColumnName_Password + ", "
+                    + User.ColumnName_Email + ", "
+                    + User.ColumnName_UserProfile + ", "
+                    + User.ColumnName_CreatedOn + ", "
+                    + User.ColumnName_ModifiedOn
+                    + " FROM " + Core.Db.User.DocumentName
+                    + " WHERE " + "(LOWER(" + User.ColumnName_Username + ")" + " LIKE '%" + (keyword ?? "").Replace("'", "''").Replace("\\", "\\\\").ToLower() + "%'"
+                    + " AND " + User.ColumnName_UserProfile + " = " + (int)UserProfile.Administrator + ")"
+                    + " ORDER BY " + User.ColumnName_Username + (uo == UserOrderBy.UsernameAscending ? " ASC" : " DESC")
+                    + ";", conn))
                 {
-                    conn.Open();
-
-                    using (var command = new MySqlCommand("SELECT " + User.ColumnName_Id + ", "
-                        + User.ColumnName_Username + ", "
-                        + User.ColumnName_Password + ", "
-                        + User.ColumnName_Email + ", "
-                        + User.ColumnName_UserProfile + ", "
-                        + User.ColumnName_CreatedOn + ", "
-                        + User.ColumnName_ModifiedOn
-                        + " FROM " + Core.Db.User.DocumentName
-                        + " WHERE " + "(LOWER(" + User.ColumnName_Username + ")" + " LIKE '%" + (keyword ?? "").Replace("'", "''").Replace("\\", "\\\\").ToLower() + "%'"
-                        + " AND " + User.ColumnName_UserProfile + " = " + (int)UserProfile.Administrator + ")"
-                        + " ORDER BY " + User.ColumnName_Username + (uo == UserOrderBy.UsernameAscending ? " ASC" : " DESC")
-                        + ";", conn))
+                    using var reader = command.ExecuteReader();
+                    while (reader.Read())
                     {
-
-                        using (var reader = command.ExecuteReader())
+                        User admin = new()
                         {
-                            while (reader.Read())
-                            {
-                                var admin = new User
-                                {
-                                    Id = (int)reader[User.ColumnName_Id],
-                                    Username = (string)reader[User.ColumnName_Username],
-                                    Password = (string)reader[User.ColumnName_Password],
-                                    Email = (string)reader[User.ColumnName_Email],
-                                    UserProfile = (UserProfile)((int)reader[User.ColumnName_UserProfile]),
-                                    CreatedOn = (DateTime)reader[User.ColumnName_CreatedOn],
-                                    ModifiedOn = reader[User.ColumnName_ModifiedOn] == DBNull.Value ? DateTime.MinValue : (DateTime)reader[User.ColumnName_ModifiedOn]
-                                };
+                            Id = (int)reader[User.ColumnName_Id],
+                            Username = (string)reader[User.ColumnName_Username],
+                            Password = (string)reader[User.ColumnName_Password],
+                            Email = (string)reader[User.ColumnName_Email],
+                            UserProfile = (UserProfile)(int)reader[User.ColumnName_UserProfile],
+                            CreatedOn = (DateTime)reader[User.ColumnName_CreatedOn],
+                            ModifiedOn = reader[User.ColumnName_ModifiedOn] == DBNull.Value ? DateTime.MinValue : (DateTime)reader[User.ColumnName_ModifiedOn]
+                        };
 
-                                admins.Add(admin);
-                            }
-                        }
+                        admins.Add(admin);
                     }
-
-                    return admins;
                 }
+
+                return admins;
             }
         }
 
@@ -333,48 +290,43 @@ namespace Wexflow.Core.Db.MySQL
         {
             lock (padlock)
             {
-                List<Entry> entries = new List<Entry>();
+                List<Entry> entries = new();
 
-                using (var conn = new MySqlConnection(connectionString))
+                using MySqlConnection conn = new(connectionString);
+                conn.Open();
+
+                using MySqlCommand command = new("SELECT "
+                    + Entry.ColumnName_Id + ", "
+                    + Entry.ColumnName_Name + ", "
+                    + Entry.ColumnName_Description + ", "
+                    + Entry.ColumnName_LaunchType + ", "
+                    + Entry.ColumnName_Status + ", "
+                    + Entry.ColumnName_StatusDate + ", "
+                    + Entry.ColumnName_WorkflowId + ", "
+                    + Entry.ColumnName_JobId
+                    + " FROM " + Core.Db.Entry.DocumentName + ";", conn);
+
+                using (var reader = command.ExecuteReader())
                 {
-                    conn.Open();
-
-                    using (var command = new MySqlCommand("SELECT "
-                        + Entry.ColumnName_Id + ", "
-                        + Entry.ColumnName_Name + ", "
-                        + Entry.ColumnName_Description + ", "
-                        + Entry.ColumnName_LaunchType + ", "
-                        + Entry.ColumnName_Status + ", "
-                        + Entry.ColumnName_StatusDate + ", "
-                        + Entry.ColumnName_WorkflowId + ", "
-                        + Entry.ColumnName_JobId
-                        + " FROM " + Core.Db.Entry.DocumentName + ";", conn))
+                    while (reader.Read())
                     {
-
-                        using (var reader = command.ExecuteReader())
+                        Entry entry = new()
                         {
+                            Id = (int)reader[Entry.ColumnName_Id],
+                            Name = (string)reader[Entry.ColumnName_Name],
+                            Description = (string)reader[Entry.ColumnName_Description],
+                            LaunchType = (LaunchType)(int)reader[Entry.ColumnName_LaunchType],
+                            Status = (Status)(int)reader[Entry.ColumnName_Status],
+                            StatusDate = (DateTime)reader[Entry.ColumnName_StatusDate],
+                            WorkflowId = (int)reader[Entry.ColumnName_WorkflowId],
+                            JobId = (string)reader[Entry.ColumnName_JobId]
+                        };
 
-                            while (reader.Read())
-                            {
-                                var entry = new Entry
-                                {
-                                    Id = (int)reader[Entry.ColumnName_Id],
-                                    Name = (string)reader[Entry.ColumnName_Name],
-                                    Description = (string)reader[Entry.ColumnName_Description],
-                                    LaunchType = (LaunchType)((int)reader[Entry.ColumnName_LaunchType]),
-                                    Status = (Status)((int)reader[Entry.ColumnName_Status]),
-                                    StatusDate = (DateTime)reader[Entry.ColumnName_StatusDate],
-                                    WorkflowId = (int)reader[Entry.ColumnName_WorkflowId],
-                                    JobId = (string)reader[Entry.ColumnName_JobId]
-                                };
-
-                                entries.Add(entry);
-                            }
-                        }
-
-                        return entries;
+                        entries.Add(entry);
                     }
                 }
+
+                return entries;
             }
         }
 
@@ -382,117 +334,113 @@ namespace Wexflow.Core.Db.MySQL
         {
             lock (padlock)
             {
-                List<Entry> entries = new List<Entry>();
+                List<Entry> entries = new();
 
-                using (var conn = new MySqlConnection(connectionString))
+                using MySqlConnection conn = new(connectionString);
+                conn.Open();
+
+                StringBuilder sqlBuilder = new("SELECT "
+                    + Entry.ColumnName_Id + ", "
+                    + Entry.ColumnName_Name + ", "
+                    + Entry.ColumnName_Description + ", "
+                    + Entry.ColumnName_LaunchType + ", "
+                    + Entry.ColumnName_Status + ", "
+                    + Entry.ColumnName_StatusDate + ", "
+                    + Entry.ColumnName_WorkflowId + ", "
+                    + Entry.ColumnName_JobId
+                    + " FROM " + Core.Db.Entry.DocumentName
+                    + " WHERE " + "(LOWER(" + Entry.ColumnName_Name + ") LIKE '%" + (keyword ?? "").Replace("'", "''").Replace("\\", "\\\\").ToLower() + "%'"
+                    + " OR " + "LOWER(" + Entry.ColumnName_Description + ") LIKE '%" + (keyword ?? "").Replace("'", "''").Replace("\\", "\\\\").ToLower() + "%')"
+                    + " AND (" + Entry.ColumnName_StatusDate + " BETWEEN '" + from.ToString(dateTimeFormat) + "' AND '" + to.ToString(dateTimeFormat) + "')"
+                    + " ORDER BY ");
+
+                switch (eo)
                 {
-                    conn.Open();
+                    case EntryOrderBy.StatusDateAscending:
 
-                    var sqlBuilder = new StringBuilder("SELECT "
-                        + Entry.ColumnName_Id + ", "
-                        + Entry.ColumnName_Name + ", "
-                        + Entry.ColumnName_Description + ", "
-                        + Entry.ColumnName_LaunchType + ", "
-                        + Entry.ColumnName_Status + ", "
-                        + Entry.ColumnName_StatusDate + ", "
-                        + Entry.ColumnName_WorkflowId + ", "
-                        + Entry.ColumnName_JobId
-                        + " FROM " + Core.Db.Entry.DocumentName
-                        + " WHERE " + "(LOWER(" + Entry.ColumnName_Name + ") LIKE '%" + (keyword ?? "").Replace("'", "''").Replace("\\", "\\\\").ToLower() + "%'"
-                        + " OR " + "LOWER(" + Entry.ColumnName_Description + ") LIKE '%" + (keyword ?? "").Replace("'", "''").Replace("\\", "\\\\").ToLower() + "%')"
-                        + " AND (" + Entry.ColumnName_StatusDate + " BETWEEN '" + from.ToString(dateTimeFormat) + "' AND '" + to.ToString(dateTimeFormat) + "')"
-                        + " ORDER BY ");
+                        _ = sqlBuilder.Append(Entry.ColumnName_StatusDate).Append(" ASC");
+                        break;
 
-                    switch (eo)
+                    case EntryOrderBy.StatusDateDescending:
+
+                        _ = sqlBuilder.Append(Entry.ColumnName_StatusDate).Append(" DESC");
+                        break;
+
+                    case EntryOrderBy.WorkflowIdAscending:
+
+                        _ = sqlBuilder.Append(Entry.ColumnName_WorkflowId).Append(" ASC");
+                        break;
+
+                    case EntryOrderBy.WorkflowIdDescending:
+
+                        _ = sqlBuilder.Append(Entry.ColumnName_WorkflowId).Append(" DESC");
+                        break;
+
+                    case EntryOrderBy.NameAscending:
+
+                        _ = sqlBuilder.Append(Entry.ColumnName_Name).Append(" ASC");
+                        break;
+
+                    case EntryOrderBy.NameDescending:
+
+                        _ = sqlBuilder.Append(Entry.ColumnName_Name).Append(" DESC");
+                        break;
+
+                    case EntryOrderBy.LaunchTypeAscending:
+
+                        _ = sqlBuilder.Append(Entry.ColumnName_LaunchType).Append(" ASC");
+                        break;
+
+                    case EntryOrderBy.LaunchTypeDescending:
+
+                        _ = sqlBuilder.Append(Entry.ColumnName_LaunchType).Append(" DESC");
+                        break;
+
+                    case EntryOrderBy.DescriptionAscending:
+
+                        _ = sqlBuilder.Append(Entry.ColumnName_Description).Append(" ASC");
+                        break;
+
+                    case EntryOrderBy.DescriptionDescending:
+
+                        _ = sqlBuilder.Append(Entry.ColumnName_Description).Append(" DESC");
+                        break;
+
+                    case EntryOrderBy.StatusAscending:
+
+                        _ = sqlBuilder.Append(Entry.ColumnName_Status).Append(" ASC");
+                        break;
+
+                    case EntryOrderBy.StatusDescending:
+
+                        _ = sqlBuilder.Append(Entry.ColumnName_Status).Append(" DESC");
+                        break;
+                }
+
+                _ = sqlBuilder.Append(" LIMIT ").Append(entriesCount).Append(" OFFSET ").Append((page - 1) * entriesCount).Append(';');
+
+                using MySqlCommand command = new(sqlBuilder.ToString(), conn);
+                using (var reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
                     {
-                        case EntryOrderBy.StatusDateAscending:
-
-                            sqlBuilder.Append(Entry.ColumnName_StatusDate).Append(" ASC");
-                            break;
-
-                        case EntryOrderBy.StatusDateDescending:
-
-                            sqlBuilder.Append(Entry.ColumnName_StatusDate).Append(" DESC");
-                            break;
-
-                        case EntryOrderBy.WorkflowIdAscending:
-
-                            sqlBuilder.Append(Entry.ColumnName_WorkflowId).Append(" ASC");
-                            break;
-
-                        case EntryOrderBy.WorkflowIdDescending:
-
-                            sqlBuilder.Append(Entry.ColumnName_WorkflowId).Append(" DESC");
-                            break;
-
-                        case EntryOrderBy.NameAscending:
-
-                            sqlBuilder.Append(Entry.ColumnName_Name).Append(" ASC");
-                            break;
-
-                        case EntryOrderBy.NameDescending:
-
-                            sqlBuilder.Append(Entry.ColumnName_Name).Append(" DESC");
-                            break;
-
-                        case EntryOrderBy.LaunchTypeAscending:
-
-                            sqlBuilder.Append(Entry.ColumnName_LaunchType).Append(" ASC");
-                            break;
-
-                        case EntryOrderBy.LaunchTypeDescending:
-
-                            sqlBuilder.Append(Entry.ColumnName_LaunchType).Append(" DESC");
-                            break;
-
-                        case EntryOrderBy.DescriptionAscending:
-
-                            sqlBuilder.Append(Entry.ColumnName_Description).Append(" ASC");
-                            break;
-
-                        case EntryOrderBy.DescriptionDescending:
-
-                            sqlBuilder.Append(Entry.ColumnName_Description).Append(" DESC");
-                            break;
-
-                        case EntryOrderBy.StatusAscending:
-
-                            sqlBuilder.Append(Entry.ColumnName_Status).Append(" ASC");
-                            break;
-
-                        case EntryOrderBy.StatusDescending:
-
-                            sqlBuilder.Append(Entry.ColumnName_Status).Append(" DESC");
-                            break;
-                    }
-
-                    sqlBuilder.Append(" LIMIT ").Append(entriesCount).Append(" OFFSET ").Append((page - 1) * entriesCount).Append(";");
-
-                    using (var command = new MySqlCommand(sqlBuilder.ToString(), conn))
-                    {
-                        using (var reader = command.ExecuteReader())
+                        Entry entry = new()
                         {
-                            while (reader.Read())
-                            {
-                                var entry = new Entry
-                                {
-                                    Id = (int)reader[Entry.ColumnName_Id],
-                                    Name = (string)reader[Entry.ColumnName_Name],
-                                    Description = (string)reader[Entry.ColumnName_Description],
-                                    LaunchType = (LaunchType)((int)reader[Entry.ColumnName_LaunchType]),
-                                    Status = (Status)((int)reader[Entry.ColumnName_Status]),
-                                    StatusDate = (DateTime)reader[Entry.ColumnName_StatusDate],
-                                    WorkflowId = (int)reader[Entry.ColumnName_WorkflowId],
-                                    JobId = (string)reader[Entry.ColumnName_JobId]
-                                };
+                            Id = (int)reader[Entry.ColumnName_Id],
+                            Name = (string)reader[Entry.ColumnName_Name],
+                            Description = (string)reader[Entry.ColumnName_Description],
+                            LaunchType = (LaunchType)(int)reader[Entry.ColumnName_LaunchType],
+                            Status = (Status)(int)reader[Entry.ColumnName_Status],
+                            StatusDate = (DateTime)reader[Entry.ColumnName_StatusDate],
+                            WorkflowId = (int)reader[Entry.ColumnName_WorkflowId],
+                            JobId = (string)reader[Entry.ColumnName_JobId]
+                        };
 
-                                entries.Add(entry);
-                            }
-                        }
-
-                        return entries;
+                        entries.Add(entry);
                     }
                 }
+
+                return entries;
             }
         }
 
@@ -500,22 +448,18 @@ namespace Wexflow.Core.Db.MySQL
         {
             lock (padlock)
             {
-                using (var conn = new MySqlConnection(connectionString))
-                {
-                    conn.Open();
+                using MySqlConnection conn = new(connectionString);
+                conn.Open();
 
-                    using (var command = new MySqlCommand("SELECT COUNT(*)"
-                        + " FROM " + Core.Db.Entry.DocumentName
-                        + " WHERE " + "(LOWER(" + Entry.ColumnName_Name + ") LIKE '%" + (keyword ?? "").Replace("'", "''").Replace("\\", "\\\\").ToLower() + "%'"
-                        + " OR " + "LOWER(" + Entry.ColumnName_Description + ") LIKE '%" + (keyword ?? "").Replace("'", "''").Replace("\\", "\\\\").ToLower() + "%')"
-                        + " AND (" + Entry.ColumnName_StatusDate + " BETWEEN '" + from.ToString(dateTimeFormat) + "' AND '" + to.ToString(dateTimeFormat) + "');", conn))
-                    {
+                using MySqlCommand command = new("SELECT COUNT(*)"
+                    + " FROM " + Core.Db.Entry.DocumentName
+                    + " WHERE " + "(LOWER(" + Entry.ColumnName_Name + ") LIKE '%" + (keyword ?? "").Replace("'", "''").Replace("\\", "\\\\").ToLower() + "%'"
+                    + " OR " + "LOWER(" + Entry.ColumnName_Description + ") LIKE '%" + (keyword ?? "").Replace("'", "''").Replace("\\", "\\\\").ToLower() + "%')"
+                    + " AND (" + Entry.ColumnName_StatusDate + " BETWEEN '" + from.ToString(dateTimeFormat) + "' AND '" + to.ToString(dateTimeFormat) + "');", conn);
 
-                        var count = (long)command.ExecuteScalar();
+                var count = (long)command.ExecuteScalar();
 
-                        return count;
-                    }
-                }
+                return count;
             }
         }
 
@@ -523,48 +467,41 @@ namespace Wexflow.Core.Db.MySQL
         {
             lock (padlock)
             {
-                using (var conn = new MySqlConnection(connectionString))
+                using MySqlConnection conn = new(connectionString);
+                conn.Open();
+
+                using MySqlCommand command = new("SELECT "
+                    + Entry.ColumnName_Id + ", "
+                    + Entry.ColumnName_Name + ", "
+                    + Entry.ColumnName_Description + ", "
+                    + Entry.ColumnName_LaunchType + ", "
+                    + Entry.ColumnName_Status + ", "
+                    + Entry.ColumnName_StatusDate + ", "
+                    + Entry.ColumnName_WorkflowId + ", "
+                    + Entry.ColumnName_JobId
+                    + " FROM " + Core.Db.Entry.DocumentName
+                    + " WHERE " + Entry.ColumnName_WorkflowId + " = " + workflowId + ";", conn);
+
+                using var reader = command.ExecuteReader();
+
+                if (reader.Read())
                 {
-                    conn.Open();
-
-                    using (var command = new MySqlCommand("SELECT "
-                        + Entry.ColumnName_Id + ", "
-                        + Entry.ColumnName_Name + ", "
-                        + Entry.ColumnName_Description + ", "
-                        + Entry.ColumnName_LaunchType + ", "
-                        + Entry.ColumnName_Status + ", "
-                        + Entry.ColumnName_StatusDate + ", "
-                        + Entry.ColumnName_WorkflowId + ", "
-                        + Entry.ColumnName_JobId
-                        + " FROM " + Core.Db.Entry.DocumentName
-                        + " WHERE " + Entry.ColumnName_WorkflowId + " = " + workflowId + ";", conn))
+                    Entry entry = new()
                     {
+                        Id = (int)reader[Entry.ColumnName_Id],
+                        Name = (string)reader[Entry.ColumnName_Name],
+                        Description = (string)reader[Entry.ColumnName_Description],
+                        LaunchType = (LaunchType)(int)reader[Entry.ColumnName_LaunchType],
+                        Status = (Status)(int)reader[Entry.ColumnName_Status],
+                        StatusDate = (DateTime)reader[Entry.ColumnName_StatusDate],
+                        WorkflowId = (int)reader[Entry.ColumnName_WorkflowId],
+                        JobId = (string)reader[Entry.ColumnName_JobId]
+                    };
 
-                        using (var reader = command.ExecuteReader())
-                        {
-
-                            if (reader.Read())
-                            {
-                                var entry = new Entry
-                                {
-                                    Id = (int)reader[Entry.ColumnName_Id],
-                                    Name = (string)reader[Entry.ColumnName_Name],
-                                    Description = (string)reader[Entry.ColumnName_Description],
-                                    LaunchType = (LaunchType)((int)reader[Entry.ColumnName_LaunchType]),
-                                    Status = (Status)((int)reader[Entry.ColumnName_Status]),
-                                    StatusDate = (DateTime)reader[Entry.ColumnName_StatusDate],
-                                    WorkflowId = (int)reader[Entry.ColumnName_WorkflowId],
-                                    JobId = (string)reader[Entry.ColumnName_JobId]
-                                };
-
-                                return entry;
-                            }
-
-                        }
-                    }
-
-                    return null;
+                    return entry;
                 }
+
+                return null;
             }
         }
 
@@ -572,48 +509,42 @@ namespace Wexflow.Core.Db.MySQL
         {
             lock (padlock)
             {
-                using (var conn = new MySqlConnection(connectionString))
+                using MySqlConnection conn = new(connectionString);
+                conn.Open();
+
+                using MySqlCommand command = new("SELECT "
+                    + Entry.ColumnName_Id + ", "
+                    + Entry.ColumnName_Name + ", "
+                    + Entry.ColumnName_Description + ", "
+                    + Entry.ColumnName_LaunchType + ", "
+                    + Entry.ColumnName_Status + ", "
+                    + Entry.ColumnName_StatusDate + ", "
+                    + Entry.ColumnName_WorkflowId + ", "
+                    + Entry.ColumnName_JobId
+                    + " FROM " + Core.Db.Entry.DocumentName
+                    + " WHERE (" + Entry.ColumnName_WorkflowId + " = " + workflowId
+                    + " AND " + Entry.ColumnName_JobId + " = '" + jobId.ToString() + "');", conn);
+
+                using var reader = command.ExecuteReader();
+
+                if (reader.Read())
                 {
-                    conn.Open();
-
-                    using (var command = new MySqlCommand("SELECT "
-                        + Entry.ColumnName_Id + ", "
-                        + Entry.ColumnName_Name + ", "
-                        + Entry.ColumnName_Description + ", "
-                        + Entry.ColumnName_LaunchType + ", "
-                        + Entry.ColumnName_Status + ", "
-                        + Entry.ColumnName_StatusDate + ", "
-                        + Entry.ColumnName_WorkflowId + ", "
-                        + Entry.ColumnName_JobId
-                        + " FROM " + Core.Db.Entry.DocumentName
-                        + " WHERE (" + Entry.ColumnName_WorkflowId + " = " + workflowId
-                        + " AND " + Entry.ColumnName_JobId + " = '" + jobId.ToString() + "');", conn))
+                    Entry entry = new()
                     {
+                        Id = (int)reader[Entry.ColumnName_Id],
+                        Name = (string)reader[Entry.ColumnName_Name],
+                        Description = (string)reader[Entry.ColumnName_Description],
+                        LaunchType = (LaunchType)(int)reader[Entry.ColumnName_LaunchType],
+                        Status = (Status)(int)reader[Entry.ColumnName_Status],
+                        StatusDate = (DateTime)reader[Entry.ColumnName_StatusDate],
+                        WorkflowId = (int)reader[Entry.ColumnName_WorkflowId],
+                        JobId = (string)reader[Entry.ColumnName_JobId]
+                    };
 
-                        using (var reader = command.ExecuteReader())
-                        {
-
-                            if (reader.Read())
-                            {
-                                var entry = new Entry
-                                {
-                                    Id = (int)reader[Entry.ColumnName_Id],
-                                    Name = (string)reader[Entry.ColumnName_Name],
-                                    Description = (string)reader[Entry.ColumnName_Description],
-                                    LaunchType = (LaunchType)((int)reader[Entry.ColumnName_LaunchType]),
-                                    Status = (Status)((int)reader[Entry.ColumnName_Status]),
-                                    StatusDate = (DateTime)reader[Entry.ColumnName_StatusDate],
-                                    WorkflowId = (int)reader[Entry.ColumnName_WorkflowId],
-                                    JobId = (string)reader[Entry.ColumnName_JobId]
-                                };
-
-                                return entry;
-                            }
-                        }
-                    }
-
-                    return null;
+                    return entry;
                 }
+
+                return null;
             }
         }
 
@@ -621,25 +552,21 @@ namespace Wexflow.Core.Db.MySQL
         {
             lock (padlock)
             {
-                using (var conn = new MySqlConnection(connectionString))
+                using (MySqlConnection conn = new(connectionString))
                 {
                     conn.Open();
 
-                    using (var command = new MySqlCommand("SELECT " + Entry.ColumnName_StatusDate
+                    using MySqlCommand command = new("SELECT " + Entry.ColumnName_StatusDate
                         + " FROM " + Core.Db.Entry.DocumentName
-                        + " ORDER BY " + Entry.ColumnName_StatusDate + " DESC LIMIT 1;", conn))
+                        + " ORDER BY " + Entry.ColumnName_StatusDate + " DESC LIMIT 1;", conn);
+
+                    using var reader = command.ExecuteReader();
+
+                    if (reader.Read())
                     {
+                        var statusDate = (DateTime)reader[Entry.ColumnName_StatusDate];
 
-                        using (var reader = command.ExecuteReader())
-                        {
-
-                            if (reader.Read())
-                            {
-                                var statusDate = (DateTime)reader[Entry.ColumnName_StatusDate];
-
-                                return statusDate;
-                            }
-                        }
+                        return statusDate;
                     }
                 }
 
@@ -651,30 +578,25 @@ namespace Wexflow.Core.Db.MySQL
         {
             lock (padlock)
             {
-                using (var conn = new MySqlConnection(connectionString))
+                using (MySqlConnection conn = new(connectionString))
                 {
                     conn.Open();
 
-                    using (var command = new MySqlCommand("SELECT " + Entry.ColumnName_StatusDate
+                    using MySqlCommand command = new("SELECT " + Entry.ColumnName_StatusDate
                         + " FROM " + Core.Db.Entry.DocumentName
-                        + " ORDER BY " + Entry.ColumnName_StatusDate + " ASC LIMIT 1;", conn))
+                        + " ORDER BY " + Entry.ColumnName_StatusDate + " ASC LIMIT 1;", conn);
+
+                    using var reader = command.ExecuteReader();
+
+                    if (reader.Read())
                     {
+                        var statusDate = (DateTime)reader[Entry.ColumnName_StatusDate];
 
-                        using (var reader = command.ExecuteReader())
-                        {
-
-                            if (reader.Read())
-                            {
-                                var statusDate = (DateTime)reader[Entry.ColumnName_StatusDate];
-
-                                return statusDate;
-                            }
-                        }
+                        return statusDate;
                     }
                 }
 
                 return DateTime.Now;
-
             }
         }
 
@@ -682,46 +604,41 @@ namespace Wexflow.Core.Db.MySQL
         {
             lock (padlock)
             {
-                List<HistoryEntry> entries = new List<HistoryEntry>();
+                List<HistoryEntry> entries = new();
 
-                using (var conn = new MySqlConnection(connectionString))
+                using MySqlConnection conn = new(connectionString);
+                conn.Open();
+
+                using MySqlCommand command = new("SELECT "
+                    + HistoryEntry.ColumnName_Id + ", "
+                    + HistoryEntry.ColumnName_Name + ", "
+                    + HistoryEntry.ColumnName_Description + ", "
+                    + HistoryEntry.ColumnName_LaunchType + ", "
+                    + HistoryEntry.ColumnName_Status + ", "
+                    + HistoryEntry.ColumnName_StatusDate + ", "
+                    + HistoryEntry.ColumnName_WorkflowId
+                    + " FROM " + Core.Db.HistoryEntry.DocumentName + ";", conn);
+
+                using (var reader = command.ExecuteReader())
                 {
-                    conn.Open();
-
-                    using (var command = new MySqlCommand("SELECT "
-                        + HistoryEntry.ColumnName_Id + ", "
-                        + HistoryEntry.ColumnName_Name + ", "
-                        + HistoryEntry.ColumnName_Description + ", "
-                        + HistoryEntry.ColumnName_LaunchType + ", "
-                        + HistoryEntry.ColumnName_Status + ", "
-                        + HistoryEntry.ColumnName_StatusDate + ", "
-                        + HistoryEntry.ColumnName_WorkflowId
-                        + " FROM " + Core.Db.HistoryEntry.DocumentName + ";", conn))
+                    while (reader.Read())
                     {
-
-                        using (var reader = command.ExecuteReader())
+                        HistoryEntry entry = new()
                         {
+                            Id = (int)reader[HistoryEntry.ColumnName_Id],
+                            Name = (string)reader[HistoryEntry.ColumnName_Name],
+                            Description = (string)reader[HistoryEntry.ColumnName_Description],
+                            LaunchType = (LaunchType)(int)reader[HistoryEntry.ColumnName_LaunchType],
+                            Status = (Status)(int)reader[HistoryEntry.ColumnName_Status],
+                            StatusDate = (DateTime)reader[HistoryEntry.ColumnName_StatusDate],
+                            WorkflowId = (int)reader[HistoryEntry.ColumnName_WorkflowId]
+                        };
 
-                            while (reader.Read())
-                            {
-                                var entry = new HistoryEntry
-                                {
-                                    Id = (int)reader[HistoryEntry.ColumnName_Id],
-                                    Name = (string)reader[HistoryEntry.ColumnName_Name],
-                                    Description = (string)reader[HistoryEntry.ColumnName_Description],
-                                    LaunchType = (LaunchType)((int)reader[HistoryEntry.ColumnName_LaunchType]),
-                                    Status = (Status)((int)reader[HistoryEntry.ColumnName_Status]),
-                                    StatusDate = (DateTime)reader[HistoryEntry.ColumnName_StatusDate],
-                                    WorkflowId = (int)reader[HistoryEntry.ColumnName_WorkflowId]
-                                };
-
-                                entries.Add(entry);
-                            }
-                        }
-
-                        return entries;
+                        entries.Add(entry);
                     }
                 }
+
+                return entries;
             }
         }
 
@@ -729,48 +646,43 @@ namespace Wexflow.Core.Db.MySQL
         {
             lock (padlock)
             {
-                List<HistoryEntry> entries = new List<HistoryEntry>();
+                List<HistoryEntry> entries = new();
 
-                using (var conn = new MySqlConnection(connectionString))
+                using MySqlConnection conn = new(connectionString);
+                conn.Open();
+
+                using MySqlCommand command = new("SELECT "
+                    + HistoryEntry.ColumnName_Id + ", "
+                    + HistoryEntry.ColumnName_Name + ", "
+                    + HistoryEntry.ColumnName_Description + ", "
+                    + HistoryEntry.ColumnName_LaunchType + ", "
+                    + HistoryEntry.ColumnName_Status + ", "
+                    + HistoryEntry.ColumnName_StatusDate + ", "
+                    + HistoryEntry.ColumnName_WorkflowId
+                    + " FROM " + Core.Db.HistoryEntry.DocumentName
+                    + " WHERE " + "LOWER(" + HistoryEntry.ColumnName_Name + ") LIKE '%" + (keyword ?? "").Replace("'", "''").Replace("\\", "\\\\").ToLower() + "%'"
+                    + " OR " + "LOWER(" + HistoryEntry.ColumnName_Description + ") LIKE '%" + (keyword ?? "").Replace("'", "''").Replace("\\", "\\\\").ToLower() + "%';", conn);
+
+                using (var reader = command.ExecuteReader())
                 {
-                    conn.Open();
-
-                    using (var command = new MySqlCommand("SELECT "
-                        + HistoryEntry.ColumnName_Id + ", "
-                        + HistoryEntry.ColumnName_Name + ", "
-                        + HistoryEntry.ColumnName_Description + ", "
-                        + HistoryEntry.ColumnName_LaunchType + ", "
-                        + HistoryEntry.ColumnName_Status + ", "
-                        + HistoryEntry.ColumnName_StatusDate + ", "
-                        + HistoryEntry.ColumnName_WorkflowId
-                        + " FROM " + Core.Db.HistoryEntry.DocumentName
-                        + " WHERE " + "LOWER(" + HistoryEntry.ColumnName_Name + ") LIKE '%" + (keyword ?? "").Replace("'", "''").Replace("\\", "\\\\").ToLower() + "%'"
-                        + " OR " + "LOWER(" + HistoryEntry.ColumnName_Description + ") LIKE '%" + (keyword ?? "").Replace("'", "''").Replace("\\", "\\\\").ToLower() + "%';", conn))
+                    while (reader.Read())
                     {
-
-                        using (var reader = command.ExecuteReader())
+                        HistoryEntry entry = new()
                         {
+                            Id = (int)reader[HistoryEntry.ColumnName_Id],
+                            Name = (string)reader[HistoryEntry.ColumnName_Name],
+                            Description = (string)reader[HistoryEntry.ColumnName_Description],
+                            LaunchType = (LaunchType)(int)reader[HistoryEntry.ColumnName_LaunchType],
+                            Status = (Status)(int)reader[HistoryEntry.ColumnName_Status],
+                            StatusDate = (DateTime)reader[HistoryEntry.ColumnName_StatusDate],
+                            WorkflowId = (int)reader[HistoryEntry.ColumnName_WorkflowId]
+                        };
 
-                            while (reader.Read())
-                            {
-                                var entry = new HistoryEntry
-                                {
-                                    Id = (int)reader[HistoryEntry.ColumnName_Id],
-                                    Name = (string)reader[HistoryEntry.ColumnName_Name],
-                                    Description = (string)reader[HistoryEntry.ColumnName_Description],
-                                    LaunchType = (LaunchType)((int)reader[HistoryEntry.ColumnName_LaunchType]),
-                                    Status = (Status)((int)reader[HistoryEntry.ColumnName_Status]),
-                                    StatusDate = (DateTime)reader[HistoryEntry.ColumnName_StatusDate],
-                                    WorkflowId = (int)reader[HistoryEntry.ColumnName_WorkflowId]
-                                };
-
-                                entries.Add(entry);
-                            }
-                        }
-
-                        return entries;
+                        entries.Add(entry);
                     }
                 }
+
+                return entries;
             }
         }
 
@@ -778,49 +690,45 @@ namespace Wexflow.Core.Db.MySQL
         {
             lock (padlock)
             {
-                List<HistoryEntry> entries = new List<HistoryEntry>();
+                List<HistoryEntry> entries = new();
 
-                using (var conn = new MySqlConnection(connectionString))
+                using MySqlConnection conn = new(connectionString);
+                conn.Open();
+
+                using MySqlCommand command = new("SELECT "
+                    + HistoryEntry.ColumnName_Id + ", "
+                    + HistoryEntry.ColumnName_Name + ", "
+                    + HistoryEntry.ColumnName_Description + ", "
+                    + HistoryEntry.ColumnName_LaunchType + ", "
+                    + HistoryEntry.ColumnName_Status + ", "
+                    + HistoryEntry.ColumnName_StatusDate + ", "
+                    + HistoryEntry.ColumnName_WorkflowId
+                    + " FROM " + Core.Db.HistoryEntry.DocumentName
+                    + " WHERE " + "LOWER(" + HistoryEntry.ColumnName_Name + ") LIKE '%" + (keyword ?? "").Replace("'", "''").Replace("\\", "\\\\").ToLower() + "%'"
+                    + " OR " + "LOWER(" + HistoryEntry.ColumnName_Description + ") LIKE '%" + (keyword ?? "").Replace("'", "''").Replace("\\", "\\\\").ToLower() + "%'"
+                    + " LIMIT " + entriesCount + " OFFSET " + ((page - 1) * entriesCount) + ";"
+                    , conn);
+
+                using (var reader = command.ExecuteReader())
                 {
-                    conn.Open();
-
-                    using (var command = new MySqlCommand("SELECT "
-                        + HistoryEntry.ColumnName_Id + ", "
-                        + HistoryEntry.ColumnName_Name + ", "
-                        + HistoryEntry.ColumnName_Description + ", "
-                        + HistoryEntry.ColumnName_LaunchType + ", "
-                        + HistoryEntry.ColumnName_Status + ", "
-                        + HistoryEntry.ColumnName_StatusDate + ", "
-                        + HistoryEntry.ColumnName_WorkflowId
-                        + " FROM " + Core.Db.HistoryEntry.DocumentName
-                        + " WHERE " + "LOWER(" + HistoryEntry.ColumnName_Name + ") LIKE '%" + (keyword ?? "").Replace("'", "''").Replace("\\", "\\\\").ToLower() + "%'"
-                        + " OR " + "LOWER(" + HistoryEntry.ColumnName_Description + ") LIKE '%" + (keyword ?? "").Replace("'", "''").Replace("\\", "\\\\").ToLower() + "%'"
-                        + " LIMIT " + entriesCount + " OFFSET " + (page - 1) * entriesCount + ";"
-                        , conn))
+                    while (reader.Read())
                     {
-
-                        using (var reader = command.ExecuteReader())
+                        HistoryEntry entry = new()
                         {
-                            while (reader.Read())
-                            {
-                                var entry = new HistoryEntry
-                                {
-                                    Id = (int)reader[HistoryEntry.ColumnName_Id],
-                                    Name = (string)reader[HistoryEntry.ColumnName_Name],
-                                    Description = (string)reader[HistoryEntry.ColumnName_Description],
-                                    LaunchType = (LaunchType)((int)reader[HistoryEntry.ColumnName_LaunchType]),
-                                    Status = (Status)((int)reader[HistoryEntry.ColumnName_Status]),
-                                    StatusDate = (DateTime)reader[HistoryEntry.ColumnName_StatusDate],
-                                    WorkflowId = (int)reader[HistoryEntry.ColumnName_WorkflowId]
-                                };
+                            Id = (int)reader[HistoryEntry.ColumnName_Id],
+                            Name = (string)reader[HistoryEntry.ColumnName_Name],
+                            Description = (string)reader[HistoryEntry.ColumnName_Description],
+                            LaunchType = (LaunchType)(int)reader[HistoryEntry.ColumnName_LaunchType],
+                            Status = (Status)(int)reader[HistoryEntry.ColumnName_Status],
+                            StatusDate = (DateTime)reader[HistoryEntry.ColumnName_StatusDate],
+                            WorkflowId = (int)reader[HistoryEntry.ColumnName_WorkflowId]
+                        };
 
-                                entries.Add(entry);
-                            }
-                        }
-
-                        return entries;
+                        entries.Add(entry);
                     }
                 }
+
+                return entries;
             }
         }
 
@@ -828,117 +736,112 @@ namespace Wexflow.Core.Db.MySQL
         {
             lock (padlock)
             {
-                List<HistoryEntry> entries = new List<HistoryEntry>();
+                List<HistoryEntry> entries = new();
 
-                using (var conn = new MySqlConnection(connectionString))
+                using MySqlConnection conn = new(connectionString);
+                conn.Open();
+
+                StringBuilder sqlBuilder = new("SELECT "
+                    + HistoryEntry.ColumnName_Id + ", "
+                    + HistoryEntry.ColumnName_Name + ", "
+                    + HistoryEntry.ColumnName_Description + ", "
+                    + HistoryEntry.ColumnName_LaunchType + ", "
+                    + HistoryEntry.ColumnName_Status + ", "
+                    + HistoryEntry.ColumnName_StatusDate + ", "
+                    + HistoryEntry.ColumnName_WorkflowId
+                    + " FROM " + Core.Db.HistoryEntry.DocumentName
+                    + " WHERE " + "(LOWER(" + HistoryEntry.ColumnName_Name + ") LIKE '%" + (keyword ?? "").Replace("'", "''").Replace("\\", "\\\\").ToLower() + "%'"
+                    + " OR " + "LOWER(" + HistoryEntry.ColumnName_Description + ") LIKE '%" + (keyword ?? "").Replace("'", "''").Replace("\\", "\\\\").ToLower() + "%')"
+                    + " AND (" + HistoryEntry.ColumnName_StatusDate + " BETWEEN '" + from.ToString(dateTimeFormat) + "' AND '" + to.ToString(dateTimeFormat) + "')"
+                    + " ORDER BY ");
+
+                switch (heo)
                 {
-                    conn.Open();
+                    case EntryOrderBy.StatusDateAscending:
 
-                    var sqlBuilder = new StringBuilder("SELECT "
-                        + HistoryEntry.ColumnName_Id + ", "
-                        + HistoryEntry.ColumnName_Name + ", "
-                        + HistoryEntry.ColumnName_Description + ", "
-                        + HistoryEntry.ColumnName_LaunchType + ", "
-                        + HistoryEntry.ColumnName_Status + ", "
-                        + HistoryEntry.ColumnName_StatusDate + ", "
-                        + HistoryEntry.ColumnName_WorkflowId
-                        + " FROM " + Core.Db.HistoryEntry.DocumentName
-                        + " WHERE " + "(LOWER(" + HistoryEntry.ColumnName_Name + ") LIKE '%" + (keyword ?? "").Replace("'", "''").Replace("\\", "\\\\").ToLower() + "%'"
-                        + " OR " + "LOWER(" + HistoryEntry.ColumnName_Description + ") LIKE '%" + (keyword ?? "").Replace("'", "''").Replace("\\", "\\\\").ToLower() + "%')"
-                        + " AND (" + HistoryEntry.ColumnName_StatusDate + " BETWEEN '" + from.ToString(dateTimeFormat) + "' AND '" + to.ToString(dateTimeFormat) + "')"
-                        + " ORDER BY ");
+                        _ = sqlBuilder.Append(HistoryEntry.ColumnName_StatusDate).Append(" ASC");
+                        break;
 
-                    switch (heo)
+                    case EntryOrderBy.StatusDateDescending:
+
+                        _ = sqlBuilder.Append(HistoryEntry.ColumnName_StatusDate).Append(" DESC");
+                        break;
+
+                    case EntryOrderBy.WorkflowIdAscending:
+
+                        _ = sqlBuilder.Append(HistoryEntry.ColumnName_WorkflowId).Append(" ASC");
+                        break;
+
+                    case EntryOrderBy.WorkflowIdDescending:
+
+                        _ = sqlBuilder.Append(HistoryEntry.ColumnName_WorkflowId).Append(" DESC");
+                        break;
+
+                    case EntryOrderBy.NameAscending:
+
+                        _ = sqlBuilder.Append(HistoryEntry.ColumnName_Name).Append(" ASC");
+                        break;
+
+                    case EntryOrderBy.NameDescending:
+
+                        _ = sqlBuilder.Append(HistoryEntry.ColumnName_Name).Append(" DESC");
+                        break;
+
+                    case EntryOrderBy.LaunchTypeAscending:
+
+                        _ = sqlBuilder.Append(HistoryEntry.ColumnName_LaunchType).Append(" ASC");
+                        break;
+
+                    case EntryOrderBy.LaunchTypeDescending:
+
+                        _ = sqlBuilder.Append(HistoryEntry.ColumnName_LaunchType).Append(" DESC");
+                        break;
+
+                    case EntryOrderBy.DescriptionAscending:
+
+                        _ = sqlBuilder.Append(HistoryEntry.ColumnName_Description).Append(" ASC");
+                        break;
+
+                    case EntryOrderBy.DescriptionDescending:
+
+                        _ = sqlBuilder.Append(HistoryEntry.ColumnName_Description).Append(" DESC");
+                        break;
+
+                    case EntryOrderBy.StatusAscending:
+
+                        _ = sqlBuilder.Append(HistoryEntry.ColumnName_Status).Append(" ASC");
+                        break;
+
+                    case EntryOrderBy.StatusDescending:
+
+                        _ = sqlBuilder.Append(HistoryEntry.ColumnName_Status).Append(" DESC");
+                        break;
+                }
+
+                _ = sqlBuilder.Append(" LIMIT ").Append(entriesCount).Append(" OFFSET ").Append((page - 1) * entriesCount).Append(';');
+
+                using MySqlCommand command = new(sqlBuilder.ToString(), conn);
+
+                using (var reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
                     {
-                        case EntryOrderBy.StatusDateAscending:
-
-                            sqlBuilder.Append(HistoryEntry.ColumnName_StatusDate).Append(" ASC");
-                            break;
-
-                        case EntryOrderBy.StatusDateDescending:
-
-                            sqlBuilder.Append(HistoryEntry.ColumnName_StatusDate).Append(" DESC");
-                            break;
-
-                        case EntryOrderBy.WorkflowIdAscending:
-
-                            sqlBuilder.Append(HistoryEntry.ColumnName_WorkflowId).Append(" ASC");
-                            break;
-
-                        case EntryOrderBy.WorkflowIdDescending:
-
-                            sqlBuilder.Append(HistoryEntry.ColumnName_WorkflowId).Append(" DESC");
-                            break;
-
-                        case EntryOrderBy.NameAscending:
-
-                            sqlBuilder.Append(HistoryEntry.ColumnName_Name).Append(" ASC");
-                            break;
-
-                        case EntryOrderBy.NameDescending:
-
-                            sqlBuilder.Append(HistoryEntry.ColumnName_Name).Append(" DESC");
-                            break;
-
-                        case EntryOrderBy.LaunchTypeAscending:
-
-                            sqlBuilder.Append(HistoryEntry.ColumnName_LaunchType).Append(" ASC");
-                            break;
-
-                        case EntryOrderBy.LaunchTypeDescending:
-
-                            sqlBuilder.Append(HistoryEntry.ColumnName_LaunchType).Append(" DESC");
-                            break;
-
-                        case EntryOrderBy.DescriptionAscending:
-
-                            sqlBuilder.Append(HistoryEntry.ColumnName_Description).Append(" ASC");
-                            break;
-
-                        case EntryOrderBy.DescriptionDescending:
-
-                            sqlBuilder.Append(HistoryEntry.ColumnName_Description).Append(" DESC");
-                            break;
-
-                        case EntryOrderBy.StatusAscending:
-
-                            sqlBuilder.Append(HistoryEntry.ColumnName_Status).Append(" ASC");
-                            break;
-
-                        case EntryOrderBy.StatusDescending:
-
-                            sqlBuilder.Append(HistoryEntry.ColumnName_Status).Append(" DESC");
-                            break;
-                    }
-
-                    sqlBuilder.Append(" LIMIT ").Append(entriesCount).Append(" OFFSET ").Append((page - 1) * entriesCount).Append(";");
-
-                    using (var command = new MySqlCommand(sqlBuilder.ToString(), conn))
-                    {
-
-                        using (var reader = command.ExecuteReader())
+                        HistoryEntry entry = new()
                         {
+                            Id = (int)reader[HistoryEntry.ColumnName_Id],
+                            Name = (string)reader[HistoryEntry.ColumnName_Name],
+                            Description = (string)reader[HistoryEntry.ColumnName_Description],
+                            LaunchType = (LaunchType)(int)reader[HistoryEntry.ColumnName_LaunchType],
+                            Status = (Status)(int)reader[HistoryEntry.ColumnName_Status],
+                            StatusDate = (DateTime)reader[HistoryEntry.ColumnName_StatusDate],
+                            WorkflowId = (int)reader[HistoryEntry.ColumnName_WorkflowId]
+                        };
 
-                            while (reader.Read())
-                            {
-                                var entry = new HistoryEntry
-                                {
-                                    Id = (int)reader[HistoryEntry.ColumnName_Id],
-                                    Name = (string)reader[HistoryEntry.ColumnName_Name],
-                                    Description = (string)reader[HistoryEntry.ColumnName_Description],
-                                    LaunchType = (LaunchType)((int)reader[HistoryEntry.ColumnName_LaunchType]),
-                                    Status = (Status)((int)reader[HistoryEntry.ColumnName_Status]),
-                                    StatusDate = (DateTime)reader[HistoryEntry.ColumnName_StatusDate],
-                                    WorkflowId = (int)reader[HistoryEntry.ColumnName_WorkflowId]
-                                };
-
-                                entries.Add(entry);
-                            }
-                        }
-
-                        return entries;
+                        entries.Add(entry);
                     }
                 }
+
+                return entries;
             }
         }
 
@@ -946,22 +849,17 @@ namespace Wexflow.Core.Db.MySQL
         {
             lock (padlock)
             {
-                using (var conn = new MySqlConnection(connectionString))
-                {
-                    conn.Open();
+                using MySqlConnection conn = new(connectionString);
+                conn.Open();
 
-                    using (var command = new MySqlCommand("SELECT COUNT(*)"
-                        + " FROM " + Core.Db.HistoryEntry.DocumentName
-                        + " WHERE " + "LOWER(" + HistoryEntry.ColumnName_Name + ") LIKE '%" + (keyword ?? "").Replace("'", "''").Replace("\\", "\\\\").ToLower() + "%'"
-                        + " OR " + "LOWER(" + HistoryEntry.ColumnName_Description + ") LIKE '%" + (keyword ?? "").Replace("'", "''").Replace("\\", "\\\\").ToLower() + "%';", conn))
-                    {
+                using MySqlCommand command = new("SELECT COUNT(*)"
+                    + " FROM " + Core.Db.HistoryEntry.DocumentName
+                    + " WHERE " + "LOWER(" + HistoryEntry.ColumnName_Name + ") LIKE '%" + (keyword ?? "").Replace("'", "''").Replace("\\", "\\\\").ToLower() + "%'"
+                    + " OR " + "LOWER(" + HistoryEntry.ColumnName_Description + ") LIKE '%" + (keyword ?? "").Replace("'", "''").Replace("\\", "\\\\").ToLower() + "%';", conn);
 
-                        var count = (long)command.ExecuteScalar();
+                var count = (long)command.ExecuteScalar();
 
-                        return count;
-                    }
-
-                }
+                return count;
             }
         }
 
@@ -969,22 +867,18 @@ namespace Wexflow.Core.Db.MySQL
         {
             lock (padlock)
             {
-                using (var conn = new MySqlConnection(connectionString))
-                {
-                    conn.Open();
+                using MySqlConnection conn = new(connectionString);
+                conn.Open();
 
-                    using (var command = new MySqlCommand("SELECT COUNT(*)"
-                        + " FROM " + Core.Db.HistoryEntry.DocumentName
-                        + " WHERE " + "(LOWER(" + HistoryEntry.ColumnName_Name + ") LIKE '%" + (keyword ?? "").Replace("'", "''").Replace("\\", "\\\\").ToLower() + "%'"
-                        + " OR " + "LOWER(" + HistoryEntry.ColumnName_Description + ") LIKE '%" + (keyword ?? "").Replace("'", "''").Replace("\\", "\\\\").ToLower() + "%')"
-                        + " AND (" + HistoryEntry.ColumnName_StatusDate + " BETWEEN '" + from.ToString(dateTimeFormat) + "' AND '" + to.ToString(dateTimeFormat) + "');", conn))
-                    {
+                using MySqlCommand command = new("SELECT COUNT(*)"
+                    + " FROM " + Core.Db.HistoryEntry.DocumentName
+                    + " WHERE " + "(LOWER(" + HistoryEntry.ColumnName_Name + ") LIKE '%" + (keyword ?? "").Replace("'", "''").Replace("\\", "\\\\").ToLower() + "%'"
+                    + " OR " + "LOWER(" + HistoryEntry.ColumnName_Description + ") LIKE '%" + (keyword ?? "").Replace("'", "''").Replace("\\", "\\\\").ToLower() + "%')"
+                    + " AND (" + HistoryEntry.ColumnName_StatusDate + " BETWEEN '" + from.ToString(dateTimeFormat) + "' AND '" + to.ToString(dateTimeFormat) + "');", conn);
 
-                        var count = (long)command.ExecuteScalar();
+                var count = (long)command.ExecuteScalar();
 
-                        return count;
-                    }
-                }
+                return count;
             }
         }
 
@@ -992,25 +886,21 @@ namespace Wexflow.Core.Db.MySQL
         {
             lock (padlock)
             {
-                using (var conn = new MySqlConnection(connectionString))
+                using (MySqlConnection conn = new(connectionString))
                 {
                     conn.Open();
 
-                    using (var command = new MySqlCommand("SELECT " + HistoryEntry.ColumnName_StatusDate
+                    using MySqlCommand command = new("SELECT " + HistoryEntry.ColumnName_StatusDate
                         + " FROM " + Core.Db.HistoryEntry.DocumentName
-                        + " ORDER BY " + HistoryEntry.ColumnName_StatusDate + " DESC LIMIT 1;", conn))
+                        + " ORDER BY " + HistoryEntry.ColumnName_StatusDate + " DESC LIMIT 1;", conn);
+
+                    using var reader = command.ExecuteReader();
+
+                    if (reader.Read())
                     {
+                        var statusDate = (DateTime)reader[HistoryEntry.ColumnName_StatusDate];
 
-                        using (var reader = command.ExecuteReader())
-                        {
-
-                            if (reader.Read())
-                            {
-                                var statusDate = (DateTime)reader[HistoryEntry.ColumnName_StatusDate];
-
-                                return statusDate;
-                            }
-                        }
+                        return statusDate;
                     }
                 }
 
@@ -1022,25 +912,21 @@ namespace Wexflow.Core.Db.MySQL
         {
             lock (padlock)
             {
-                using (var conn = new MySqlConnection(connectionString))
+                using (MySqlConnection conn = new(connectionString))
                 {
                     conn.Open();
 
-                    using (var command = new MySqlCommand("SELECT " + HistoryEntry.ColumnName_StatusDate
+                    using MySqlCommand command = new("SELECT " + HistoryEntry.ColumnName_StatusDate
                         + " FROM " + Core.Db.HistoryEntry.DocumentName
-                        + " ORDER BY " + HistoryEntry.ColumnName_StatusDate + " ASC LIMIT 1;", conn))
+                        + " ORDER BY " + HistoryEntry.ColumnName_StatusDate + " ASC LIMIT 1;", conn);
+
+                    using var reader = command.ExecuteReader();
+
+                    if (reader.Read())
                     {
+                        var statusDate = (DateTime)reader[HistoryEntry.ColumnName_StatusDate];
 
-                        using (var reader = command.ExecuteReader())
-                        {
-
-                            if (reader.Read())
-                            {
-                                var statusDate = (DateTime)reader[HistoryEntry.ColumnName_StatusDate];
-
-                                return statusDate;
-                            }
-                        }
+                        return statusDate;
                     }
                 }
 
@@ -1052,27 +938,21 @@ namespace Wexflow.Core.Db.MySQL
         {
             lock (padlock)
             {
-                using (var conn = new MySqlConnection(connectionString))
+                using MySqlConnection conn = new(connectionString);
+                conn.Open();
+
+                using MySqlCommand command = new("SELECT " + User.ColumnName_Password
+                    + " FROM " + Core.Db.User.DocumentName
+                    + " WHERE " + User.ColumnName_Username + " = '" + username + "'"
+                    + ";", conn);
+
+                using var reader = command.ExecuteReader();
+
+                if (reader.Read())
                 {
-                    conn.Open();
+                    var password = (string)reader[User.ColumnName_Password];
 
-                    using (var command = new MySqlCommand("SELECT " + User.ColumnName_Password
-                        + " FROM " + Core.Db.User.DocumentName
-                        + " WHERE " + User.ColumnName_Username + " = '" + username + "'"
-                        + ";", conn))
-                    {
-
-                        using (var reader = command.ExecuteReader())
-                        {
-
-                            if (reader.Read())
-                            {
-                                var password = (string)reader[User.ColumnName_Password];
-
-                                return password;
-                            }
-                        }
-                    }
+                    return password;
                 }
 
                 return null;
@@ -1083,45 +963,39 @@ namespace Wexflow.Core.Db.MySQL
         {
             lock (padlock)
             {
-                using (var conn = new MySqlConnection(connectionString))
+                using MySqlConnection conn = new(connectionString);
+                conn.Open();
+
+                using MySqlCommand command = new("SELECT " + StatusCount.ColumnName_Id + ", "
+                    + StatusCount.ColumnName_PendingCount + ", "
+                    + StatusCount.ColumnName_RunningCount + ", "
+                    + StatusCount.ColumnName_DoneCount + ", "
+                    + StatusCount.ColumnName_FailedCount + ", "
+                    + StatusCount.ColumnName_WarningCount + ", "
+                    + StatusCount.ColumnName_DisabledCount + ", "
+                    + StatusCount.ColumnName_StoppedCount + ", "
+                    + StatusCount.ColumnName_RejectedCount
+                    + " FROM " + Core.Db.StatusCount.DocumentName
+                    + ";", conn);
+
+                using var reader = command.ExecuteReader();
+
+                if (reader.Read())
                 {
-                    conn.Open();
-
-                    using (var command = new MySqlCommand("SELECT " + StatusCount.ColumnName_Id + ", "
-                        + StatusCount.ColumnName_PendingCount + ", "
-                        + StatusCount.ColumnName_RunningCount + ", "
-                        + StatusCount.ColumnName_DoneCount + ", "
-                        + StatusCount.ColumnName_FailedCount + ", "
-                        + StatusCount.ColumnName_WarningCount + ", "
-                        + StatusCount.ColumnName_DisabledCount + ", "
-                        + StatusCount.ColumnName_StoppedCount + ", "
-                        + StatusCount.ColumnName_RejectedCount
-                        + " FROM " + Core.Db.StatusCount.DocumentName
-                        + ";", conn))
+                    StatusCount statusCount = new()
                     {
+                        Id = (int)reader[StatusCount.ColumnName_Id],
+                        PendingCount = (int)reader[StatusCount.ColumnName_PendingCount],
+                        RunningCount = (int)reader[StatusCount.ColumnName_RunningCount],
+                        DoneCount = (int)reader[StatusCount.ColumnName_DoneCount],
+                        FailedCount = (int)reader[StatusCount.ColumnName_FailedCount],
+                        WarningCount = (int)reader[StatusCount.ColumnName_WarningCount],
+                        DisabledCount = (int)reader[StatusCount.ColumnName_DisabledCount],
+                        StoppedCount = (int)reader[StatusCount.ColumnName_StoppedCount],
+                        RejectedCount = (int)reader[StatusCount.ColumnName_RejectedCount]
+                    };
 
-                        using (var reader = command.ExecuteReader())
-                        {
-
-                            if (reader.Read())
-                            {
-                                var statusCount = new StatusCount
-                                {
-                                    Id = (int)reader[StatusCount.ColumnName_Id],
-                                    PendingCount = (int)reader[StatusCount.ColumnName_PendingCount],
-                                    RunningCount = (int)reader[StatusCount.ColumnName_RunningCount],
-                                    DoneCount = (int)reader[StatusCount.ColumnName_DoneCount],
-                                    FailedCount = (int)reader[StatusCount.ColumnName_FailedCount],
-                                    WarningCount = (int)reader[StatusCount.ColumnName_WarningCount],
-                                    DisabledCount = (int)reader[StatusCount.ColumnName_DisabledCount],
-                                    StoppedCount = (int)reader[StatusCount.ColumnName_StoppedCount],
-                                    RejectedCount = (int)reader[StatusCount.ColumnName_RejectedCount]
-                                };
-
-                                return statusCount;
-                            }
-                        }
-                    }
+                    return statusCount;
                 }
 
                 return null;
@@ -1132,42 +1006,36 @@ namespace Wexflow.Core.Db.MySQL
         {
             lock (padlock)
             {
-                using (var conn = new MySqlConnection(connectionString))
+                using MySqlConnection conn = new(connectionString);
+                conn.Open();
+
+                using MySqlCommand command = new("SELECT " + User.ColumnName_Id + ", "
+                    + User.ColumnName_Username + ", "
+                    + User.ColumnName_Password + ", "
+                    + User.ColumnName_Email + ", "
+                    + User.ColumnName_UserProfile + ", "
+                    + User.ColumnName_CreatedOn + ", "
+                    + User.ColumnName_ModifiedOn
+                    + " FROM " + Core.Db.User.DocumentName
+                    + " WHERE " + User.ColumnName_Username + " = '" + (username ?? "").Replace("'", "''").Replace("\\", "\\\\") + "'"
+                    + ";", conn);
+
+                using var reader = command.ExecuteReader();
+
+                if (reader.Read())
                 {
-                    conn.Open();
-
-                    using (var command = new MySqlCommand("SELECT " + User.ColumnName_Id + ", "
-                        + User.ColumnName_Username + ", "
-                        + User.ColumnName_Password + ", "
-                        + User.ColumnName_Email + ", "
-                        + User.ColumnName_UserProfile + ", "
-                        + User.ColumnName_CreatedOn + ", "
-                        + User.ColumnName_ModifiedOn
-                        + " FROM " + Core.Db.User.DocumentName
-                        + " WHERE " + User.ColumnName_Username + " = '" + (username ?? "").Replace("'", "''").Replace("\\", "\\\\") + "'"
-                        + ";", conn))
+                    User user = new()
                     {
+                        Id = (int)reader[User.ColumnName_Id],
+                        Username = (string)reader[User.ColumnName_Username],
+                        Password = (string)reader[User.ColumnName_Password],
+                        Email = (string)reader[User.ColumnName_Email],
+                        UserProfile = (UserProfile)(int)reader[User.ColumnName_UserProfile],
+                        CreatedOn = (DateTime)reader[User.ColumnName_CreatedOn],
+                        ModifiedOn = reader[User.ColumnName_ModifiedOn] == DBNull.Value ? DateTime.MinValue : (DateTime)reader[User.ColumnName_ModifiedOn]
+                    };
 
-                        using (var reader = command.ExecuteReader())
-                        {
-
-                            if (reader.Read())
-                            {
-                                var user = new User
-                                {
-                                    Id = (int)reader[User.ColumnName_Id],
-                                    Username = (string)reader[User.ColumnName_Username],
-                                    Password = (string)reader[User.ColumnName_Password],
-                                    Email = (string)reader[User.ColumnName_Email],
-                                    UserProfile = (UserProfile)((int)reader[User.ColumnName_UserProfile]),
-                                    CreatedOn = (DateTime)reader[User.ColumnName_CreatedOn],
-                                    ModifiedOn = reader[User.ColumnName_ModifiedOn] == DBNull.Value ? DateTime.MinValue : (DateTime)reader[User.ColumnName_ModifiedOn]
-                                };
-
-                                return user;
-                            }
-                        }
-                    }
+                    return user;
                 }
 
                 return null;
@@ -1178,42 +1046,36 @@ namespace Wexflow.Core.Db.MySQL
         {
             lock (padlock)
             {
-                using (var conn = new MySqlConnection(connectionString))
+                using MySqlConnection conn = new(connectionString);
+                conn.Open();
+
+                using MySqlCommand command = new("SELECT " + User.ColumnName_Id + ", "
+                    + User.ColumnName_Username + ", "
+                    + User.ColumnName_Password + ", "
+                    + User.ColumnName_Email + ", "
+                    + User.ColumnName_UserProfile + ", "
+                    + User.ColumnName_CreatedOn + ", "
+                    + User.ColumnName_ModifiedOn
+                    + " FROM " + Core.Db.User.DocumentName
+                    + " WHERE " + User.ColumnName_Id + " = '" + int.Parse(userId) + "'"
+                    + ";", conn);
+
+                using var reader = command.ExecuteReader();
+
+                if (reader.Read())
                 {
-                    conn.Open();
-
-                    using (var command = new MySqlCommand("SELECT " + User.ColumnName_Id + ", "
-                        + User.ColumnName_Username + ", "
-                        + User.ColumnName_Password + ", "
-                        + User.ColumnName_Email + ", "
-                        + User.ColumnName_UserProfile + ", "
-                        + User.ColumnName_CreatedOn + ", "
-                        + User.ColumnName_ModifiedOn
-                        + " FROM " + Core.Db.User.DocumentName
-                        + " WHERE " + User.ColumnName_Id + " = '" + int.Parse(userId) + "'"
-                        + ";", conn))
+                    User user = new()
                     {
+                        Id = (int)reader[User.ColumnName_Id],
+                        Username = (string)reader[User.ColumnName_Username],
+                        Password = (string)reader[User.ColumnName_Password],
+                        Email = (string)reader[User.ColumnName_Email],
+                        UserProfile = (UserProfile)(int)reader[User.ColumnName_UserProfile],
+                        CreatedOn = (DateTime)reader[User.ColumnName_CreatedOn],
+                        ModifiedOn = reader[User.ColumnName_ModifiedOn] == DBNull.Value ? DateTime.MinValue : (DateTime)reader[User.ColumnName_ModifiedOn]
+                    };
 
-                        using (var reader = command.ExecuteReader())
-                        {
-
-                            if (reader.Read())
-                            {
-                                var user = new User
-                                {
-                                    Id = (int)reader[User.ColumnName_Id],
-                                    Username = (string)reader[User.ColumnName_Username],
-                                    Password = (string)reader[User.ColumnName_Password],
-                                    Email = (string)reader[User.ColumnName_Email],
-                                    UserProfile = (UserProfile)((int)reader[User.ColumnName_UserProfile]),
-                                    CreatedOn = (DateTime)reader[User.ColumnName_CreatedOn],
-                                    ModifiedOn = reader[User.ColumnName_ModifiedOn] == DBNull.Value ? DateTime.MinValue : (DateTime)reader[User.ColumnName_ModifiedOn]
-                                };
-
-                                return user;
-                            }
-                        }
-                    }
+                    return user;
                 }
 
                 return null;
@@ -1224,46 +1086,41 @@ namespace Wexflow.Core.Db.MySQL
         {
             lock (padlock)
             {
-                List<User> users = new List<User>();
+                List<User> users = new();
 
-                using (var conn = new MySqlConnection(connectionString))
+                using MySqlConnection conn = new(connectionString);
+                conn.Open();
+
+                using (MySqlCommand command = new("SELECT " + User.ColumnName_Id + ", "
+                    + User.ColumnName_Username + ", "
+                    + User.ColumnName_Password + ", "
+                    + User.ColumnName_Email + ", "
+                    + User.ColumnName_UserProfile + ", "
+                    + User.ColumnName_CreatedOn + ", "
+                    + User.ColumnName_ModifiedOn
+                    + " FROM " + Core.Db.User.DocumentName
+                    + ";", conn))
                 {
-                    conn.Open();
+                    using var reader = command.ExecuteReader();
 
-                    using (var command = new MySqlCommand("SELECT " + User.ColumnName_Id + ", "
-                        + User.ColumnName_Username + ", "
-                        + User.ColumnName_Password + ", "
-                        + User.ColumnName_Email + ", "
-                        + User.ColumnName_UserProfile + ", "
-                        + User.ColumnName_CreatedOn + ", "
-                        + User.ColumnName_ModifiedOn
-                        + " FROM " + Core.Db.User.DocumentName
-                        + ";", conn))
+                    while (reader.Read())
                     {
-
-                        using (var reader = command.ExecuteReader())
+                        User user = new()
                         {
+                            Id = (int)reader[User.ColumnName_Id],
+                            Username = (string)reader[User.ColumnName_Username],
+                            Password = (string)reader[User.ColumnName_Password],
+                            Email = (string)reader[User.ColumnName_Email],
+                            UserProfile = (UserProfile)(int)reader[User.ColumnName_UserProfile],
+                            CreatedOn = (DateTime)reader[User.ColumnName_CreatedOn],
+                            ModifiedOn = reader[User.ColumnName_ModifiedOn] == DBNull.Value ? DateTime.MinValue : (DateTime)reader[User.ColumnName_ModifiedOn]
+                        };
 
-                            while (reader.Read())
-                            {
-                                var user = new User
-                                {
-                                    Id = (int)reader[User.ColumnName_Id],
-                                    Username = (string)reader[User.ColumnName_Username],
-                                    Password = (string)reader[User.ColumnName_Password],
-                                    Email = (string)reader[User.ColumnName_Email],
-                                    UserProfile = (UserProfile)((int)reader[User.ColumnName_UserProfile]),
-                                    CreatedOn = (DateTime)reader[User.ColumnName_CreatedOn],
-                                    ModifiedOn = reader[User.ColumnName_ModifiedOn] == DBNull.Value ? DateTime.MinValue : (DateTime)reader[User.ColumnName_ModifiedOn]
-                                };
-
-                                users.Add(user);
-                            }
-                        }
+                        users.Add(user);
                     }
-
-                    return users;
                 }
+
+                return users;
             }
         }
 
@@ -1271,13 +1128,13 @@ namespace Wexflow.Core.Db.MySQL
         {
             lock (padlock)
             {
-                List<User> users = new List<User>();
+                List<User> users = new();
 
-                using (var conn = new MySqlConnection(connectionString))
+                using (MySqlConnection conn = new(connectionString))
                 {
                     conn.Open();
 
-                    using (var command = new MySqlCommand("SELECT " + User.ColumnName_Id + ", "
+                    using MySqlCommand command = new("SELECT " + User.ColumnName_Id + ", "
                         + User.ColumnName_Username + ", "
                         + User.ColumnName_Password + ", "
                         + User.ColumnName_Email + ", "
@@ -1287,28 +1144,24 @@ namespace Wexflow.Core.Db.MySQL
                         + " FROM " + Core.Db.User.DocumentName
                         + " WHERE " + "LOWER(" + User.ColumnName_Username + ")" + " LIKE '%" + (keyword ?? "").Replace("'", "''").Replace("\\", "\\\\").ToLower() + "%'"
                         + " ORDER BY " + User.ColumnName_Username + (uo == UserOrderBy.UsernameAscending ? " ASC" : " DESC")
-                        + ";", conn))
+                        + ";", conn);
+
+                    using var reader = command.ExecuteReader();
+
+                    while (reader.Read())
                     {
-
-                        using (var reader = command.ExecuteReader())
+                        User user = new()
                         {
+                            Id = (int)reader[User.ColumnName_Id],
+                            Username = (string)reader[User.ColumnName_Username],
+                            Password = (string)reader[User.ColumnName_Password],
+                            Email = (string)reader[User.ColumnName_Email],
+                            UserProfile = (UserProfile)(int)reader[User.ColumnName_UserProfile],
+                            CreatedOn = (DateTime)reader[User.ColumnName_CreatedOn],
+                            ModifiedOn = reader[User.ColumnName_ModifiedOn] == DBNull.Value ? DateTime.MinValue : (DateTime)reader[User.ColumnName_ModifiedOn]
+                        };
 
-                            while (reader.Read())
-                            {
-                                var user = new User
-                                {
-                                    Id = (int)reader[User.ColumnName_Id],
-                                    Username = (string)reader[User.ColumnName_Username],
-                                    Password = (string)reader[User.ColumnName_Password],
-                                    Email = (string)reader[User.ColumnName_Email],
-                                    UserProfile = (UserProfile)((int)reader[User.ColumnName_UserProfile]),
-                                    CreatedOn = (DateTime)reader[User.ColumnName_CreatedOn],
-                                    ModifiedOn = reader[User.ColumnName_ModifiedOn] == DBNull.Value ? DateTime.MinValue : (DateTime)reader[User.ColumnName_ModifiedOn]
-                                };
-
-                                users.Add(user);
-                            }
-                        }
+                        users.Add(user);
                     }
                 }
 
@@ -1320,30 +1173,26 @@ namespace Wexflow.Core.Db.MySQL
         {
             lock (padlock)
             {
-                List<string> workflowIds = new List<string>();
+                List<string> workflowIds = new();
 
-                using (var conn = new MySqlConnection(connectionString))
+                using (MySqlConnection conn = new(connectionString))
                 {
                     conn.Open();
 
-                    using (var command = new MySqlCommand("SELECT " + UserWorkflow.ColumnName_Id + ", "
+                    using MySqlCommand command = new("SELECT " + UserWorkflow.ColumnName_Id + ", "
                         + UserWorkflow.ColumnName_UserId + ", "
                         + UserWorkflow.ColumnName_WorkflowId
                         + " FROM " + Core.Db.UserWorkflow.DocumentName
                         + " WHERE " + UserWorkflow.ColumnName_UserId + " = " + int.Parse(userId)
-                        + ";", conn))
+                        + ";", conn);
+
+                    using var reader = command.ExecuteReader();
+
+                    while (reader.Read())
                     {
+                        var workflowId = (int)reader[UserWorkflow.ColumnName_WorkflowId];
 
-                        using (var reader = command.ExecuteReader())
-                        {
-
-                            while (reader.Read())
-                            {
-                                var workflowId = (int)reader[UserWorkflow.ColumnName_WorkflowId];
-
-                                workflowIds.Add(workflowId.ToString());
-                            }
-                        }
+                        workflowIds.Add(workflowId.ToString());
                     }
                 }
 
@@ -1355,34 +1204,28 @@ namespace Wexflow.Core.Db.MySQL
         {
             lock (padlock)
             {
-                using (var conn = new MySqlConnection(connectionString))
+                using MySqlConnection conn = new(connectionString);
+                conn.Open();
+
+                using MySqlCommand command = new("SELECT " + Workflow.ColumnName_Id + ", "
+                    + Workflow.ColumnName_Xml
+                    + " FROM " + Core.Db.Workflow.DocumentName
+                    + " WHERE " + Workflow.ColumnName_Id + " = " + int.Parse(id) + ";", conn);
+
+                using var reader = command.ExecuteReader();
+
+                if (reader.Read())
                 {
-                    conn.Open();
-
-                    using (var command = new MySqlCommand("SELECT " + Workflow.ColumnName_Id + ", "
-                        + Workflow.ColumnName_Xml
-                        + " FROM " + Core.Db.Workflow.DocumentName
-                        + " WHERE " + Workflow.ColumnName_Id + " = " + int.Parse(id) + ";", conn))
+                    Workflow workflow = new()
                     {
+                        Id = (int)reader[Workflow.ColumnName_Id],
+                        Xml = (string)reader[Workflow.ColumnName_Xml]
+                    };
 
-                        using (var reader = command.ExecuteReader())
-                        {
-
-                            if (reader.Read())
-                            {
-                                var workflow = new Workflow
-                                {
-                                    Id = (int)reader[Workflow.ColumnName_Id],
-                                    Xml = (string)reader[Workflow.ColumnName_Xml]
-                                };
-
-                                return workflow;
-                            }
-                        }
-                    }
-
-                    return null;
+                    return workflow;
                 }
+
+                return null;
             }
         }
 
@@ -1390,52 +1233,42 @@ namespace Wexflow.Core.Db.MySQL
         {
             lock (padlock)
             {
-                List<Core.Db.Workflow> workflows = new List<Core.Db.Workflow>();
+                List<Core.Db.Workflow> workflows = new();
 
-                using (var conn = new MySqlConnection(connectionString))
+                using MySqlConnection conn = new(connectionString);
+                conn.Open();
+
+                using (MySqlCommand command = new("SELECT " + Workflow.ColumnName_Id + ", "
+                    + Workflow.ColumnName_Xml
+                    + " FROM " + Core.Db.Workflow.DocumentName + ";", conn))
                 {
-                    conn.Open();
+                    using var reader = command.ExecuteReader();
 
-                    using (var command = new MySqlCommand("SELECT " + Workflow.ColumnName_Id + ", "
-                        + Workflow.ColumnName_Xml
-                        + " FROM " + Core.Db.Workflow.DocumentName + ";", conn))
+                    while (reader.Read())
                     {
-
-                        using (var reader = command.ExecuteReader())
+                        Workflow workflow = new()
                         {
+                            Id = (int)reader[Workflow.ColumnName_Id],
+                            Xml = (string)reader[Workflow.ColumnName_Xml]
+                        };
 
-                            while (reader.Read())
-                            {
-                                var workflow = new Workflow
-                                {
-                                    Id = (int)reader[Workflow.ColumnName_Id],
-                                    Xml = (string)reader[Workflow.ColumnName_Xml]
-                                };
-
-                                workflows.Add(workflow);
-                            }
-                        }
+                        workflows.Add(workflow);
                     }
-
-                    return workflows;
-
                 }
+
+                return workflows;
             }
         }
 
-        private void IncrementStatusCountColumn(string statusCountColumnName)
+        private static void IncrementStatusCountColumn(string statusCountColumnName)
         {
             lock (padlock)
             {
-                using (var conn = new MySqlConnection(connectionString))
-                {
-                    conn.Open();
+                using MySqlConnection conn = new(connectionString);
+                conn.Open();
 
-                    using (var command = new MySqlCommand("UPDATE " + Core.Db.StatusCount.DocumentName + " SET " + statusCountColumnName + " = " + statusCountColumnName + " + 1;", conn))
-                    {
-                        command.ExecuteNonQuery();
-                    }
-                }
+                using MySqlCommand command = new("UPDATE " + Core.Db.StatusCount.DocumentName + " SET " + statusCountColumnName + " = " + statusCountColumnName + " + 1;", conn);
+                _ = command.ExecuteNonQuery();
             }
         }
 
@@ -1479,19 +1312,15 @@ namespace Wexflow.Core.Db.MySQL
             IncrementStatusCountColumn(StatusCount.ColumnName_WarningCount);
         }
 
-        private void DecrementStatusCountColumn(string statusCountColumnName)
+        private static void DecrementStatusCountColumn(string statusCountColumnName)
         {
             lock (padlock)
             {
-                using (var conn = new MySqlConnection(connectionString))
-                {
-                    conn.Open();
+                using MySqlConnection conn = new(connectionString);
+                conn.Open();
 
-                    using (var command = new MySqlCommand("UPDATE " + Core.Db.StatusCount.DocumentName + " SET " + statusCountColumnName + " = " + statusCountColumnName + " - 1;", conn))
-                    {
-                        command.ExecuteNonQuery();
-                    }
-                }
+                using MySqlCommand command = new("UPDATE " + Core.Db.StatusCount.DocumentName + " SET " + statusCountColumnName + " = " + statusCountColumnName + " - 1;", conn);
+                _ = command.ExecuteNonQuery();
             }
         }
 
@@ -1509,33 +1338,29 @@ namespace Wexflow.Core.Db.MySQL
         {
             lock (padlock)
             {
-                using (var conn = new MySqlConnection(connectionString))
-                {
-                    conn.Open();
+                using MySqlConnection conn = new(connectionString);
+                conn.Open();
 
-                    using (var command = new MySqlCommand("INSERT INTO " + Core.Db.Entry.DocumentName + "("
-                        + Entry.ColumnName_Name + ", "
-                        + Entry.ColumnName_Description + ", "
-                        + Entry.ColumnName_LaunchType + ", "
-                        + Entry.ColumnName_StatusDate + ", "
-                        + Entry.ColumnName_Status + ", "
-                        + Entry.ColumnName_WorkflowId + ", "
-                        + Entry.ColumnName_JobId + ", "
-                        + Entry.ColumnName_Logs + ") VALUES("
-                        + "'" + (entry.Name ?? "").Replace("'", "''").Replace("\\", "\\\\") + "'" + ", "
-                        + "'" + (entry.Description ?? "").Replace("'", "''").Replace("\\", "\\\\") + "'" + ", "
-                        + (int)entry.LaunchType + ", "
-                        + "'" + entry.StatusDate.ToString(dateTimeFormat) + "'" + ", "
-                        + (int)entry.Status + ", "
-                        + entry.WorkflowId + ", "
-                        + "'" + (entry.JobId ?? "") + "', "
-                        + "'" + (entry.Logs ?? "").Replace("'", "''").Replace("\\", "\\\\") + "'" + ");"
-                        , conn))
-                    {
+                using MySqlCommand command = new("INSERT INTO " + Core.Db.Entry.DocumentName + "("
+                    + Entry.ColumnName_Name + ", "
+                    + Entry.ColumnName_Description + ", "
+                    + Entry.ColumnName_LaunchType + ", "
+                    + Entry.ColumnName_StatusDate + ", "
+                    + Entry.ColumnName_Status + ", "
+                    + Entry.ColumnName_WorkflowId + ", "
+                    + Entry.ColumnName_JobId + ", "
+                    + Entry.ColumnName_Logs + ") VALUES("
+                    + "'" + (entry.Name ?? "").Replace("'", "''").Replace("\\", "\\\\") + "'" + ", "
+                    + "'" + (entry.Description ?? "").Replace("'", "''").Replace("\\", "\\\\") + "'" + ", "
+                    + (int)entry.LaunchType + ", "
+                    + "'" + entry.StatusDate.ToString(dateTimeFormat) + "'" + ", "
+                    + (int)entry.Status + ", "
+                    + entry.WorkflowId + ", "
+                    + "'" + (entry.JobId ?? "") + "', "
+                    + "'" + (entry.Logs ?? "").Replace("'", "''").Replace("\\", "\\\\") + "'" + ");"
+                    , conn);
 
-                        command.ExecuteNonQuery();
-                    }
-                }
+                _ = command.ExecuteNonQuery();
             }
         }
 
@@ -1543,31 +1368,27 @@ namespace Wexflow.Core.Db.MySQL
         {
             lock (padlock)
             {
-                using (var conn = new MySqlConnection(connectionString))
-                {
-                    conn.Open();
+                using MySqlConnection conn = new(connectionString);
+                conn.Open();
 
-                    using (var command = new MySqlCommand("INSERT INTO " + Core.Db.HistoryEntry.DocumentName + "("
-                        + HistoryEntry.ColumnName_Name + ", "
-                        + HistoryEntry.ColumnName_Description + ", "
-                        + HistoryEntry.ColumnName_LaunchType + ", "
-                        + HistoryEntry.ColumnName_StatusDate + ", "
-                        + HistoryEntry.ColumnName_Status + ", "
-                        + HistoryEntry.ColumnName_WorkflowId + ", "
-                        + HistoryEntry.ColumnName_Logs + ") VALUES("
-                        + "'" + (entry.Name ?? "").Replace("'", "''").Replace("\\", "\\\\") + "'" + ", "
-                        + "'" + (entry.Description ?? "").Replace("'", "''").Replace("\\", "\\\\") + "'" + ", "
-                        + (int)entry.LaunchType + ", "
-                        + "'" + entry.StatusDate.ToString(dateTimeFormat) + "'" + ", "
-                        + (int)entry.Status + ", "
-                        + entry.WorkflowId + ", "
-                        + "'" + (entry.Logs ?? "").Replace("'", "''").Replace("\\", "\\\\") + "'" + ");"
-                        , conn))
-                    {
+                using MySqlCommand command = new("INSERT INTO " + Core.Db.HistoryEntry.DocumentName + "("
+                    + HistoryEntry.ColumnName_Name + ", "
+                    + HistoryEntry.ColumnName_Description + ", "
+                    + HistoryEntry.ColumnName_LaunchType + ", "
+                    + HistoryEntry.ColumnName_StatusDate + ", "
+                    + HistoryEntry.ColumnName_Status + ", "
+                    + HistoryEntry.ColumnName_WorkflowId + ", "
+                    + HistoryEntry.ColumnName_Logs + ") VALUES("
+                    + "'" + (entry.Name ?? "").Replace("'", "''").Replace("\\", "\\\\") + "'" + ", "
+                    + "'" + (entry.Description ?? "").Replace("'", "''").Replace("\\", "\\\\") + "'" + ", "
+                    + (int)entry.LaunchType + ", "
+                    + "'" + entry.StatusDate.ToString(dateTimeFormat) + "'" + ", "
+                    + (int)entry.Status + ", "
+                    + entry.WorkflowId + ", "
+                    + "'" + (entry.Logs ?? "").Replace("'", "''").Replace("\\", "\\\\") + "'" + ");"
+                    , conn);
 
-                        command.ExecuteNonQuery();
-                    }
-                }
+                _ = command.ExecuteNonQuery();
             }
         }
 
@@ -1575,29 +1396,25 @@ namespace Wexflow.Core.Db.MySQL
         {
             lock (padlock)
             {
-                using (var conn = new MySqlConnection(connectionString))
-                {
-                    conn.Open();
+                using MySqlConnection conn = new(connectionString);
+                conn.Open();
 
-                    using (var command = new MySqlCommand("INSERT INTO " + Core.Db.User.DocumentName + "("
-                        + User.ColumnName_Username + ", "
-                        + User.ColumnName_Password + ", "
-                        + User.ColumnName_UserProfile + ", "
-                        + User.ColumnName_Email + ", "
-                        + User.ColumnName_CreatedOn + ", "
-                        + User.ColumnName_ModifiedOn + ") VALUES("
-                        + "'" + (user.Username ?? "").Replace("'", "''").Replace("\\", "\\\\") + "'" + ", "
-                        + "'" + (user.Password ?? "").Replace("'", "''").Replace("\\", "\\\\") + "'" + ", "
-                        + (int)user.UserProfile + ", "
-                        + "'" + (user.Email ?? "").Replace("'", "''").Replace("\\", "\\\\") + "'" + ", "
-                        + "'" + DateTime.Now.ToString(dateTimeFormat) + "'" + ", "
-                        + (user.ModifiedOn == DateTime.MinValue ? "NULL" : "'" + user.ModifiedOn.ToString(dateTimeFormat) + "'") + ");"
-                        , conn))
-                    {
+                using MySqlCommand command = new("INSERT INTO " + Core.Db.User.DocumentName + "("
+                    + User.ColumnName_Username + ", "
+                    + User.ColumnName_Password + ", "
+                    + User.ColumnName_UserProfile + ", "
+                    + User.ColumnName_Email + ", "
+                    + User.ColumnName_CreatedOn + ", "
+                    + User.ColumnName_ModifiedOn + ") VALUES("
+                    + "'" + (user.Username ?? "").Replace("'", "''").Replace("\\", "\\\\") + "'" + ", "
+                    + "'" + (user.Password ?? "").Replace("'", "''").Replace("\\", "\\\\") + "'" + ", "
+                    + (int)user.UserProfile + ", "
+                    + "'" + (user.Email ?? "").Replace("'", "''").Replace("\\", "\\\\") + "'" + ", "
+                    + "'" + DateTime.Now.ToString(dateTimeFormat) + "'" + ", "
+                    + (user.ModifiedOn == DateTime.MinValue ? "NULL" : "'" + user.ModifiedOn.ToString(dateTimeFormat) + "'") + ");"
+                    , conn);
 
-                        command.ExecuteNonQuery();
-                    }
-                }
+                _ = command.ExecuteNonQuery();
             }
         }
 
@@ -1605,21 +1422,17 @@ namespace Wexflow.Core.Db.MySQL
         {
             lock (padlock)
             {
-                using (var conn = new MySqlConnection(connectionString))
-                {
-                    conn.Open();
+                using MySqlConnection conn = new(connectionString);
+                conn.Open();
 
-                    using (var command = new MySqlCommand("INSERT INTO " + Core.Db.UserWorkflow.DocumentName + "("
-                        + UserWorkflow.ColumnName_UserId + ", "
-                        + UserWorkflow.ColumnName_WorkflowId + ") VALUES("
-                        + int.Parse(userWorkflow.UserId) + ", "
-                        + int.Parse(userWorkflow.WorkflowId) + ");"
-                        , conn))
-                    {
+                using MySqlCommand command = new("INSERT INTO " + Core.Db.UserWorkflow.DocumentName + "("
+                    + UserWorkflow.ColumnName_UserId + ", "
+                    + UserWorkflow.ColumnName_WorkflowId + ") VALUES("
+                    + int.Parse(userWorkflow.UserId) + ", "
+                    + int.Parse(userWorkflow.WorkflowId) + ");"
+                    , conn);
 
-                        command.ExecuteNonQuery();
-                    }
-                }
+                _ = command.ExecuteNonQuery();
             }
         }
 
@@ -1627,21 +1440,17 @@ namespace Wexflow.Core.Db.MySQL
         {
             lock (padlock)
             {
-                using (var conn = new MySqlConnection(connectionString))
-                {
-                    conn.Open();
+                using MySqlConnection conn = new(connectionString);
+                conn.Open();
 
-                    using (var command = new MySqlCommand("INSERT INTO " + Core.Db.Workflow.DocumentName + "("
-                        + Workflow.ColumnName_Xml + ") VALUES("
-                        + "'" + (workflow.Xml ?? "").Replace("'", "''").Replace("\\", "\\\\") + "'" + "); SELECT LAST_INSERT_ID(); "
-                        , conn))
-                    {
+                using MySqlCommand command = new("INSERT INTO " + Core.Db.Workflow.DocumentName + "("
+                    + Workflow.ColumnName_Xml + ") VALUES("
+                    + "'" + (workflow.Xml ?? "").Replace("'", "''").Replace("\\", "\\\\") + "'" + "); SELECT LAST_INSERT_ID(); "
+                    , conn);
 
-                        var id = (ulong)command.ExecuteScalar();
+                var id = (ulong)command.ExecuteScalar();
 
-                        return id.ToString();
-                    }
-                }
+                return id.ToString();
             }
         }
 
@@ -1649,27 +1458,23 @@ namespace Wexflow.Core.Db.MySQL
         {
             lock (padlock)
             {
-                using (var conn = new MySqlConnection(connectionString))
-                {
-                    conn.Open();
+                using MySqlConnection conn = new(connectionString);
+                conn.Open();
 
-                    using (var command = new MySqlCommand("UPDATE " + Core.Db.Entry.DocumentName + " SET "
-                        + Entry.ColumnName_Name + " = '" + (entry.Name ?? "").Replace("'", "''").Replace("\\", "\\\\") + "', "
-                        + Entry.ColumnName_Description + " = '" + (entry.Description ?? "").Replace("'", "''").Replace("\\", "\\\\") + "', "
-                        + Entry.ColumnName_LaunchType + " = " + (int)entry.LaunchType + ", "
-                        + Entry.ColumnName_StatusDate + " = '" + entry.StatusDate.ToString(dateTimeFormat) + "', "
-                        + Entry.ColumnName_Status + " = " + (int)entry.Status + ", "
-                        + Entry.ColumnName_WorkflowId + " = " + entry.WorkflowId + ", "
-                        + Entry.ColumnName_JobId + " = '" + (entry.JobId ?? "") + "', "
-                        + Entry.ColumnName_Logs + " = '" + (entry.Logs ?? "").Replace("'", "''").Replace("\\", "\\\\") + "'"
-                        + " WHERE "
-                        + Entry.ColumnName_Id + " = " + int.Parse(id) + ";"
-                        , conn))
-                    {
+                using MySqlCommand command = new("UPDATE " + Core.Db.Entry.DocumentName + " SET "
+                    + Entry.ColumnName_Name + " = '" + (entry.Name ?? "").Replace("'", "''").Replace("\\", "\\\\") + "', "
+                    + Entry.ColumnName_Description + " = '" + (entry.Description ?? "").Replace("'", "''").Replace("\\", "\\\\") + "', "
+                    + Entry.ColumnName_LaunchType + " = " + (int)entry.LaunchType + ", "
+                    + Entry.ColumnName_StatusDate + " = '" + entry.StatusDate.ToString(dateTimeFormat) + "', "
+                    + Entry.ColumnName_Status + " = " + (int)entry.Status + ", "
+                    + Entry.ColumnName_WorkflowId + " = " + entry.WorkflowId + ", "
+                    + Entry.ColumnName_JobId + " = '" + (entry.JobId ?? "") + "', "
+                    + Entry.ColumnName_Logs + " = '" + (entry.Logs ?? "").Replace("'", "''").Replace("\\", "\\\\") + "'"
+                    + " WHERE "
+                    + Entry.ColumnName_Id + " = " + int.Parse(id) + ";"
+                    , conn);
 
-                        command.ExecuteNonQuery();
-                    }
-                }
+                _ = command.ExecuteNonQuery();
             }
         }
 
@@ -1677,20 +1482,16 @@ namespace Wexflow.Core.Db.MySQL
         {
             lock (padlock)
             {
-                using (var conn = new MySqlConnection(connectionString))
-                {
-                    conn.Open();
+                using MySqlConnection conn = new(connectionString);
+                conn.Open();
 
-                    using (var command = new MySqlCommand("UPDATE " + Core.Db.User.DocumentName + " SET "
-                        + User.ColumnName_Password + " = '" + (password ?? "").Replace("'", "''").Replace("\\", "\\\\") + "'"
-                        + " WHERE "
-                        + User.ColumnName_Username + " = '" + (username ?? "").Replace("'", "''").Replace("\\", "\\\\") + "';"
-                        , conn))
-                    {
+                using MySqlCommand command = new("UPDATE " + Core.Db.User.DocumentName + " SET "
+                    + User.ColumnName_Password + " = '" + (password ?? "").Replace("'", "''").Replace("\\", "\\\\") + "'"
+                    + " WHERE "
+                    + User.ColumnName_Username + " = '" + (username ?? "").Replace("'", "''").Replace("\\", "\\\\") + "';"
+                    , conn);
 
-                        command.ExecuteNonQuery();
-                    }
-                }
+                _ = command.ExecuteNonQuery();
             }
         }
 
@@ -1698,25 +1499,21 @@ namespace Wexflow.Core.Db.MySQL
         {
             lock (padlock)
             {
-                using (var conn = new MySqlConnection(connectionString))
-                {
-                    conn.Open();
+                using MySqlConnection conn = new(connectionString);
+                conn.Open();
 
-                    using (var command = new MySqlCommand("UPDATE " + Core.Db.User.DocumentName + " SET "
-                        + User.ColumnName_Username + " = '" + (user.Username ?? "").Replace("'", "''").Replace("\\", "\\\\") + "', "
-                        + User.ColumnName_Password + " = '" + (user.Password ?? "").Replace("'", "''").Replace("\\", "\\\\") + "', "
-                        + User.ColumnName_UserProfile + " = " + (int)user.UserProfile + ", "
-                        + User.ColumnName_Email + " = '" + (user.Email ?? "").Replace("'", "''").Replace("\\", "\\\\") + "', "
-                        + User.ColumnName_CreatedOn + " = '" + user.CreatedOn.ToString(dateTimeFormat) + "', "
-                        + User.ColumnName_ModifiedOn + " = '" + DateTime.Now.ToString(dateTimeFormat) + "'"
-                        + " WHERE "
-                        + User.ColumnName_Id + " = " + int.Parse(id) + ";"
-                        , conn))
-                    {
+                using MySqlCommand command = new("UPDATE " + Core.Db.User.DocumentName + " SET "
+                    + User.ColumnName_Username + " = '" + (user.Username ?? "").Replace("'", "''").Replace("\\", "\\\\") + "', "
+                    + User.ColumnName_Password + " = '" + (user.Password ?? "").Replace("'", "''").Replace("\\", "\\\\") + "', "
+                    + User.ColumnName_UserProfile + " = " + (int)user.UserProfile + ", "
+                    + User.ColumnName_Email + " = '" + (user.Email ?? "").Replace("'", "''").Replace("\\", "\\\\") + "', "
+                    + User.ColumnName_CreatedOn + " = '" + user.CreatedOn.ToString(dateTimeFormat) + "', "
+                    + User.ColumnName_ModifiedOn + " = '" + DateTime.Now.ToString(dateTimeFormat) + "'"
+                    + " WHERE "
+                    + User.ColumnName_Id + " = " + int.Parse(id) + ";"
+                    , conn);
 
-                        command.ExecuteNonQuery();
-                    }
-                }
+                _ = command.ExecuteNonQuery();
             }
         }
 
@@ -1724,23 +1521,19 @@ namespace Wexflow.Core.Db.MySQL
         {
             lock (padlock)
             {
-                using (var conn = new MySqlConnection(connectionString))
-                {
-                    conn.Open();
+                using MySqlConnection conn = new(connectionString);
+                conn.Open();
 
-                    using (var command = new MySqlCommand("UPDATE " + Core.Db.User.DocumentName + " SET "
-                        + User.ColumnName_Username + " = '" + (username ?? "").Replace("'", "''").Replace("\\", "\\\\") + "', "
-                        + User.ColumnName_UserProfile + " = " + (int)up + ", "
-                        + User.ColumnName_Email + " = '" + (email ?? "").Replace("'", "''").Replace("\\", "\\\\") + "', "
-                        + User.ColumnName_ModifiedOn + " = '" + DateTime.Now.ToString(dateTimeFormat) + "'"
-                        + " WHERE "
-                        + User.ColumnName_Id + " = " + int.Parse(userId) + ";"
-                        , conn))
-                    {
+                using MySqlCommand command = new("UPDATE " + Core.Db.User.DocumentName + " SET "
+                    + User.ColumnName_Username + " = '" + (username ?? "").Replace("'", "''").Replace("\\", "\\\\") + "', "
+                    + User.ColumnName_UserProfile + " = " + (int)up + ", "
+                    + User.ColumnName_Email + " = '" + (email ?? "").Replace("'", "''").Replace("\\", "\\\\") + "', "
+                    + User.ColumnName_ModifiedOn + " = '" + DateTime.Now.ToString(dateTimeFormat) + "'"
+                    + " WHERE "
+                    + User.ColumnName_Id + " = " + int.Parse(userId) + ";"
+                    , conn);
 
-                        command.ExecuteNonQuery();
-                    }
-                }
+                _ = command.ExecuteNonQuery();
             }
         }
 
@@ -1748,20 +1541,16 @@ namespace Wexflow.Core.Db.MySQL
         {
             lock (padlock)
             {
-                using (var conn = new MySqlConnection(connectionString))
-                {
-                    conn.Open();
+                using MySqlConnection conn = new(connectionString);
+                conn.Open();
 
-                    using (var command = new MySqlCommand("UPDATE " + Core.Db.Workflow.DocumentName + " SET "
-                        + Workflow.ColumnName_Xml + " = '" + (workflow.Xml ?? "").Replace("'", "''").Replace("\\", "\\\\") + "'"
-                        + " WHERE "
-                        + User.ColumnName_Id + " = " + int.Parse(dbId) + ";"
-                        , conn))
-                    {
+                using MySqlCommand command = new("UPDATE " + Core.Db.Workflow.DocumentName + " SET "
+                    + Workflow.ColumnName_Xml + " = '" + (workflow.Xml ?? "").Replace("'", "''").Replace("\\", "\\\\") + "'"
+                    + " WHERE "
+                    + User.ColumnName_Id + " = " + int.Parse(dbId) + ";"
+                    , conn);
 
-                        command.ExecuteNonQuery();
-                    }
-                }
+                _ = command.ExecuteNonQuery();
             }
         }
 
@@ -1769,28 +1558,21 @@ namespace Wexflow.Core.Db.MySQL
         {
             lock (padlock)
             {
-                using (var conn = new MySqlConnection(connectionString))
+                using MySqlConnection conn = new(connectionString);
+                conn.Open();
+
+                using MySqlCommand command = new("SELECT " + Entry.ColumnName_Logs
+                    + " FROM " + Core.Db.Entry.DocumentName
+                    + " WHERE "
+                    + Entry.ColumnName_Id + " = " + int.Parse(entryId) + ";"
+                    , conn);
+
+                using var reader = command.ExecuteReader();
+
+                if (reader.Read())
                 {
-                    conn.Open();
-
-                    using (var command = new MySqlCommand("SELECT " + Entry.ColumnName_Logs
-                        + " FROM " + Core.Db.Entry.DocumentName
-                        + " WHERE "
-                        + Entry.ColumnName_Id + " = " + int.Parse(entryId) + ";"
-                        , conn))
-                    {
-
-                        using (var reader = command.ExecuteReader())
-                        {
-
-                            if (reader.Read())
-                            {
-                                var logs = (string)reader[Entry.ColumnName_Logs];
-                                return logs;
-                            }
-                        }
-                    }
-
+                    var logs = (string)reader[Entry.ColumnName_Logs];
+                    return logs;
                 }
 
                 return null;
@@ -1801,28 +1583,21 @@ namespace Wexflow.Core.Db.MySQL
         {
             lock (padlock)
             {
-                using (var conn = new MySqlConnection(connectionString))
+                using MySqlConnection conn = new(connectionString);
+                conn.Open();
+
+                using MySqlCommand command = new("SELECT " + HistoryEntry.ColumnName_Logs
+                    + " FROM " + Core.Db.HistoryEntry.DocumentName
+                    + " WHERE "
+                    + HistoryEntry.ColumnName_Id + " = " + int.Parse(entryId) + ";"
+                    , conn);
+
+                using var reader = command.ExecuteReader();
+
+                if (reader.Read())
                 {
-                    conn.Open();
-
-                    using (var command = new MySqlCommand("SELECT " + HistoryEntry.ColumnName_Logs
-                        + " FROM " + Core.Db.HistoryEntry.DocumentName
-                        + " WHERE "
-                        + HistoryEntry.ColumnName_Id + " = " + int.Parse(entryId) + ";"
-                        , conn))
-                    {
-
-                        using (var reader = command.ExecuteReader())
-                        {
-
-                            if (reader.Read())
-                            {
-                                var logs = (string)reader[HistoryEntry.ColumnName_Logs];
-                                return logs;
-                            }
-                        }
-                    }
-
+                    var logs = (string)reader[HistoryEntry.ColumnName_Logs];
+                    return logs;
                 }
 
                 return null;
@@ -1833,13 +1608,13 @@ namespace Wexflow.Core.Db.MySQL
         {
             lock (padlock)
             {
-                List<User> users = new List<User>();
+                List<User> users = new();
 
-                using (var conn = new MySqlConnection(connectionString))
+                using (MySqlConnection conn = new(connectionString))
                 {
                     conn.Open();
 
-                    using (var command = new MySqlCommand("SELECT "
+                    using MySqlCommand command = new("SELECT "
                         + User.ColumnName_Id + ", "
                         + User.ColumnName_Username + ", "
                         + User.ColumnName_Password + ", "
@@ -1851,26 +1626,22 @@ namespace Wexflow.Core.Db.MySQL
                         + " WHERE (" + User.ColumnName_UserProfile + " = " + (int)UserProfile.SuperAdministrator
                         + " OR " + User.ColumnName_UserProfile + " = " + (int)UserProfile.Administrator + ")"
                         + " ORDER BY " + User.ColumnName_Username
-                        + ";", conn))
+                        + ";", conn);
+                    using var reader = command.ExecuteReader();
+                    while (reader.Read())
                     {
-                        using (var reader = command.ExecuteReader())
+                        User admin = new()
                         {
-                            while (reader.Read())
-                            {
-                                var admin = new User
-                                {
-                                    Id = (int)reader[User.ColumnName_Id],
-                                    Username = (string)reader[User.ColumnName_Username],
-                                    Password = (string)reader[User.ColumnName_Password],
-                                    Email = (string)reader[User.ColumnName_Email],
-                                    UserProfile = (UserProfile)((int)reader[User.ColumnName_UserProfile]),
-                                    CreatedOn = (DateTime)reader[User.ColumnName_CreatedOn],
-                                    ModifiedOn = reader[User.ColumnName_ModifiedOn] == DBNull.Value ? DateTime.MinValue : (DateTime)reader[User.ColumnName_ModifiedOn]
-                                };
+                            Id = (int)reader[User.ColumnName_Id],
+                            Username = (string)reader[User.ColumnName_Username],
+                            Password = (string)reader[User.ColumnName_Password],
+                            Email = (string)reader[User.ColumnName_Email],
+                            UserProfile = (UserProfile)(int)reader[User.ColumnName_UserProfile],
+                            CreatedOn = (DateTime)reader[User.ColumnName_CreatedOn],
+                            ModifiedOn = reader[User.ColumnName_ModifiedOn] == DBNull.Value ? DateTime.MinValue : (DateTime)reader[User.ColumnName_ModifiedOn]
+                        };
 
-                                users.Add(admin);
-                            }
-                        }
+                        users.Add(admin);
                     }
                 }
 
@@ -1882,45 +1653,41 @@ namespace Wexflow.Core.Db.MySQL
         {
             lock (padlock)
             {
-                using (var conn = new MySqlConnection(connectionString))
-                {
-                    conn.Open();
+                using MySqlConnection conn = new(connectionString);
+                conn.Open();
 
-                    using (var command = new MySqlCommand("INSERT INTO " + Core.Db.Record.DocumentName + "("
-                        + Record.ColumnName_Name + ", "
-                        + Record.ColumnName_Description + ", "
-                        + Record.ColumnName_Approved + ", "
-                        + Record.ColumnName_StartDate + ", "
-                        + Record.ColumnName_EndDate + ", "
-                        + Record.ColumnName_Comments + ", "
-                        + Record.ColumnName_ManagerComments + ", "
-                        + Record.ColumnName_CreatedBy + ", "
-                        + Record.ColumnName_CreatedOn + ", "
-                        + Record.ColumnName_ModifiedBy + ", "
-                        + Record.ColumnName_ModifiedOn + ", "
-                        + Record.ColumnName_AssignedTo + ", "
-                        + Record.ColumnName_AssignedOn + ")"
-                        + " VALUES("
-                        + "'" + (record.Name ?? "").Replace("'", "''").Replace("\\", "\\\\") + "'" + ", "
-                        + "'" + (record.Description ?? "").Replace("'", "''").Replace("\\", "\\\\") + "'" + ", "
-                        + (record.Approved ? "1" : "0") + ", "
-                        + (record.StartDate == null ? "NULL" : "'" + record.StartDate.Value.ToString(dateTimeFormat) + "'") + ", "
-                        + (record.EndDate == null ? "NULL" : "'" + record.EndDate.Value.ToString(dateTimeFormat) + "'") + ", "
-                        + "'" + (record.Comments ?? "").Replace("'", "''").Replace("\\", "\\\\") + "'" + ", "
-                        + "'" + (record.ManagerComments ?? "").Replace("'", "''").Replace("\\", "\\\\") + "'" + ", "
-                        + int.Parse(record.CreatedBy) + ", "
-                        + "'" + DateTime.Now.ToString(dateTimeFormat) + "'" + ", "
-                        + (string.IsNullOrEmpty(record.ModifiedBy) ? "NULL" : int.Parse(record.ModifiedBy).ToString()) + ", "
-                        + (record.ModifiedOn == null ? "NULL" : "'" + record.ModifiedOn.Value.ToString(dateTimeFormat) + "'") + ", "
-                         + (string.IsNullOrEmpty(record.AssignedTo) ? "NULL" : int.Parse(record.AssignedTo).ToString()) + ", "
-                        + (record.AssignedOn == null ? "NULL" : "'" + record.AssignedOn.Value.ToString(dateTimeFormat) + "'") + ");"
-                        + " SELECT LAST_INSERT_ID();"
-                        , conn))
-                    {
-                        var id = (ulong)command.ExecuteScalar();
-                        return id.ToString();
-                    }
-                }
+                using MySqlCommand command = new("INSERT INTO " + Core.Db.Record.DocumentName + "("
+                    + Record.ColumnName_Name + ", "
+                    + Record.ColumnName_Description + ", "
+                    + Record.ColumnName_Approved + ", "
+                    + Record.ColumnName_StartDate + ", "
+                    + Record.ColumnName_EndDate + ", "
+                    + Record.ColumnName_Comments + ", "
+                    + Record.ColumnName_ManagerComments + ", "
+                    + Record.ColumnName_CreatedBy + ", "
+                    + Record.ColumnName_CreatedOn + ", "
+                    + Record.ColumnName_ModifiedBy + ", "
+                    + Record.ColumnName_ModifiedOn + ", "
+                    + Record.ColumnName_AssignedTo + ", "
+                    + Record.ColumnName_AssignedOn + ")"
+                    + " VALUES("
+                    + "'" + (record.Name ?? "").Replace("'", "''").Replace("\\", "\\\\") + "'" + ", "
+                    + "'" + (record.Description ?? "").Replace("'", "''").Replace("\\", "\\\\") + "'" + ", "
+                    + (record.Approved ? "1" : "0") + ", "
+                    + (record.StartDate == null ? "NULL" : "'" + record.StartDate.Value.ToString(dateTimeFormat) + "'") + ", "
+                    + (record.EndDate == null ? "NULL" : "'" + record.EndDate.Value.ToString(dateTimeFormat) + "'") + ", "
+                    + "'" + (record.Comments ?? "").Replace("'", "''").Replace("\\", "\\\\") + "'" + ", "
+                    + "'" + (record.ManagerComments ?? "").Replace("'", "''").Replace("\\", "\\\\") + "'" + ", "
+                    + int.Parse(record.CreatedBy) + ", "
+                    + "'" + DateTime.Now.ToString(dateTimeFormat) + "'" + ", "
+                    + (string.IsNullOrEmpty(record.ModifiedBy) ? "NULL" : int.Parse(record.ModifiedBy).ToString()) + ", "
+                    + (record.ModifiedOn == null ? "NULL" : "'" + record.ModifiedOn.Value.ToString(dateTimeFormat) + "'") + ", "
+                     + (string.IsNullOrEmpty(record.AssignedTo) ? "NULL" : int.Parse(record.AssignedTo).ToString()) + ", "
+                    + (record.AssignedOn == null ? "NULL" : "'" + record.AssignedOn.Value.ToString(dateTimeFormat) + "'") + ");"
+                    + " SELECT LAST_INSERT_ID();"
+                    , conn);
+                var id = (ulong)command.ExecuteScalar();
+                return id.ToString();
             }
         }
 
@@ -1928,30 +1695,26 @@ namespace Wexflow.Core.Db.MySQL
         {
             lock (padlock)
             {
-                using (var conn = new MySqlConnection(connectionString))
-                {
-                    conn.Open();
+                using MySqlConnection conn = new(connectionString);
+                conn.Open();
 
-                    using (var command = new MySqlCommand("UPDATE " + Core.Db.Record.DocumentName + " SET "
-                        + Record.ColumnName_Name + " = '" + (record.Name ?? "").Replace("'", "''").Replace("\\", "\\\\") + "', "
-                        + Record.ColumnName_Description + " = '" + (record.Description ?? "").Replace("'", "''").Replace("\\", "\\\\") + "', "
-                        + Record.ColumnName_Approved + " = " + (record.Approved ? "1" : "0") + ", "
-                        + Record.ColumnName_StartDate + " = " + (record.StartDate == null ? "NULL" : "'" + record.StartDate.Value.ToString(dateTimeFormat) + "'") + ", "
-                        + Record.ColumnName_EndDate + " = " + (record.EndDate == null ? "NULL" : "'" + record.EndDate.Value.ToString(dateTimeFormat) + "'") + ", "
-                        + Record.ColumnName_Comments + " = '" + (record.Comments ?? "").Replace("'", "''").Replace("\\", "\\\\") + "', "
-                        + Record.ColumnName_ManagerComments + " = '" + (record.ManagerComments ?? "").Replace("'", "''").Replace("\\", "\\\\") + "', "
-                        + Record.ColumnName_CreatedBy + " = " + int.Parse(record.CreatedBy) + ", "
-                        + Record.ColumnName_ModifiedBy + " = " + (string.IsNullOrEmpty(record.ModifiedBy) ? "NULL" : int.Parse(record.ModifiedBy).ToString()) + ", "
-                        + Record.ColumnName_ModifiedOn + " = '" + DateTime.Now.ToString(dateTimeFormat) + "', "
-                        + Record.ColumnName_AssignedTo + " = " + (string.IsNullOrEmpty(record.AssignedTo) ? "NULL" : int.Parse(record.AssignedTo).ToString()) + ", "
-                        + Record.ColumnName_AssignedOn + " = " + (record.AssignedOn == null ? "NULL" : "'" + record.AssignedOn.Value.ToString(dateTimeFormat) + "'")
-                        + " WHERE "
-                        + Record.ColumnName_Id + " = " + int.Parse(recordId) + ";"
-                        , conn))
-                    {
-                        command.ExecuteNonQuery();
-                    }
-                }
+                using MySqlCommand command = new("UPDATE " + Core.Db.Record.DocumentName + " SET "
+                    + Record.ColumnName_Name + " = '" + (record.Name ?? "").Replace("'", "''").Replace("\\", "\\\\") + "', "
+                    + Record.ColumnName_Description + " = '" + (record.Description ?? "").Replace("'", "''").Replace("\\", "\\\\") + "', "
+                    + Record.ColumnName_Approved + " = " + (record.Approved ? "1" : "0") + ", "
+                    + Record.ColumnName_StartDate + " = " + (record.StartDate == null ? "NULL" : "'" + record.StartDate.Value.ToString(dateTimeFormat) + "'") + ", "
+                    + Record.ColumnName_EndDate + " = " + (record.EndDate == null ? "NULL" : "'" + record.EndDate.Value.ToString(dateTimeFormat) + "'") + ", "
+                    + Record.ColumnName_Comments + " = '" + (record.Comments ?? "").Replace("'", "''").Replace("\\", "\\\\") + "', "
+                    + Record.ColumnName_ManagerComments + " = '" + (record.ManagerComments ?? "").Replace("'", "''").Replace("\\", "\\\\") + "', "
+                    + Record.ColumnName_CreatedBy + " = " + int.Parse(record.CreatedBy) + ", "
+                    + Record.ColumnName_ModifiedBy + " = " + (string.IsNullOrEmpty(record.ModifiedBy) ? "NULL" : int.Parse(record.ModifiedBy).ToString()) + ", "
+                    + Record.ColumnName_ModifiedOn + " = '" + DateTime.Now.ToString(dateTimeFormat) + "', "
+                    + Record.ColumnName_AssignedTo + " = " + (string.IsNullOrEmpty(record.AssignedTo) ? "NULL" : int.Parse(record.AssignedTo).ToString()) + ", "
+                    + Record.ColumnName_AssignedOn + " = " + (record.AssignedOn == null ? "NULL" : "'" + record.AssignedOn.Value.ToString(dateTimeFormat) + "'")
+                    + " WHERE "
+                    + Record.ColumnName_Id + " = " + int.Parse(recordId) + ";"
+                    , conn);
+                _ = command.ExecuteNonQuery();
             }
         }
 
@@ -1961,32 +1724,21 @@ namespace Wexflow.Core.Db.MySQL
             {
                 if (recordIds.Length > 0)
                 {
-                    using (var conn = new MySqlConnection(connectionString))
+                    using MySqlConnection conn = new(connectionString);
+                    conn.Open();
+
+                    StringBuilder builder = new("(");
+
+                    for (var i = 0; i < recordIds.Length; i++)
                     {
-                        conn.Open();
-
-                        var builder = new StringBuilder("(");
-
-                        for (int i = 0; i < recordIds.Length; i++)
-                        {
-                            var id = recordIds[i];
-                            builder.Append(id);
-                            if (i < recordIds.Length - 1)
-                            {
-                                builder.Append(", ");
-                            }
-                            else
-                            {
-                                builder.Append(")");
-                            }
-                        }
-
-                        using (var command = new MySqlCommand("DELETE FROM " + Core.Db.Record.DocumentName
-                            + " WHERE " + Record.ColumnName_Id + " IN " + builder.ToString() + ";", conn))
-                        {
-                            command.ExecuteNonQuery();
-                        }
+                        var id = recordIds[i];
+                        _ = builder.Append(id);
+                        _ = i < recordIds.Length - 1 ? builder.Append(", ") : builder.Append(')');
                     }
+
+                    using MySqlCommand command = new("DELETE FROM " + Core.Db.Record.DocumentName
+                        + " WHERE " + Record.ColumnName_Id + " IN " + builder.ToString() + ";", conn);
+                    _ = command.ExecuteNonQuery();
                 }
             }
         }
@@ -1995,55 +1747,49 @@ namespace Wexflow.Core.Db.MySQL
         {
             lock (padlock)
             {
-                using (var conn = new MySqlConnection(connectionString))
+                using MySqlConnection conn = new(connectionString);
+                conn.Open();
+
+                using MySqlCommand command = new("SELECT "
+                    + Record.ColumnName_Id + ", "
+                    + Record.ColumnName_Name + ", "
+                    + Record.ColumnName_Description + ", "
+                    + Record.ColumnName_Approved + ", "
+                    + Record.ColumnName_StartDate + ", "
+                    + Record.ColumnName_EndDate + ", "
+                    + Record.ColumnName_Comments + ", "
+                    + Record.ColumnName_ManagerComments + ", "
+                    + Record.ColumnName_CreatedBy + ", "
+                    + Record.ColumnName_CreatedOn + ", "
+                    + Record.ColumnName_ModifiedBy + ", "
+                    + Record.ColumnName_ModifiedOn + ", "
+                    + Record.ColumnName_AssignedTo + ", "
+                    + Record.ColumnName_AssignedOn
+                    + " FROM " + Core.Db.Record.DocumentName
+                    + " WHERE " + Record.ColumnName_Id + " = " + int.Parse(id)
+                    + ";", conn);
+                using var reader = command.ExecuteReader();
+                if (reader.Read())
                 {
-                    conn.Open();
-
-                    using (var command = new MySqlCommand("SELECT "
-                        + Record.ColumnName_Id + ", "
-                        + Record.ColumnName_Name + ", "
-                        + Record.ColumnName_Description + ", "
-                        + Record.ColumnName_Approved + ", "
-                        + Record.ColumnName_StartDate + ", "
-                        + Record.ColumnName_EndDate + ", "
-                        + Record.ColumnName_Comments + ", "
-                        + Record.ColumnName_ManagerComments + ", "
-                        + Record.ColumnName_CreatedBy + ", "
-                        + Record.ColumnName_CreatedOn + ", "
-                        + Record.ColumnName_ModifiedBy + ", "
-                        + Record.ColumnName_ModifiedOn + ", "
-                        + Record.ColumnName_AssignedTo + ", "
-                        + Record.ColumnName_AssignedOn
-                        + " FROM " + Core.Db.Record.DocumentName
-                        + " WHERE " + Record.ColumnName_Id + " = " + int.Parse(id)
-                        + ";", conn))
+                    Record record = new()
                     {
-                        using (var reader = command.ExecuteReader())
-                        {
-                            if (reader.Read())
-                            {
-                                var record = new Record
-                                {
-                                    Id = (int)reader[Record.ColumnName_Id],
-                                    Name = (string)reader[Record.ColumnName_Name],
-                                    Description = (string)reader[Record.ColumnName_Description],
-                                    Approved = (ulong)reader[Record.ColumnName_Approved] == 1 ? true : false,
-                                    StartDate = reader[Record.ColumnName_StartDate] == DBNull.Value ? null : (DateTime?)reader[Record.ColumnName_StartDate],
-                                    EndDate = reader[Record.ColumnName_EndDate] == DBNull.Value ? null : (DateTime?)reader[Record.ColumnName_EndDate],
-                                    Comments = (string)reader[Record.ColumnName_Comments],
-                                    ManagerComments = (string)reader[Record.ColumnName_ManagerComments],
-                                    CreatedBy = ((int)reader[Record.ColumnName_CreatedBy]).ToString(),
-                                    CreatedOn = (DateTime)reader[Record.ColumnName_CreatedOn],
-                                    ModifiedBy = reader[Record.ColumnName_ModifiedBy] == DBNull.Value ? string.Empty : ((int)reader[Record.ColumnName_ModifiedBy]).ToString(),
-                                    ModifiedOn = reader[Record.ColumnName_ModifiedOn] == DBNull.Value ? null : (DateTime?)reader[Record.ColumnName_ModifiedOn],
-                                    AssignedTo = reader[Record.ColumnName_AssignedTo] == DBNull.Value ? string.Empty : ((int)reader[Record.ColumnName_AssignedTo]).ToString(),
-                                    AssignedOn = reader[Record.ColumnName_AssignedOn] == DBNull.Value ? null : (DateTime?)reader[Record.ColumnName_AssignedOn]
-                                };
+                        Id = (int)reader[Record.ColumnName_Id],
+                        Name = (string)reader[Record.ColumnName_Name],
+                        Description = (string)reader[Record.ColumnName_Description],
+                        Approved = (ulong)reader[Record.ColumnName_Approved] == 1,
+                        StartDate = reader[Record.ColumnName_StartDate] == DBNull.Value ? null : (DateTime?)reader[Record.ColumnName_StartDate],
+                        EndDate = reader[Record.ColumnName_EndDate] == DBNull.Value ? null : (DateTime?)reader[Record.ColumnName_EndDate],
+                        Comments = (string)reader[Record.ColumnName_Comments],
+                        ManagerComments = (string)reader[Record.ColumnName_ManagerComments],
+                        CreatedBy = ((int)reader[Record.ColumnName_CreatedBy]).ToString(),
+                        CreatedOn = (DateTime)reader[Record.ColumnName_CreatedOn],
+                        ModifiedBy = reader[Record.ColumnName_ModifiedBy] == DBNull.Value ? string.Empty : ((int)reader[Record.ColumnName_ModifiedBy]).ToString(),
+                        ModifiedOn = reader[Record.ColumnName_ModifiedOn] == DBNull.Value ? null : (DateTime?)reader[Record.ColumnName_ModifiedOn],
+                        AssignedTo = reader[Record.ColumnName_AssignedTo] == DBNull.Value ? string.Empty : ((int)reader[Record.ColumnName_AssignedTo]).ToString(),
+                        AssignedOn = reader[Record.ColumnName_AssignedOn] == DBNull.Value ? null : (DateTime?)reader[Record.ColumnName_AssignedOn]
+                    };
 
-                                return record;
-                            }
-                        }
-                    }
+                    return record;
                 }
 
                 return null;
@@ -2054,13 +1800,13 @@ namespace Wexflow.Core.Db.MySQL
         {
             lock (padlock)
             {
-                List<Record> records = new List<Record>();
+                List<Record> records = new();
 
-                using (var conn = new MySqlConnection(connectionString))
+                using (MySqlConnection conn = new(connectionString))
                 {
                     conn.Open();
 
-                    using (var command = new MySqlCommand("SELECT "
+                    using MySqlCommand command = new("SELECT "
                         + Record.ColumnName_Id + ", "
                         + Record.ColumnName_Name + ", "
                         + Record.ColumnName_Description + ", "
@@ -2079,33 +1825,29 @@ namespace Wexflow.Core.Db.MySQL
                         + " WHERE " + "LOWER(" + Record.ColumnName_Name + ")" + " LIKE '%" + (keyword ?? "").Replace("'", "''").ToLower() + "%'"
                         + " OR " + "LOWER(" + Record.ColumnName_Description + ")" + " LIKE '%" + (keyword ?? "").Replace("'", "''").ToLower() + "%'"
                         + " ORDER BY " + Record.ColumnName_CreatedOn + " DESC"
-                        + ";", conn))
+                        + ";", conn);
+                    using var reader = command.ExecuteReader();
+                    while (reader.Read())
                     {
-                        using (var reader = command.ExecuteReader())
+                        Record record = new()
                         {
-                            while (reader.Read())
-                            {
-                                var record = new Record
-                                {
-                                    Id = (int)reader[Record.ColumnName_Id],
-                                    Name = (string)reader[Record.ColumnName_Name],
-                                    Description = (string)reader[Record.ColumnName_Description],
-                                    Approved = (ulong)reader[Record.ColumnName_Approved] == 1 ? true : false,
-                                    StartDate = reader[Record.ColumnName_StartDate] == DBNull.Value ? null : (DateTime?)reader[Record.ColumnName_StartDate],
-                                    EndDate = reader[Record.ColumnName_EndDate] == DBNull.Value ? null : (DateTime?)reader[Record.ColumnName_EndDate],
-                                    Comments = (string)reader[Record.ColumnName_Comments],
-                                    ManagerComments = (string)reader[Record.ColumnName_ManagerComments],
-                                    CreatedBy = ((int)reader[Record.ColumnName_CreatedBy]).ToString(),
-                                    CreatedOn = (DateTime)reader[Record.ColumnName_CreatedOn],
-                                    ModifiedBy = reader[Record.ColumnName_ModifiedBy] == DBNull.Value ? string.Empty : ((int)reader[Record.ColumnName_ModifiedBy]).ToString(),
-                                    ModifiedOn = reader[Record.ColumnName_ModifiedOn] == DBNull.Value ? null : (DateTime?)reader[Record.ColumnName_ModifiedOn],
-                                    AssignedTo = reader[Record.ColumnName_AssignedTo] == DBNull.Value ? string.Empty : ((int)reader[Record.ColumnName_AssignedTo]).ToString(),
-                                    AssignedOn = reader[Record.ColumnName_AssignedOn] == DBNull.Value ? null : (DateTime?)reader[Record.ColumnName_AssignedOn]
-                                };
+                            Id = (int)reader[Record.ColumnName_Id],
+                            Name = (string)reader[Record.ColumnName_Name],
+                            Description = (string)reader[Record.ColumnName_Description],
+                            Approved = (ulong)reader[Record.ColumnName_Approved] == 1,
+                            StartDate = reader[Record.ColumnName_StartDate] == DBNull.Value ? null : (DateTime?)reader[Record.ColumnName_StartDate],
+                            EndDate = reader[Record.ColumnName_EndDate] == DBNull.Value ? null : (DateTime?)reader[Record.ColumnName_EndDate],
+                            Comments = (string)reader[Record.ColumnName_Comments],
+                            ManagerComments = (string)reader[Record.ColumnName_ManagerComments],
+                            CreatedBy = ((int)reader[Record.ColumnName_CreatedBy]).ToString(),
+                            CreatedOn = (DateTime)reader[Record.ColumnName_CreatedOn],
+                            ModifiedBy = reader[Record.ColumnName_ModifiedBy] == DBNull.Value ? string.Empty : ((int)reader[Record.ColumnName_ModifiedBy]).ToString(),
+                            ModifiedOn = reader[Record.ColumnName_ModifiedOn] == DBNull.Value ? null : (DateTime?)reader[Record.ColumnName_ModifiedOn],
+                            AssignedTo = reader[Record.ColumnName_AssignedTo] == DBNull.Value ? string.Empty : ((int)reader[Record.ColumnName_AssignedTo]).ToString(),
+                            AssignedOn = reader[Record.ColumnName_AssignedOn] == DBNull.Value ? null : (DateTime?)reader[Record.ColumnName_AssignedOn]
+                        };
 
-                                records.Add(record);
-                            }
-                        }
+                        records.Add(record);
                     }
                 }
 
@@ -2117,13 +1859,13 @@ namespace Wexflow.Core.Db.MySQL
         {
             lock (padlock)
             {
-                List<Record> records = new List<Record>();
+                List<Record> records = new();
 
-                using (var conn = new MySqlConnection(connectionString))
+                using (MySqlConnection conn = new(connectionString))
                 {
                     conn.Open();
 
-                    using (var command = new MySqlCommand("SELECT "
+                    using MySqlCommand command = new("SELECT "
                         + Record.ColumnName_Id + ", "
                         + Record.ColumnName_Name + ", "
                         + Record.ColumnName_Description + ", "
@@ -2141,33 +1883,29 @@ namespace Wexflow.Core.Db.MySQL
                         + " FROM " + Core.Db.Record.DocumentName
                         + " WHERE " + Record.ColumnName_CreatedBy + " = " + int.Parse(createdBy)
                         + " ORDER BY " + Record.ColumnName_Name + " ASC"
-                        + ";", conn))
+                        + ";", conn);
+                    using var reader = command.ExecuteReader();
+                    while (reader.Read())
                     {
-                        using (var reader = command.ExecuteReader())
+                        Record record = new()
                         {
-                            while (reader.Read())
-                            {
-                                var record = new Record
-                                {
-                                    Id = (int)reader[Record.ColumnName_Id],
-                                    Name = (string)reader[Record.ColumnName_Name],
-                                    Description = (string)reader[Record.ColumnName_Description],
-                                    Approved = (ulong)reader[Record.ColumnName_Approved] == 1 ? true : false,
-                                    StartDate = reader[Record.ColumnName_StartDate] == DBNull.Value ? null : (DateTime?)reader[Record.ColumnName_StartDate],
-                                    EndDate = reader[Record.ColumnName_EndDate] == DBNull.Value ? null : (DateTime?)reader[Record.ColumnName_EndDate],
-                                    Comments = (string)reader[Record.ColumnName_Comments],
-                                    ManagerComments = (string)reader[Record.ColumnName_ManagerComments],
-                                    CreatedBy = ((int)reader[Record.ColumnName_CreatedBy]).ToString(),
-                                    CreatedOn = (DateTime)reader[Record.ColumnName_CreatedOn],
-                                    ModifiedBy = reader[Record.ColumnName_ModifiedBy] == DBNull.Value ? string.Empty : ((int)reader[Record.ColumnName_ModifiedBy]).ToString(),
-                                    ModifiedOn = reader[Record.ColumnName_ModifiedOn] == DBNull.Value ? null : (DateTime?)reader[Record.ColumnName_ModifiedOn],
-                                    AssignedTo = reader[Record.ColumnName_AssignedTo] == DBNull.Value ? string.Empty : ((int)reader[Record.ColumnName_AssignedTo]).ToString(),
-                                    AssignedOn = reader[Record.ColumnName_AssignedOn] == DBNull.Value ? null : (DateTime?)reader[Record.ColumnName_AssignedOn]
-                                };
+                            Id = (int)reader[Record.ColumnName_Id],
+                            Name = (string)reader[Record.ColumnName_Name],
+                            Description = (string)reader[Record.ColumnName_Description],
+                            Approved = (ulong)reader[Record.ColumnName_Approved] == 1,
+                            StartDate = reader[Record.ColumnName_StartDate] == DBNull.Value ? null : (DateTime?)reader[Record.ColumnName_StartDate],
+                            EndDate = reader[Record.ColumnName_EndDate] == DBNull.Value ? null : (DateTime?)reader[Record.ColumnName_EndDate],
+                            Comments = (string)reader[Record.ColumnName_Comments],
+                            ManagerComments = (string)reader[Record.ColumnName_ManagerComments],
+                            CreatedBy = ((int)reader[Record.ColumnName_CreatedBy]).ToString(),
+                            CreatedOn = (DateTime)reader[Record.ColumnName_CreatedOn],
+                            ModifiedBy = reader[Record.ColumnName_ModifiedBy] == DBNull.Value ? string.Empty : ((int)reader[Record.ColumnName_ModifiedBy]).ToString(),
+                            ModifiedOn = reader[Record.ColumnName_ModifiedOn] == DBNull.Value ? null : (DateTime?)reader[Record.ColumnName_ModifiedOn],
+                            AssignedTo = reader[Record.ColumnName_AssignedTo] == DBNull.Value ? string.Empty : ((int)reader[Record.ColumnName_AssignedTo]).ToString(),
+                            AssignedOn = reader[Record.ColumnName_AssignedOn] == DBNull.Value ? null : (DateTime?)reader[Record.ColumnName_AssignedOn]
+                        };
 
-                                records.Add(record);
-                            }
-                        }
+                        records.Add(record);
                     }
                 }
 
@@ -2179,13 +1917,13 @@ namespace Wexflow.Core.Db.MySQL
         {
             lock (padlock)
             {
-                List<Record> records = new List<Record>();
+                List<Record> records = new();
 
-                using (var conn = new MySqlConnection(connectionString))
+                using (MySqlConnection conn = new(connectionString))
                 {
                     conn.Open();
 
-                    using (var command = new MySqlCommand("SELECT "
+                    using MySqlCommand command = new("SELECT "
                         + Record.ColumnName_Id + ", "
                         + Record.ColumnName_Name + ", "
                         + Record.ColumnName_Description + ", "
@@ -2205,33 +1943,29 @@ namespace Wexflow.Core.Db.MySQL
                         + " OR " + "LOWER(" + Record.ColumnName_Description + ")" + " LIKE '%" + (keyword ?? "").Replace("'", "''").ToLower() + "%')"
                         + " AND (" + Record.ColumnName_CreatedBy + " = " + int.Parse(createdBy) + " OR " + Record.ColumnName_AssignedTo + " = " + int.Parse(assingedTo) + ")"
                         + " ORDER BY " + Record.ColumnName_CreatedOn + " DESC"
-                        + ";", conn))
+                        + ";", conn);
+                    using var reader = command.ExecuteReader();
+                    while (reader.Read())
                     {
-                        using (var reader = command.ExecuteReader())
+                        Record record = new()
                         {
-                            while (reader.Read())
-                            {
-                                var record = new Record
-                                {
-                                    Id = (int)reader[Record.ColumnName_Id],
-                                    Name = (string)reader[Record.ColumnName_Name],
-                                    Description = (string)reader[Record.ColumnName_Description],
-                                    Approved = (ulong)reader[Record.ColumnName_Approved] == 1 ? true : false,
-                                    StartDate = reader[Record.ColumnName_StartDate] == DBNull.Value ? null : (DateTime?)reader[Record.ColumnName_StartDate],
-                                    EndDate = reader[Record.ColumnName_EndDate] == DBNull.Value ? null : (DateTime?)reader[Record.ColumnName_EndDate],
-                                    Comments = (string)reader[Record.ColumnName_Comments],
-                                    ManagerComments = (string)reader[Record.ColumnName_ManagerComments],
-                                    CreatedBy = ((int)reader[Record.ColumnName_CreatedBy]).ToString(),
-                                    CreatedOn = (DateTime)reader[Record.ColumnName_CreatedOn],
-                                    ModifiedBy = reader[Record.ColumnName_ModifiedBy] == DBNull.Value ? string.Empty : ((int)reader[Record.ColumnName_ModifiedBy]).ToString(),
-                                    ModifiedOn = reader[Record.ColumnName_ModifiedOn] == DBNull.Value ? null : (DateTime?)reader[Record.ColumnName_ModifiedOn],
-                                    AssignedTo = reader[Record.ColumnName_AssignedTo] == DBNull.Value ? string.Empty : ((int)reader[Record.ColumnName_AssignedTo]).ToString(),
-                                    AssignedOn = reader[Record.ColumnName_AssignedOn] == DBNull.Value ? null : (DateTime?)reader[Record.ColumnName_AssignedOn]
-                                };
+                            Id = (int)reader[Record.ColumnName_Id],
+                            Name = (string)reader[Record.ColumnName_Name],
+                            Description = (string)reader[Record.ColumnName_Description],
+                            Approved = (ulong)reader[Record.ColumnName_Approved] == 1,
+                            StartDate = reader[Record.ColumnName_StartDate] == DBNull.Value ? null : (DateTime?)reader[Record.ColumnName_StartDate],
+                            EndDate = reader[Record.ColumnName_EndDate] == DBNull.Value ? null : (DateTime?)reader[Record.ColumnName_EndDate],
+                            Comments = (string)reader[Record.ColumnName_Comments],
+                            ManagerComments = (string)reader[Record.ColumnName_ManagerComments],
+                            CreatedBy = ((int)reader[Record.ColumnName_CreatedBy]).ToString(),
+                            CreatedOn = (DateTime)reader[Record.ColumnName_CreatedOn],
+                            ModifiedBy = reader[Record.ColumnName_ModifiedBy] == DBNull.Value ? string.Empty : ((int)reader[Record.ColumnName_ModifiedBy]).ToString(),
+                            ModifiedOn = reader[Record.ColumnName_ModifiedOn] == DBNull.Value ? null : (DateTime?)reader[Record.ColumnName_ModifiedOn],
+                            AssignedTo = reader[Record.ColumnName_AssignedTo] == DBNull.Value ? string.Empty : ((int)reader[Record.ColumnName_AssignedTo]).ToString(),
+                            AssignedOn = reader[Record.ColumnName_AssignedOn] == DBNull.Value ? null : (DateTime?)reader[Record.ColumnName_AssignedOn]
+                        };
 
-                                records.Add(record);
-                            }
-                        }
+                        records.Add(record);
                     }
                 }
 
@@ -2243,25 +1977,21 @@ namespace Wexflow.Core.Db.MySQL
         {
             lock (padlock)
             {
-                using (var conn = new MySqlConnection(connectionString))
-                {
-                    conn.Open();
+                using MySqlConnection conn = new(connectionString);
+                conn.Open();
 
-                    using (var command = new MySqlCommand("INSERT INTO " + Core.Db.Version.DocumentName + "("
-                        + Version.ColumnName_RecordId + ", "
-                        + Version.ColumnName_FilePath + ", "
-                        + Version.ColumnName_CreatedOn + ")"
-                        + " VALUES("
-                        + int.Parse(version.RecordId) + ", "
-                        + "'" + (version.FilePath ?? "").Replace("'", "''").Replace("\\", "\\\\") + "'" + ", "
-                        + "'" + DateTime.Now.ToString(dateTimeFormat) + "'" + ");"
-                        + " SELECT LAST_INSERT_ID();"
-                        , conn))
-                    {
-                        var id = (ulong)command.ExecuteScalar();
-                        return id.ToString();
-                    }
-                }
+                using MySqlCommand command = new("INSERT INTO " + Core.Db.Version.DocumentName + "("
+                    + Version.ColumnName_RecordId + ", "
+                    + Version.ColumnName_FilePath + ", "
+                    + Version.ColumnName_CreatedOn + ")"
+                    + " VALUES("
+                    + int.Parse(version.RecordId) + ", "
+                    + "'" + (version.FilePath ?? "").Replace("'", "''").Replace("\\", "\\\\") + "'" + ", "
+                    + "'" + DateTime.Now.ToString(dateTimeFormat) + "'" + ");"
+                    + " SELECT LAST_INSERT_ID();"
+                    , conn);
+                var id = (ulong)command.ExecuteScalar();
+                return id.ToString();
             }
         }
 
@@ -2269,20 +1999,16 @@ namespace Wexflow.Core.Db.MySQL
         {
             lock (padlock)
             {
-                using (var conn = new MySqlConnection(connectionString))
-                {
-                    conn.Open();
+                using MySqlConnection conn = new(connectionString);
+                conn.Open();
 
-                    using (var command = new MySqlCommand("UPDATE " + Core.Db.Version.DocumentName + " SET "
-                        + Version.ColumnName_RecordId + " = " + int.Parse(version.RecordId) + ", "
-                        + Version.ColumnName_FilePath + " = '" + (version.FilePath ?? "").Replace("'", "''").Replace("\\", "\\\\") + "'"
-                        + " WHERE "
-                        + Version.ColumnName_Id + " = " + int.Parse(versionId) + ";"
-                        , conn))
-                    {
-                        command.ExecuteNonQuery();
-                    }
-                }
+                using MySqlCommand command = new("UPDATE " + Core.Db.Version.DocumentName + " SET "
+                    + Version.ColumnName_RecordId + " = " + int.Parse(version.RecordId) + ", "
+                    + Version.ColumnName_FilePath + " = '" + (version.FilePath ?? "").Replace("'", "''").Replace("\\", "\\\\") + "'"
+                    + " WHERE "
+                    + Version.ColumnName_Id + " = " + int.Parse(versionId) + ";"
+                    , conn);
+                _ = command.ExecuteNonQuery();
             }
         }
 
@@ -2292,32 +2018,21 @@ namespace Wexflow.Core.Db.MySQL
             {
                 if (versionIds.Length > 0)
                 {
-                    using (var conn = new MySqlConnection(connectionString))
+                    using MySqlConnection conn = new(connectionString);
+                    conn.Open();
+
+                    StringBuilder builder = new("(");
+
+                    for (var i = 0; i < versionIds.Length; i++)
                     {
-                        conn.Open();
-
-                        var builder = new StringBuilder("(");
-
-                        for (int i = 0; i < versionIds.Length; i++)
-                        {
-                            var id = versionIds[i];
-                            builder.Append(id);
-                            if (i < versionIds.Length - 1)
-                            {
-                                builder.Append(", ");
-                            }
-                            else
-                            {
-                                builder.Append(")");
-                            }
-                        }
-
-                        using (var command = new MySqlCommand("DELETE FROM " + Core.Db.Version.DocumentName
-                            + " WHERE " + Version.ColumnName_Id + " IN " + builder.ToString() + ";", conn))
-                        {
-                            command.ExecuteNonQuery();
-                        }
+                        var id = versionIds[i];
+                        _ = builder.Append(id);
+                        _ = i < versionIds.Length - 1 ? builder.Append(", ") : builder.Append(')');
                     }
+
+                    using MySqlCommand command = new("DELETE FROM " + Core.Db.Version.DocumentName
+                        + " WHERE " + Version.ColumnName_Id + " IN " + builder.ToString() + ";", conn);
+                    _ = command.ExecuteNonQuery();
                 }
             }
         }
@@ -2326,36 +2041,32 @@ namespace Wexflow.Core.Db.MySQL
         {
             lock (padlock)
             {
-                List<Version> versions = new List<Version>();
+                List<Version> versions = new();
 
-                using (var conn = new MySqlConnection(connectionString))
+                using (MySqlConnection conn = new(connectionString))
                 {
                     conn.Open();
 
-                    using (var command = new MySqlCommand("SELECT "
+                    using MySqlCommand command = new("SELECT "
                         + Version.ColumnName_Id + ", "
                         + Version.ColumnName_RecordId + ", "
                         + Version.ColumnName_FilePath + ", "
                         + Version.ColumnName_CreatedOn
                         + " FROM " + Core.Db.Version.DocumentName
                         + " WHERE " + Version.ColumnName_RecordId + " = " + int.Parse(recordId)
-                        + ";", conn))
+                        + ";", conn);
+                    using var reader = command.ExecuteReader();
+                    while (reader.Read())
                     {
-                        using (var reader = command.ExecuteReader())
+                        Version version = new()
                         {
-                            while (reader.Read())
-                            {
-                                var version = new Version
-                                {
-                                    Id = (int)reader[Version.ColumnName_Id],
-                                    RecordId = ((int)reader[Version.ColumnName_RecordId]).ToString(),
-                                    FilePath = (string)reader[Version.ColumnName_FilePath],
-                                    CreatedOn = (DateTime)reader[Version.ColumnName_CreatedOn]
-                                };
+                            Id = (int)reader[Version.ColumnName_Id],
+                            RecordId = ((int)reader[Version.ColumnName_RecordId]).ToString(),
+                            FilePath = (string)reader[Version.ColumnName_FilePath],
+                            CreatedOn = (DateTime)reader[Version.ColumnName_CreatedOn]
+                        };
 
-                                versions.Add(version);
-                            }
-                        }
+                        versions.Add(version);
                     }
                 }
 
@@ -2367,37 +2078,31 @@ namespace Wexflow.Core.Db.MySQL
         {
             lock (padlock)
             {
-                using (var conn = new MySqlConnection(connectionString))
+                using MySqlConnection conn = new(connectionString);
+                conn.Open();
+
+                using MySqlCommand command = new("SELECT "
+                    + Version.ColumnName_Id + ", "
+                    + Version.ColumnName_RecordId + ", "
+                    + Version.ColumnName_FilePath + ", "
+                    + Version.ColumnName_CreatedOn
+                    + " FROM " + Core.Db.Version.DocumentName
+                    + " WHERE " + Version.ColumnName_RecordId + " = " + int.Parse(recordId)
+                    + " ORDER BY " + Version.ColumnName_CreatedOn + " DESC"
+                    + " LIMIT 1"
+                    + ";", conn);
+                using var reader = command.ExecuteReader();
+                if (reader.Read())
                 {
-                    conn.Open();
-
-                    using (var command = new MySqlCommand("SELECT "
-                        + Version.ColumnName_Id + ", "
-                        + Version.ColumnName_RecordId + ", "
-                        + Version.ColumnName_FilePath + ", "
-                        + Version.ColumnName_CreatedOn
-                        + " FROM " + Core.Db.Version.DocumentName
-                        + " WHERE " + Version.ColumnName_RecordId + " = " + int.Parse(recordId)
-                        + " ORDER BY " + Version.ColumnName_CreatedOn + " DESC"
-                        + " LIMIT 1"
-                        + ";", conn))
+                    Version version = new()
                     {
-                        using (var reader = command.ExecuteReader())
-                        {
-                            if (reader.Read())
-                            {
-                                var version = new Version
-                                {
-                                    Id = (int)reader[Version.ColumnName_Id],
-                                    RecordId = ((int)reader[Version.ColumnName_RecordId]).ToString(),
-                                    FilePath = (string)reader[Version.ColumnName_FilePath],
-                                    CreatedOn = (DateTime)reader[Version.ColumnName_CreatedOn]
-                                };
+                        Id = (int)reader[Version.ColumnName_Id],
+                        RecordId = ((int)reader[Version.ColumnName_RecordId]).ToString(),
+                        FilePath = (string)reader[Version.ColumnName_FilePath],
+                        CreatedOn = (DateTime)reader[Version.ColumnName_CreatedOn]
+                    };
 
-                                return version;
-                            }
-                        }
-                    }
+                    return version;
                 }
 
                 return null;
@@ -2408,29 +2113,25 @@ namespace Wexflow.Core.Db.MySQL
         {
             lock (padlock)
             {
-                using (var conn = new MySqlConnection(connectionString))
-                {
-                    conn.Open();
+                using MySqlConnection conn = new(connectionString);
+                conn.Open();
 
-                    using (var command = new MySqlCommand("INSERT INTO " + Core.Db.Notification.DocumentName + "("
-                        + Notification.ColumnName_AssignedBy + ", "
-                        + Notification.ColumnName_AssignedOn + ", "
-                        + Notification.ColumnName_AssignedTo + ", "
-                        + Notification.ColumnName_Message + ", "
-                        + Notification.ColumnName_IsRead + ")"
-                        + " VALUES("
-                        + (!string.IsNullOrEmpty(notification.AssignedBy) ? int.Parse(notification.AssignedBy).ToString() : "NULL") + ", "
-                        + "'" + notification.AssignedOn.ToString(dateTimeFormat) + "'" + ", "
-                        + (!string.IsNullOrEmpty(notification.AssignedTo) ? int.Parse(notification.AssignedTo).ToString() : "NULL") + ", "
-                        + "'" + (notification.Message ?? "").Replace("'", "''").Replace("\\", "\\\\") + "'" + ", "
-                        + (notification.IsRead ? "1" : "0") + ");"
-                        + " SELECT LAST_INSERT_ID();"
-                        , conn))
-                    {
-                        var id = (ulong)command.ExecuteScalar();
-                        return id.ToString();
-                    }
-                }
+                using MySqlCommand command = new("INSERT INTO " + Core.Db.Notification.DocumentName + "("
+                    + Notification.ColumnName_AssignedBy + ", "
+                    + Notification.ColumnName_AssignedOn + ", "
+                    + Notification.ColumnName_AssignedTo + ", "
+                    + Notification.ColumnName_Message + ", "
+                    + Notification.ColumnName_IsRead + ")"
+                    + " VALUES("
+                    + (!string.IsNullOrEmpty(notification.AssignedBy) ? int.Parse(notification.AssignedBy).ToString() : "NULL") + ", "
+                    + "'" + notification.AssignedOn.ToString(dateTimeFormat) + "'" + ", "
+                    + (!string.IsNullOrEmpty(notification.AssignedTo) ? int.Parse(notification.AssignedTo).ToString() : "NULL") + ", "
+                    + "'" + (notification.Message ?? "").Replace("'", "''").Replace("\\", "\\\\") + "'" + ", "
+                    + (notification.IsRead ? "1" : "0") + ");"
+                    + " SELECT LAST_INSERT_ID();"
+                    , conn);
+                var id = (ulong)command.ExecuteScalar();
+                return id.ToString();
             }
         }
 
@@ -2438,33 +2139,22 @@ namespace Wexflow.Core.Db.MySQL
         {
             lock (padlock)
             {
-                using (var conn = new MySqlConnection(connectionString))
+                using MySqlConnection conn = new(connectionString);
+                conn.Open();
+
+                StringBuilder builder = new("(");
+
+                for (var i = 0; i < notificationIds.Length; i++)
                 {
-                    conn.Open();
-
-                    var builder = new StringBuilder("(");
-
-                    for (int i = 0; i < notificationIds.Length; i++)
-                    {
-                        var id = notificationIds[i];
-                        builder.Append(id);
-                        if (i < notificationIds.Length - 1)
-                        {
-                            builder.Append(", ");
-                        }
-                        else
-                        {
-                            builder.Append(")");
-                        }
-                    }
-
-                    using (var command = new MySqlCommand("UPDATE " + Core.Db.Notification.DocumentName
-                        + " SET " + Notification.ColumnName_IsRead + " = " + "1"
-                        + " WHERE " + Notification.ColumnName_Id + " IN " + builder.ToString() + ";", conn))
-                    {
-                        command.ExecuteNonQuery();
-                    }
+                    var id = notificationIds[i];
+                    _ = builder.Append(id);
+                    _ = i < notificationIds.Length - 1 ? builder.Append(", ") : builder.Append(')');
                 }
+
+                using MySqlCommand command = new("UPDATE " + Core.Db.Notification.DocumentName
+                    + " SET " + Notification.ColumnName_IsRead + " = " + "1"
+                    + " WHERE " + Notification.ColumnName_Id + " IN " + builder.ToString() + ";", conn);
+                _ = command.ExecuteNonQuery();
             }
         }
 
@@ -2472,33 +2162,22 @@ namespace Wexflow.Core.Db.MySQL
         {
             lock (padlock)
             {
-                using (var conn = new MySqlConnection(connectionString))
+                using MySqlConnection conn = new(connectionString);
+                conn.Open();
+
+                StringBuilder builder = new("(");
+
+                for (var i = 0; i < notificationIds.Length; i++)
                 {
-                    conn.Open();
-
-                    var builder = new StringBuilder("(");
-
-                    for (int i = 0; i < notificationIds.Length; i++)
-                    {
-                        var id = notificationIds[i];
-                        builder.Append(id);
-                        if (i < notificationIds.Length - 1)
-                        {
-                            builder.Append(", ");
-                        }
-                        else
-                        {
-                            builder.Append(")");
-                        }
-                    }
-
-                    using (var command = new MySqlCommand("UPDATE " + Core.Db.Notification.DocumentName
-                        + " SET " + Notification.ColumnName_IsRead + " = " + "0"
-                        + " WHERE " + Notification.ColumnName_Id + " IN " + builder.ToString() + ";", conn))
-                    {
-                        command.ExecuteNonQuery();
-                    }
+                    var id = notificationIds[i];
+                    _ = builder.Append(id);
+                    _ = i < notificationIds.Length - 1 ? builder.Append(", ") : builder.Append(')');
                 }
+
+                using MySqlCommand command = new("UPDATE " + Core.Db.Notification.DocumentName
+                    + " SET " + Notification.ColumnName_IsRead + " = " + "0"
+                    + " WHERE " + Notification.ColumnName_Id + " IN " + builder.ToString() + ";", conn);
+                _ = command.ExecuteNonQuery();
             }
         }
 
@@ -2508,32 +2187,21 @@ namespace Wexflow.Core.Db.MySQL
             {
                 if (notificationIds.Length > 0)
                 {
-                    using (var conn = new MySqlConnection(connectionString))
+                    using MySqlConnection conn = new(connectionString);
+                    conn.Open();
+
+                    StringBuilder builder = new("(");
+
+                    for (var i = 0; i < notificationIds.Length; i++)
                     {
-                        conn.Open();
-
-                        var builder = new StringBuilder("(");
-
-                        for (int i = 0; i < notificationIds.Length; i++)
-                        {
-                            var id = notificationIds[i];
-                            builder.Append(id);
-                            if (i < notificationIds.Length - 1)
-                            {
-                                builder.Append(", ");
-                            }
-                            else
-                            {
-                                builder.Append(")");
-                            }
-                        }
-
-                        using (var command = new MySqlCommand("DELETE FROM " + Core.Db.Notification.DocumentName
-                            + " WHERE " + Notification.ColumnName_Id + " IN " + builder.ToString() + ";", conn))
-                        {
-                            command.ExecuteNonQuery();
-                        }
+                        var id = notificationIds[i];
+                        _ = builder.Append(id);
+                        _ = i < notificationIds.Length - 1 ? builder.Append(", ") : builder.Append(')');
                     }
+
+                    using MySqlCommand command = new("DELETE FROM " + Core.Db.Notification.DocumentName
+                        + " WHERE " + Notification.ColumnName_Id + " IN " + builder.ToString() + ";", conn);
+                    _ = command.ExecuteNonQuery();
                 }
             }
         }
@@ -2542,13 +2210,13 @@ namespace Wexflow.Core.Db.MySQL
         {
             lock (padlock)
             {
-                List<Notification> notifications = new List<Notification>();
+                List<Notification> notifications = new();
 
-                using (var conn = new MySqlConnection(connectionString))
+                using (MySqlConnection conn = new(connectionString))
                 {
                     conn.Open();
 
-                    using (var command = new MySqlCommand("SELECT "
+                    using MySqlCommand command = new("SELECT "
                         + Notification.ColumnName_Id + ", "
                         + Notification.ColumnName_AssignedBy + ", "
                         + Notification.ColumnName_AssignedOn + ", "
@@ -2559,25 +2227,21 @@ namespace Wexflow.Core.Db.MySQL
                         + " WHERE " + "(LOWER(" + Notification.ColumnName_Message + ")" + " LIKE '%" + (keyword ?? "").Replace("'", "''").ToLower() + "%'"
                         + " AND " + Notification.ColumnName_AssignedTo + " = " + int.Parse(assignedTo) + ")"
                         + " ORDER BY " + Notification.ColumnName_AssignedOn + " DESC"
-                        + ";", conn))
+                        + ";", conn);
+                    using var reader = command.ExecuteReader();
+                    while (reader.Read())
                     {
-                        using (var reader = command.ExecuteReader())
+                        Notification notification = new()
                         {
-                            while (reader.Read())
-                            {
-                                var notification = new Notification
-                                {
-                                    Id = (int)reader[Notification.ColumnName_Id],
-                                    AssignedBy = ((int)reader[Notification.ColumnName_AssignedBy]).ToString(),
-                                    AssignedOn = (DateTime)reader[Notification.ColumnName_AssignedOn],
-                                    AssignedTo = ((int)reader[Notification.ColumnName_AssignedTo]).ToString(),
-                                    Message = (string)reader[Notification.ColumnName_Message],
-                                    IsRead = (ulong)reader[Notification.ColumnName_IsRead] == 1 ? true : false
-                                };
+                            Id = (int)reader[Notification.ColumnName_Id],
+                            AssignedBy = ((int)reader[Notification.ColumnName_AssignedBy]).ToString(),
+                            AssignedOn = (DateTime)reader[Notification.ColumnName_AssignedOn],
+                            AssignedTo = ((int)reader[Notification.ColumnName_AssignedTo]).ToString(),
+                            Message = (string)reader[Notification.ColumnName_Message],
+                            IsRead = (ulong)reader[Notification.ColumnName_IsRead] == 1
+                        };
 
-                                notifications.Add(notification);
-                            }
-                        }
+                        notifications.Add(notification);
                     }
                 }
 
@@ -2589,21 +2253,17 @@ namespace Wexflow.Core.Db.MySQL
         {
             lock (padlock)
             {
-                using (var conn = new MySqlConnection(connectionString))
-                {
-                    conn.Open();
+                using MySqlConnection conn = new(connectionString);
+                conn.Open();
 
-                    using (var command = new MySqlCommand("SELECT COUNT(*)"
-                        + " FROM " + Core.Db.Notification.DocumentName
-                        + " WHERE (" + Notification.ColumnName_AssignedTo + " = " + int.Parse(assignedTo)
-                        + " AND " + Notification.ColumnName_IsRead + " = " + "0" + ")"
-                        + ";", conn))
-                    {
-                        var count = (long)command.ExecuteScalar();
-                        var hasNotifications = count > 0;
-                        return hasNotifications;
-                    }
-                }
+                using MySqlCommand command = new("SELECT COUNT(*)"
+                    + " FROM " + Core.Db.Notification.DocumentName
+                    + " WHERE (" + Notification.ColumnName_AssignedTo + " = " + int.Parse(assignedTo)
+                    + " AND " + Notification.ColumnName_IsRead + " = " + "0" + ")"
+                    + ";", conn);
+                var count = (long)command.ExecuteScalar();
+                var hasNotifications = count > 0;
+                return hasNotifications;
             }
         }
 
@@ -2611,26 +2271,22 @@ namespace Wexflow.Core.Db.MySQL
         {
             lock (padlock)
             {
-                using (var conn = new MySqlConnection(connectionString))
-                {
-                    conn.Open();
+                using MySqlConnection conn = new(connectionString);
+                conn.Open();
 
-                    using (var command = new MySqlCommand("INSERT INTO " + Core.Db.Approver.DocumentName + "("
-                        + Approver.ColumnName_UserId + ", "
-                        + Approver.ColumnName_RecordId + ", "
-                        + Approver.ColumnName_Approved + ", "
-                        + Approver.ColumnName_ApprovedOn + ") VALUES("
-                        + int.Parse(approver.UserId) + ", "
-                        + int.Parse(approver.RecordId) + ", "
-                        + (approver.Approved ? "1" : "0") + ", "
-                        + (approver.ApprovedOn == null ? "NULL" : "'" + approver.ApprovedOn.Value.ToString(dateTimeFormat) + "'") + ");"
-                        + " SELECT LAST_INSERT_ID();"
-                        , conn))
-                    {
-                        var id = (ulong)command.ExecuteScalar();
-                        return id.ToString();
-                    }
-                }
+                using MySqlCommand command = new("INSERT INTO " + Core.Db.Approver.DocumentName + "("
+                    + Approver.ColumnName_UserId + ", "
+                    + Approver.ColumnName_RecordId + ", "
+                    + Approver.ColumnName_Approved + ", "
+                    + Approver.ColumnName_ApprovedOn + ") VALUES("
+                    + int.Parse(approver.UserId) + ", "
+                    + int.Parse(approver.RecordId) + ", "
+                    + (approver.Approved ? "1" : "0") + ", "
+                    + (approver.ApprovedOn == null ? "NULL" : "'" + approver.ApprovedOn.Value.ToString(dateTimeFormat) + "'") + ");"
+                    + " SELECT LAST_INSERT_ID();"
+                    , conn);
+                var id = (ulong)command.ExecuteScalar();
+                return id.ToString();
             }
         }
 
@@ -2638,22 +2294,18 @@ namespace Wexflow.Core.Db.MySQL
         {
             lock (padlock)
             {
-                using (var conn = new MySqlConnection(connectionString))
-                {
-                    conn.Open();
+                using MySqlConnection conn = new(connectionString);
+                conn.Open();
 
-                    using (var command = new MySqlCommand("UPDATE " + Core.Db.Approver.DocumentName + " SET "
-                        + Approver.ColumnName_UserId + " = " + int.Parse(approver.UserId) + ", "
-                        + Approver.ColumnName_RecordId + " = " + int.Parse(approver.RecordId) + ", "
-                        + Approver.ColumnName_Approved + " = " + (approver.Approved ? "1" : "0") + ", "
-                        + Approver.ColumnName_ApprovedOn + " = " + (approver.ApprovedOn == null ? "NULL" : "'" + approver.ApprovedOn.Value.ToString(dateTimeFormat) + "'")
-                        + " WHERE "
-                        + Approver.ColumnName_Id + " = " + int.Parse(approverId) + ";"
-                        , conn))
-                    {
-                        command.ExecuteNonQuery();
-                    }
-                }
+                using MySqlCommand command = new("UPDATE " + Core.Db.Approver.DocumentName + " SET "
+                    + Approver.ColumnName_UserId + " = " + int.Parse(approver.UserId) + ", "
+                    + Approver.ColumnName_RecordId + " = " + int.Parse(approver.RecordId) + ", "
+                    + Approver.ColumnName_Approved + " = " + (approver.Approved ? "1" : "0") + ", "
+                    + Approver.ColumnName_ApprovedOn + " = " + (approver.ApprovedOn == null ? "NULL" : "'" + approver.ApprovedOn.Value.ToString(dateTimeFormat) + "'")
+                    + " WHERE "
+                    + Approver.ColumnName_Id + " = " + int.Parse(approverId) + ";"
+                    , conn);
+                _ = command.ExecuteNonQuery();
             }
         }
 
@@ -2661,16 +2313,12 @@ namespace Wexflow.Core.Db.MySQL
         {
             lock (padlock)
             {
-                using (var conn = new MySqlConnection(connectionString))
-                {
-                    conn.Open();
+                using MySqlConnection conn = new(connectionString);
+                conn.Open();
 
-                    using (var command = new MySqlCommand("DELETE FROM " + Core.Db.Approver.DocumentName
-                        + " WHERE " + Approver.ColumnName_RecordId + " = " + int.Parse(recordId) + ";", conn))
-                    {
-                        command.ExecuteNonQuery();
-                    }
-                }
+                using MySqlCommand command = new("DELETE FROM " + Core.Db.Approver.DocumentName
+                    + " WHERE " + Approver.ColumnName_RecordId + " = " + int.Parse(recordId) + ";", conn);
+                _ = command.ExecuteNonQuery();
             }
         }
 
@@ -2678,19 +2326,15 @@ namespace Wexflow.Core.Db.MySQL
         {
             lock (padlock)
             {
-                using (var conn = new MySqlConnection(connectionString))
-                {
-                    conn.Open();
+                using MySqlConnection conn = new(connectionString);
+                conn.Open();
 
-                    using (var command = new MySqlCommand("DELETE FROM " + Core.Db.Approver.DocumentName
-                        + " WHERE " + Approver.ColumnName_RecordId + " = " + int.Parse(recordId)
-                        + " AND " + Approver.ColumnName_Approved + " = " + "1"
-                        + ";"
-                        , conn))
-                    {
-                        command.ExecuteNonQuery();
-                    }
-                }
+                using MySqlCommand command = new("DELETE FROM " + Core.Db.Approver.DocumentName
+                    + " WHERE " + Approver.ColumnName_RecordId + " = " + int.Parse(recordId)
+                    + " AND " + Approver.ColumnName_Approved + " = " + "1"
+                    + ";"
+                    , conn);
+                _ = command.ExecuteNonQuery();
             }
         }
 
@@ -2698,16 +2342,12 @@ namespace Wexflow.Core.Db.MySQL
         {
             lock (padlock)
             {
-                using (var conn = new MySqlConnection(connectionString))
-                {
-                    conn.Open();
+                using MySqlConnection conn = new(connectionString);
+                conn.Open();
 
-                    using (var command = new MySqlCommand("DELETE FROM " + Core.Db.Approver.DocumentName
-                        + " WHERE " + Approver.ColumnName_UserId + " = " + int.Parse(userId) + ";", conn))
-                    {
-                        command.ExecuteNonQuery();
-                    }
-                }
+                using MySqlCommand command = new("DELETE FROM " + Core.Db.Approver.DocumentName
+                    + " WHERE " + Approver.ColumnName_UserId + " = " + int.Parse(userId) + ";", conn);
+                _ = command.ExecuteNonQuery();
             }
         }
 
@@ -2715,13 +2355,13 @@ namespace Wexflow.Core.Db.MySQL
         {
             lock (padlock)
             {
-                List<Approver> approvers = new List<Approver>();
+                List<Approver> approvers = new();
 
-                using (var conn = new MySqlConnection(connectionString))
+                using (MySqlConnection conn = new(connectionString))
                 {
                     conn.Open();
 
-                    using (var command = new MySqlCommand("SELECT "
+                    using MySqlCommand command = new("SELECT "
                         + Approver.ColumnName_Id + ", "
                         + Approver.ColumnName_UserId + ", "
                         + Approver.ColumnName_RecordId + ", "
@@ -2729,24 +2369,20 @@ namespace Wexflow.Core.Db.MySQL
                         + Approver.ColumnName_ApprovedOn
                         + " FROM " + Core.Db.Approver.DocumentName
                         + " WHERE " + Approver.ColumnName_RecordId + " = " + int.Parse(recordId)
-                        + ";", conn))
+                        + ";", conn);
+                    using var reader = command.ExecuteReader();
+                    while (reader.Read())
                     {
-                        using (var reader = command.ExecuteReader())
+                        Approver approver = new()
                         {
-                            while (reader.Read())
-                            {
-                                var approver = new Approver
-                                {
-                                    Id = (int)reader[Approver.ColumnName_Id],
-                                    UserId = ((int)reader[Approver.ColumnName_UserId]).ToString(),
-                                    RecordId = ((int)reader[Approver.ColumnName_RecordId]).ToString(),
-                                    Approved = (ulong)reader[Approver.ColumnName_Approved] == 1 ? true : false,
-                                    ApprovedOn = reader[Approver.ColumnName_ApprovedOn] == DBNull.Value ? null : (DateTime?)reader[Approver.ColumnName_ApprovedOn]
-                                };
+                            Id = (int)reader[Approver.ColumnName_Id],
+                            UserId = ((int)reader[Approver.ColumnName_UserId]).ToString(),
+                            RecordId = ((int)reader[Approver.ColumnName_RecordId]).ToString(),
+                            Approved = (ulong)reader[Approver.ColumnName_Approved] == 1,
+                            ApprovedOn = reader[Approver.ColumnName_ApprovedOn] == DBNull.Value ? null : (DateTime?)reader[Approver.ColumnName_ApprovedOn]
+                        };
 
-                                approvers.Add(approver);
-                            }
-                        }
+                        approvers.Add(approver);
                     }
                 }
 

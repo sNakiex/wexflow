@@ -1,6 +1,6 @@
-﻿using System.IO;
+﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System.IO;
 using System.Linq;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Wexflow.NetCore.Tests
 {
@@ -48,7 +48,7 @@ namespace Wexflow.NetCore.Tests
             var files = Directory.GetFiles(SourceFilesFolder);
             Assert.AreEqual(16, files.Length);
 
-            Helper.StartWorkflow(147);
+            _ = Helper.StartWorkflow(147);
 
             files = Directory.GetFiles(TempFolder, "*", SearchOption.AllDirectories).OrderBy(f => f).ToArray();
             Assert.AreEqual(4, files.Length);

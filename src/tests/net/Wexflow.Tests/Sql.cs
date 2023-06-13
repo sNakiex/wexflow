@@ -1,5 +1,5 @@
-﻿using System.Data.SQLite;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System.Data.SQLite;
 
 namespace Wexflow.Tests
 {
@@ -23,7 +23,7 @@ namespace Wexflow.Tests
         [TestMethod]
         public void SqlTest()
         {
-            Helper.StartWorkflow(22);
+            _ = Helper.StartWorkflow(22);
 
             // sqlite
             const string sql = "select Id, Description from Data;";
@@ -35,8 +35,8 @@ namespace Wexflow.Tests
                 {
                     while (reader.Read())
                     {
-                        int id = int.Parse(reader["Id"].ToString());
-                        string desc = (string) reader["Description"];
+                        var id = int.Parse(reader["Id"].ToString());
+                        var desc = (string)reader["Description"];
 
                         if (id == 1)
                         {
@@ -67,7 +67,7 @@ namespace Wexflow.Tests
 
         private void InitDataTable()
         {
-            const string sql = 
+            const string sql =
                   "UPDATE Data SET Description = 'Hello World Description 1!' WHERE Id = 1;"
                 + "UPDATE Data SET Description = 'Hello World Description 2!' WHERE Id = 2;"
                 + "UPDATE Data SET Description = 'Hello World Description 3!' WHERE Id = 3;"
@@ -78,7 +78,7 @@ namespace Wexflow.Tests
             {
                 var comm = new SQLiteCommand(sql, conn);
                 conn.Open();
-                comm.ExecuteNonQuery();
+                _ = comm.ExecuteNonQuery();
             }
         }
     }

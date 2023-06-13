@@ -29,8 +29,8 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
     var workflows = [Workflow]()
     var workflowId = -1
     var selectedIndex = -1
-    var previousSelectedCell:WorkflowTableViewCell? = nil
-    var timer:Timer? = nil
+    var previousSelectedCell:WorkflowTableViewCell?
+    var timer:Timer?
     var jobs:[Int:String] = [:]
     
     override func viewDidLoad() {
@@ -39,7 +39,7 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
         if let url = UserDefaults.standard.string(forKey: "wexflow_server_url_preference") {
             self.WexflowServerUrl = cleanupUrl(url: url)
         }else{
-            self.WexflowServerUrl = "http://aelassas-pc:8000/wexflow/"
+            self.WexflowServerUrl = "http://192.168.100.207:8000/wexflow/"
         }
         
         self.startButton.isEnabled = false
@@ -49,13 +49,12 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
         self.ApproveButton.isEnabled = false
         self.DisapproveButton.isEnabled = false
         
-        NotificationCenter.default.addObserver(self, selector: #selector(ViewController.defaultsChanged), name: UserDefaults.didChangeNotification, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(ViewController.defaultsChanged(notification:)), name: UserDefaults.didChangeNotification, object: nil)
         
         tableView.delegate = self
         tableView.dataSource = self
         
         loadWorkflows()
-        
     }
     
     func registerSettingsBundle(){
@@ -63,7 +62,7 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
         UserDefaults.standard.register(defaults: appDefaults)
     }
     
-    func defaultsChanged(){
+    @objc func defaultsChanged(notification: Notification){
         if let url = UserDefaults.standard.string(forKey: "wexflow_server_url_preference") {
             self.WexflowServerUrl = cleanupUrl(url: url)
         }
@@ -74,7 +73,7 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
     }
     
     @IBAction func onSettingsClick(_ sender: UIButton) {
-        let settings_app: URL = URL(string: UIApplicationOpenSettingsURLString)!
+        let settings_app: URL = URL(string: UIApplication.openSettingsURLString)!
         UIApplication.shared.open(settings_app)
     }
     
@@ -151,7 +150,7 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
         }
     }
     
-    func timerAction() {
+    @objc func timerAction() {
         self.updateButtons(force: false)
     }
     
@@ -163,7 +162,7 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
             let auth = "Basic " + LoginViewController.toBase64(str: LoginViewController.Username + ":" + LoginViewController.Password)
             request.setValue(auth, forHTTPHeaderField: "Authorization")
             
-            URLSession.shared.dataTask(with: request as URLRequest) { (data, response, error) in
+            URLSession.shared.dataTask(with: request as URLRequest) { (data, _, error) in
                 if error != nil {
                     //print(error!)
                     DispatchQueue.main.async{
@@ -222,7 +221,7 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
                                 self.infoLabel.text = "This workflow is suspended."
                             }
                             else {
-                                self.infoLabel.text = "";
+                                self.infoLabel.text = ""
                             }
                         }
                         
@@ -248,7 +247,7 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
         let auth = "Basic " + LoginViewController.toBase64(str: LoginViewController.Username + ":" + LoginViewController.Password)
         request.setValue(auth, forHTTPHeaderField: "Authorization")
         
-        URLSession.shared.dataTask(with: request as URLRequest) { (data, response, error) in
+        URLSession.shared.dataTask(with: request as URLRequest) { (data, _, error) in
             if error != nil {
                 //print(error!)
                 DispatchQueue.main.async{
@@ -472,13 +471,11 @@ extension UITableView {
                     let indexPath = IndexPath(row: 0, section: 0)
                     self.scrollToRow(at: indexPath, at: .top, animated: animated)
                 }
-                break
             case .bottom:
                 if numberOfRows > 0 {
                     let indexPath = IndexPath(row: numberOfRows-1, section: (numberOfSections-1))
                     self.scrollToRow(at: indexPath, at: .bottom, animated: animated)
                 }
-                break
             }
         }
     }
@@ -492,7 +489,7 @@ extension UIViewController {
     
     func cleanupUrl(url: String) -> String{
         let regex = try! NSRegularExpression(pattern: "/+$", options: NSRegularExpression.Options.caseInsensitive)
-        let range = NSMakeRange(0, url.characters.count)
+        let range = NSRange(location: 0, length: url.count)
         let cleanUrl = regex.stringByReplacingMatches(in: url, options: [], range: range, withTemplate: "")
         return cleanUrl + "/"
     }
@@ -503,15 +500,15 @@ extension UIViewController {
         toastLabel.backgroundColor = UIColor.black.withAlphaComponent(0.6)
         toastLabel.textColor = UIColor.white
         toastLabel.font = font
-        toastLabel.textAlignment = .center;
+        toastLabel.textAlignment = .center
         toastLabel.text = message
         toastLabel.alpha = 1.0
-        toastLabel.layer.cornerRadius = 10;
+        toastLabel.layer.cornerRadius = 10
         toastLabel.clipsToBounds  =  true
         self.view.addSubview(toastLabel)
         UIView.animate(withDuration: 5.0, delay: 0.1, options: .curveEaseOut, animations: {
             toastLabel.alpha = 0.0
-        }, completion: {(isCompleted) in
+        }, completion: {(_) in
             toastLabel.removeFromSuperview()
         })
     }

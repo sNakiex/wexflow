@@ -1,5 +1,5 @@
-﻿using System.IO;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System.IO;
 
 namespace Wexflow.NetCore.Tests
 {
@@ -25,7 +25,7 @@ namespace Wexflow.NetCore.Tests
         public void ZipTest()
         {
             Assert.AreEqual(false, File.Exists(ZipFile));
-            Helper.StartWorkflow(19);
+            _ = Helper.StartWorkflow(19);
             Assert.AreEqual(true, File.Exists(ZipFile));
         }
     }

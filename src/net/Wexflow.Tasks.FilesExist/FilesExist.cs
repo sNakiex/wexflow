@@ -1,8 +1,8 @@
 ﻿using System;
-using Wexflow.Core;
-using System.Xml.Linq;
-using System.Threading;
 using System.IO;
+using System.Threading;
+using System.Xml.Linq;
+using Wexflow.Core;
 
 namespace Wexflow.Tasks.FilesExist
 {
@@ -29,7 +29,7 @@ namespace Wexflow.Tasks.FilesExist
         {
             Info("Checking...");
 
-            bool success = true;
+            var success = true;
 
             try
             {

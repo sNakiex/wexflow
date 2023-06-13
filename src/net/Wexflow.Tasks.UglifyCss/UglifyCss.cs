@@ -27,7 +27,6 @@ namespace Wexflow.Tasks.UglifyCss
         {
             Info("Uglifying CSS files...");
 
-
             var success = true;
             var atLeastOneSuccess = false;
 
@@ -92,7 +91,10 @@ namespace Wexflow.Tasks.UglifyCss
                     File.WriteAllText(destPath, result.Code);
                     Files.Add(new FileInf(destPath, Id));
                     InfoFormat("The CSS file {0} has been uglified -> {1}", cssFile.Path, destPath);
-                    if (!atLeastOneSuccess) atLeastOneSuccess = true;
+                    if (!atLeastOneSuccess)
+                    {
+                        atLeastOneSuccess = true;
+                    }
                 }
                 catch (ThreadAbortException)
                 {

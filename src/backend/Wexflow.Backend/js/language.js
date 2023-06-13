@@ -1,4 +1,4 @@
-﻿const languageModule = (function () {
+﻿window.languageModule = (function () {
     "use strict";
 
     const codes = [
@@ -688,5 +688,4 @@
         codes: codes,
         languages: languages
     };
-
 })();

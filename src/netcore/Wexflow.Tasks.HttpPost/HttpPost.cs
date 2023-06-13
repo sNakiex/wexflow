@@ -55,8 +55,8 @@ namespace Wexflow.Tasks.HttpPost
 
         public async System.Threading.Tasks.Task<string> Post(string url, string authScheme, string authParam, string payload)
         {
-            using (var httpContent = new StringContent(payload, Encoding.UTF8, Type))
-            using (var httpClient = new HttpClient())
+            using (StringContent httpContent = new(payload, Encoding.UTF8, Type))
+            using (HttpClient httpClient = new())
             {
                 if (!string.IsNullOrEmpty(authScheme) && !string.IsNullOrEmpty(authParam))
                 {
@@ -72,6 +72,5 @@ namespace Wexflow.Tasks.HttpPost
             }
             return string.Empty;
         }
-
     }
 }

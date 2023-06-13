@@ -120,10 +120,10 @@ namespace Wexflow.Tasks.FileSystemWatcher
                     foreach (var task in tasks)
                     {
                         task.Logs.Clear();
-                        task.Run();
+                        _ = task.Run();
                         CurrentLogs.AddRange(task.Logs);
                     }
-                    Files.RemoveAll(f => f.Path == file);
+                    _ = Files.RemoveAll(f => f.Path == file);
                 }
                 catch (IOException ex) when ((ex.HResult & 0x0000FFFF) == 32)
                 {
@@ -202,10 +202,10 @@ namespace Wexflow.Tasks.FileSystemWatcher
                         foreach (var task in tasks)
                         {
                             task.Logs.Clear();
-                            task.Run();
+                            _ = task.Run();
                             CurrentLogs.AddRange(task.Logs);
                         }
-                        Files.RemoveAll(f => f.Path == e.FullPath);
+                        _ = Files.RemoveAll(f => f.Path == e.FullPath);
                     }
                     catch (IOException ex) when ((ex.HResult & 0x0000FFFF) == 32)
                     {
@@ -265,10 +265,10 @@ namespace Wexflow.Tasks.FileSystemWatcher
                         foreach (var task in tasks)
                         {
                             task.Logs.Clear();
-                            task.Run();
+                            _ = task.Run();
                             CurrentLogs.AddRange(task.Logs);
                         }
-                        Files.RemoveAll(f => f.Path == e.FullPath);
+                        _ = Files.RemoveAll(f => f.Path == e.FullPath);
                     }
                     catch (IOException ex) when ((ex.HResult & 0x0000FFFF) == 32)
                     {
@@ -313,10 +313,10 @@ namespace Wexflow.Tasks.FileSystemWatcher
                 foreach (var task in tasks)
                 {
                     task.Logs.Clear();
-                    task.Run();
+                    _ = task.Run();
                     CurrentLogs.AddRange(task.Logs);
                 }
-                Files.RemoveAll(f => f.Path == e.FullPath);
+                _ = Files.RemoveAll(f => f.Path == e.FullPath);
             }
             catch (IOException ex) when ((ex.HResult & 0x0000FFFF) == 32)
             {
@@ -342,19 +342,14 @@ namespace Wexflow.Tasks.FileSystemWatcher
 
         private string[] GetFiles()
         {
-            if (IncludeSubFolders)
-            {
-                return Directory.GetFiles(FolderToWatch, Filter, SearchOption.AllDirectories);
-            }
-            else
-            {
-                return Directory.GetFiles(FolderToWatch, Filter, SearchOption.TopDirectoryOnly);
-            }
+            return IncludeSubFolders
+                ? Directory.GetFiles(FolderToWatch, Filter, SearchOption.AllDirectories)
+                : Directory.GetFiles(FolderToWatch, Filter, SearchOption.TopDirectoryOnly);
         }
 
         private Task[] GetTasks(string evt)
         {
-            List<Task> tasks = new List<Task>();
+            var tasks = new List<Task>();
 
             if (!string.IsNullOrEmpty(evt))
             {
@@ -380,12 +375,11 @@ namespace Wexflow.Tasks.FileSystemWatcher
 
         private bool IsDirectory(string path)
         {
-            FileAttributes attr = File.GetAttributes(path);
+            var attr = File.GetAttributes(path);
 
             var isDir = attr.HasFlag(FileAttributes.Directory);
 
             return isDir;
         }
-
     }
 }

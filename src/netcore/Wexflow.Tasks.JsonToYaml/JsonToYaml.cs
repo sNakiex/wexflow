@@ -61,17 +61,20 @@ namespace Wexflow.Tasks.JsonToYaml
                 {
                     var source = File.ReadAllText(yamlFile.Path);
 
-                    var expConverter = new ExpandoObjectConverter();
+                    ExpandoObjectConverter expConverter = new();
                     dynamic deserializedObject = JsonConvert.DeserializeObject<ExpandoObject>(source, expConverter);
 
-                    var serializer = new Serializer();
-                    var yaml = serializer.Serialize(deserializedObject);
+                    Serializer serializer = new();
+                    dynamic yaml = serializer.Serialize(deserializedObject);
 
                     var destPath = Path.Combine(Workflow.WorkflowTempFolder, Path.GetFileNameWithoutExtension(yamlFile.FileName) + ".yml");
                     File.WriteAllText(destPath, yaml);
                     Files.Add(new FileInf(destPath, Id));
                     InfoFormat("The JSON file {0} has been converted -> {1}", yamlFile.Path, destPath);
-                    if (!atLeastOneSuccess) atLeastOneSuccess = true;
+                    if (!atLeastOneSuccess)
+                    {
+                        atLeastOneSuccess = true;
+                    }
                 }
                 catch (ThreadAbortException)
                 {
@@ -85,6 +88,5 @@ namespace Wexflow.Tasks.JsonToYaml
             }
             return success;
         }
-
     }
 }

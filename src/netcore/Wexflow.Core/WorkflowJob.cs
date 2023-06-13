@@ -7,18 +7,17 @@ namespace Wexflow.Core
     /// </summary>
     public class WorkflowJob : IJob
     {
-
         /// <summary>
         /// Executes workflow the job
         /// </summary>
         /// <param name="context">Job context.</param>
         System.Threading.Tasks.Task IJob.Execute(IJobExecutionContext context)
         {
-            Workflow workflow = (Workflow)context.JobDetail.JobDataMap.Get("workflow");
+            var workflow = (Workflow)context.JobDetail.JobDataMap.Get("workflow");
 
-            System.Threading.Tasks.Task task = new System.Threading.Tasks.Task(() =>
+            System.Threading.Tasks.Task task = new(() =>
             {
-                workflow.StartAsync(workflow.WexflowEngine.SuperAdminUsername);
+                _ = workflow.StartAsync(workflow.WexflowEngine.SuperAdminUsername);
             });
             task.Start();
 

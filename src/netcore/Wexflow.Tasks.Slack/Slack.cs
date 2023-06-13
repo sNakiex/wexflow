@@ -20,15 +20,15 @@ namespace Wexflow.Tasks.Slack
         {
             Info("Sending slack messages...");
 
-            bool success = true;
-            bool atLeastOneSucceed = false;
+            var success = true;
+            var atLeastOneSucceed = false;
 
             var files = SelectFiles();
 
             if (files.Length > 0)
             {
-                ManualResetEventSlim clientReady = new ManualResetEventSlim(false);
-                SlackSocketClient client = new SlackSocketClient(Token);
+                ManualResetEventSlim clientReady = new(false);
+                SlackSocketClient client = new(Token);
                 client.Connect((connected) =>
                 {
                     // This is called once the client has emitted the RTM start command
@@ -44,12 +44,12 @@ namespace Wexflow.Tasks.Slack
                 clientReady.Wait();
                 client.GetUserList((ulr) => { Info("Got users."); });
 
-                foreach (FileInf file in files)
+                foreach (var file in files)
                 {
                     try
                     {
                         var xdoc = XDocument.Load(file.Path);
-                        foreach (XElement xMessage in xdoc.XPathSelectElements("Messages/Message"))
+                        foreach (var xMessage in xdoc.XPathSelectElements("Messages/Message"))
                         {
                             var username = xMessage.Element("User").Value;
                             var text = xMessage.Element("Text").Value;
@@ -58,12 +58,14 @@ namespace Wexflow.Tasks.Slack
                             {
                                 var user = client.Users.Find(x => x.name.Equals(username));
                                 var dmchannel = client.DirectMessages.Find(x => x.user.Equals(user.id));
-                                client.PostMessage((mr) => Info("Message '" + text + "' sent to " + dmchannel.id + "."), dmchannel.id, text);
+                                client.PostMessage((mr) => Info($"Message '{text}' sent to {dmchannel.id}."), dmchannel.id, text);
 
-                                if (!atLeastOneSucceed) atLeastOneSucceed = true;
+                                if (!atLeastOneSucceed)
+                                {
+                                    atLeastOneSucceed = true;
+                                }
                             }
                         }
-
                     }
                     catch (ThreadAbortException)
                     {
@@ -91,6 +93,5 @@ namespace Wexflow.Tasks.Slack
             Info("Task finished.");
             return new TaskStatus(tstatus);
         }
-
     }
 }

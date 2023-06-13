@@ -19,8 +19,7 @@ namespace Wexflow.Tests
         public void CsvToSqlTest()
         {
             // TODO
-            Helper.StartWorkflow(144);
+            _ = Helper.StartWorkflow(144);
         }
-
     }
 }

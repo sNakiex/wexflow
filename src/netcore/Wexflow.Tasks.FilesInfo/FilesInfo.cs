@@ -1,8 +1,8 @@
 ﻿using System;
-using Wexflow.Core;
-using System.Xml.Linq;
 using System.IO;
 using System.Threading;
+using System.Xml.Linq;
+using Wexflow.Core;
 
 namespace Wexflow.Tasks.FilesInfo
 {
@@ -17,8 +17,8 @@ namespace Wexflow.Tasks.FilesInfo
         {
             Info("Generating files informations...");
 
-            bool success = true;
-            bool atLeastOneSucceed = false;
+            var success = true;
+            var atLeastOneSucceed = false;
 
             var files = SelectFiles();
 
@@ -27,16 +27,16 @@ namespace Wexflow.Tasks.FilesInfo
                 var filesInfoPath = Path.Combine(Workflow.WorkflowTempFolder,
                     string.Format("FilesInfo_{0:yyyy-MM-dd-HH-mm-ss-fff}.xml", DateTime.Now));
 
-                var xdoc = new XDocument(new XElement("Files"));
-                foreach (FileInf file in files)
+                XDocument xdoc = new(new XElement("Files"));
+                foreach (var file in files)
                 {
                     try
                     {
                         if (xdoc.Root != null)
                         {
                             const string dateFormat = @"MM\/dd\/yyyy HH:mm.ss";
-                            FileInfo fileInfo = new FileInfo(file.Path);
-                            var xfile = new XElement("File",
+                            FileInfo fileInfo = new(file.Path);
+                            XElement xfile = new("File",
                                 new XAttribute("path", file.Path),
                                 new XAttribute("name", file.FileName),
                                 new XAttribute("renameToOrName", file.RenameToOrName),
@@ -58,8 +58,11 @@ namespace Wexflow.Tasks.FilesInfo
                             xdoc.Root.Add(xfile);
                         }
                         InfoFormat("File information of the file {0} generated.", file.Path);
-                        
-                        if (!atLeastOneSucceed) atLeastOneSucceed = true;
+
+                        if (!atLeastOneSucceed)
+                        {
+                            atLeastOneSucceed = true;
+                        }
                     }
                     catch (ThreadAbortException)
                     {

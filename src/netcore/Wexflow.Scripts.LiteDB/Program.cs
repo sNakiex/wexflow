@@ -1,33 +1,36 @@
 ﻿using Microsoft.Extensions.Configuration;
-using System;
-using System.IO;
 using Wexflow.Core.Db.LiteDB;
 using Wexflow.Scripts.Core;
 
 namespace Wexflow.Scripts.LiteDB
 {
-    class Program
+    internal class Program
     {
-        private static IConfiguration config;
+        private static IConfiguration? config;
 
-        static void Main()
+        private static void Main()
         {
             try
             {
                 config = new ConfigurationBuilder()
                 .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
-                .AddJsonFile($"appsettings.{Environment.OSVersion.Platform}.json", optional: true, reloadOnChange: true)
+                //.AddJsonFile($"appsettings.{Environment.OSVersion.Platform}.json", optional: true, reloadOnChange: true)
                 .Build();
 
                 var workflowsFolder = config["workflowsFolder"];
-                var db = new Db(config["connectionString"]);
+                Db db = new(config["connectionString"]);
                 Helper.InsertWorkflowsAndUser(db, workflowsFolder);
                 Helper.InsertRecords(db, "litedb", config["recordsFolder"], config["documentFile"], config["invoiceFile"], config["timesheetFile"]);
                 db.Dispose();
 
-                BuildDatabase("Windows", "windows");
-                BuildDatabase("Linux", "linux");
-                BuildDatabase("Mac OS X", "macos");
+                _ = bool.TryParse(config["buildDevDatabases"], out var buildDevDatabases);
+
+                if (buildDevDatabases && config != null)
+                {
+                    BuildDatabase("Windows", "windows", config);
+                    BuildDatabase("Linux", "linux", config);
+                    BuildDatabase("Mac OS X", "macos", config);
+                }
             }
             catch (Exception e)
             {
@@ -35,10 +38,10 @@ namespace Wexflow.Scripts.LiteDB
             }
 
             Console.Write("Press any key to exit...");
-            Console.ReadKey();
+            _ = Console.ReadKey();
         }
 
-        private static void BuildDatabase(string info, string platformFolder)
+        private static void BuildDatabase(string info, string platformFolder, IConfiguration config)
         {
             Console.WriteLine($"=== Build {info} database ===");
             var path1 = Path.Combine(
@@ -47,17 +50,28 @@ namespace Wexflow.Scripts.LiteDB
             var path2 = Path.Combine(
                 AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "..", "..", "..",
                 "samples", "netcore", platformFolder, "Wexflow", "Database", "Wexflow-log.db");
-            var connString = "Filename=" + path1 + "; Connection=direct";
+            var connString = $"Filename={path1}; Connection=direct";
 
             var workflowsFolder = Path.Combine(
                 AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "..", "..", "..",
                 "samples", "netcore", platformFolder, "Wexflow", "Workflows");
 
-            if (!Directory.Exists(workflowsFolder)) throw new DirectoryNotFoundException("Invalid workflows folder: " + workflowsFolder);
-            if (File.Exists(path1)) File.Delete(path1);
-            if (File.Exists(path2)) File.Delete(path2);
+            if (!Directory.Exists(workflowsFolder))
+            {
+                throw new DirectoryNotFoundException($"Invalid workflows folder: {workflowsFolder}");
+            }
 
-            var db = new Db(connString);
+            if (File.Exists(path1))
+            {
+                File.Delete(path1);
+            }
+
+            if (File.Exists(path2))
+            {
+                File.Delete(path2);
+            }
+
+            Db db = new(connString);
             Helper.InsertWorkflowsAndUser(db, workflowsFolder);
             var recordsFolder = config["recordsFolder"];
             if (platformFolder == "linux")
@@ -68,7 +82,7 @@ namespace Wexflow.Scripts.LiteDB
             {
                 recordsFolder = "/Applications/wexflow/Wexflow/Records";
             }
-            var isUnix = platformFolder == "linux" || platformFolder == "macos";
+            var isUnix = platformFolder is "linux" or "macos";
             Helper.InsertRecords(db, "litedb", recordsFolder, config["documentFile"], config["invoiceFile"], config["timesheetFile"], isUnix);
             db.Dispose();
         }

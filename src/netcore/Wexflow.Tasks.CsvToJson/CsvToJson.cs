@@ -22,7 +22,7 @@ namespace Wexflow.Tasks.CsvToJson
             Info("Converting CSV files to JSON files...");
 
             bool success;
-            bool atLeastOneSuccess = false;
+            var atLeastOneSuccess = false;
             try
             {
                 success = ConvertFiles(ref atLeastOneSuccess);
@@ -66,7 +66,10 @@ namespace Wexflow.Tasks.CsvToJson
                     File.WriteAllText(destPath, json);
                     Files.Add(new FileInf(destPath, Id));
                     InfoFormat("The CSV file {0} has been converted -> {1}", csvFile.Path, destPath);
-                    if (!atLeastOneSuccess) atLeastOneSuccess = true;
+                    if (!atLeastOneSuccess)
+                    {
+                        atLeastOneSuccess = true;
+                    }
                 }
                 catch (ThreadAbortException)
                 {
@@ -82,24 +85,24 @@ namespace Wexflow.Tasks.CsvToJson
             return success;
         }
 
-        private string Convert(string path, string separator)
+        private static string Convert(string path, string separator)
         {
-            var csv = new List<string[]>();
+            List<string[]> csv = new();
             var lines = File.ReadAllLines(path);
 
-            foreach (string line in lines)
+            foreach (var line in lines)
             {
                 csv.Add(line.Split(new string[] { separator }, StringSplitOptions.RemoveEmptyEntries));
             }
 
             var properties = lines[0].Split(new string[] { separator }, StringSplitOptions.RemoveEmptyEntries);
 
-            var listObjResult = new List<Dictionary<string, string>>();
+            List<Dictionary<string, string>> listObjResult = new();
 
-            for (int i = 1; i < lines.Length; i++)
+            for (var i = 1; i < lines.Length; i++)
             {
-                var objResult = new Dictionary<string, string>();
-                for (int j = 0; j < properties.Length; j++)
+                Dictionary<string, string> objResult = new();
+                for (var j = 0; j < properties.Length; j++)
                 {
                     objResult.Add(properties[j], csv[i][j]);
                 }
@@ -109,6 +112,5 @@ namespace Wexflow.Tasks.CsvToJson
 
             return JsonConvert.SerializeObject(listObjResult);
         }
-
     }
 }

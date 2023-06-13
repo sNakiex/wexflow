@@ -10,6 +10,7 @@ using System.Reflection;
 using System.Threading;
 using System.Xml;
 using Wexflow.Core;
+using Wexflow.Core.PollingFileSystemWatcher;
 
 namespace Wexflow.Server
 {
@@ -17,20 +18,20 @@ namespace Wexflow.Server
     {
         private static string superAdminUsername;
 
-        public static PollingFileSystemWatcher Watcher;
-        public static IConfiguration Config;
-        public static WexflowEngine WexflowEngine;
+        public static PollingFileSystemWatcher Watcher { get; set; }
+        public static IConfiguration Config { get; set; }
+        public static WexflowEngine WexflowEngine { get; set; }
 
-        public static void Main(string[] args)
+        public static void Main()
         {
             Config = new ConfigurationBuilder()
                 .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
                 .Build();
 
-            var log4NetConfig = new XmlDocument();
+            XmlDocument log4NetConfig = new();
             log4NetConfig.Load(File.OpenRead("log4net.config"));
             var repo = LogManager.CreateRepository(Assembly.GetEntryAssembly(), typeof(log4net.Repository.Hierarchy.Hierarchy));
-            XmlConfigurator.Configure(repo, log4NetConfig["log4net"]);
+            _ = XmlConfigurator.Configure(repo, log4NetConfig["log4net"]);
 
             superAdminUsername = Config["SuperAdminUsername"];
 
@@ -110,7 +111,7 @@ namespace Wexflow.Server
             host.Run();
 
             Console.Write("Press any key to stop Wexflow server...");
-            Console.ReadKey();
+            _ = Console.ReadKey();
             WexflowEngine.Stop(true, true);
         }
 
@@ -150,7 +151,7 @@ namespace Wexflow.Server
                             Logger.Info("Workflow.PollingFileSystemWatcher.OnCreated");
 
                             var admin = WexflowEngine.GetUser(superAdminUsername);
-                            WexflowEngine.SaveWorkflowFromFile(admin.GetDbId(), Core.Db.UserProfile.SuperAdministrator, path, true);
+                            _ = WexflowEngine.SaveWorkflowFromFile(admin.GetDbId(), Core.Db.UserProfile.SuperAdministrator, path, true);
                         }
                         catch (Exception ex)
                         {
@@ -171,7 +172,7 @@ namespace Wexflow.Server
                             Logger.Info("Workflow.PollingFileSystemWatcher.OnChanged");
 
                             var admin = WexflowEngine.GetUser(superAdminUsername);
-                            WexflowEngine.SaveWorkflowFromFile(admin.GetDbId(), Core.Db.UserProfile.SuperAdministrator, path, true);
+                            _ = WexflowEngine.SaveWorkflowFromFile(admin.GetDbId(), Core.Db.UserProfile.SuperAdministrator, path, true);
                         }
                         catch (Exception ex)
                         {
@@ -242,7 +243,6 @@ namespace Wexflow.Server
                         {
                             Logger.Error($"An error occured while inserting a record from the file {path}.");
                         }
-
                     }
                     catch (Exception ex)
                     {
@@ -251,6 +251,5 @@ namespace Wexflow.Server
                 }
             }
         }
-
     }
 }
